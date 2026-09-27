@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AxisHaul Control System</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: #030712;
+            color: #f3f4f6;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #0b1329;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #1e293b;
+            gap: 8px;
+        }
+
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-badge {
+            background-color: #dc2626;
+            color: white;
+            font-weight: 900;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .brand-title {
+            font-weight: 900;
+            font-size: 15px;
+            letter-spacing: 0.8px;
+            color: #ffffff;
+            text-transform: uppercase;
+        }
+
+        .brand-sub {
+            font-size: 8px;
+            font-weight: 700;
+            color: #38bdf8;
+            letter-spacing: 1px;
+            display: block;
+        }
+
+        .status-pill {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid transparent;
+            text-align: center;
+            white-space: nowrap;
+            flex-shrink: 0;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .status-safe { background-color: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.3); }
+        .status-caution { background-color: rgba(245, 158, 11, 0.1); color: #f59e0b; border-color: rgba(245, 158, 11, 0.3); }
+        .status-danger { background-color: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+
+        .main-content {
+            flex: 1;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .view-page {
+            display: none;
+            padding: 12px;
+            height: 100%;
+        }
+
+        .view-page.active {
+            display: block;
+        }
+
+        .card {
+            background-color: #0b1329;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: #38bdf8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group { margin-bottom: 8px; }
+        .form-row { display: flex; gap: 8px; }
+        .form-row .form-group { flex: 1; }
+
+        label {
+            display: block;
+            font-size: 9px;
+            color: #94a3b8;
+            margin-bottom: 3px;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            background-color: #030712;
+            border: 1px solid #1e293b;
+            color: #f3f4f6;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            outline: none;
+        }
+
+        input:focus, select:focus { border-color: #0284c7; }
+
+        .btn {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 700;
+            font-size: 11px;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .btn-primary { background-color: #0284c7; color: white; }
+        .btn-secondary { background-color: #1e293b; color: #94a3b8; }
+        .btn-danger { background-color: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+        .sim-container {
+            height: 180px;
+            background-color: #020617;
+            border-radius: 6px;
+            border: 1px solid #1e293b;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .steer-btn {
+            background-color: #0b1329;
+            border: 1px solid #1e293b;
+            color: #38bdf8;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .zone-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .zone-box {
+            background-color: #020617;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            position: relative;
+            height: 95px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .zone-box canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .cam-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(2, 6, 23, 0.6) 0%, rgba(2, 6, 23, 0) 40%, rgba(2, 6, 23, 0.8) 100%);
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .zone-title {
+            font-size: 8px;
+            font-weight: 800;
+            color: #38bdf8;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .rec-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .cam-bottom-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .cam-time {
+            font-size: 7px;
+            font-family: monospace;
+            color: #cbd5e1;
+        }
+
+        .zone-badge {
+            font-size: 7px;
+            font-weight: 800;
+            padding: 2px 5px;
+            border-radius: 3px;
+            text-transform: uppercase;
+        }
+
+        .state-safe { border-color: rgba(16, 185, 129, 0.4); }
+        .state-safe .zone-badge { background-color: rgba(16, 185, 129, 0.3); color: #34d399; }
+
+        .state-caution { border-color: rgba(245, 158, 11, 0.5); }
+        .state-caution .zone-badge { background-color: rgba(245, 158, 11, 0.3); color: #fbbf24; }
+
+        .state-danger { border-color: rgba(239, 68, 68, 0.6); }
+        .state-danger .zone-badge { background-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
+
+        .terminal {
+            background-color: #020617;
+            border: 1px solid #1e293b;
+            border-radius: 4px;
+            padding: 8px;
+            font-family: monospace;
+            font-size: 9px;
+            height: 100px;
+            overflow-y: auto;
+            color: #34d399;
+        }
+
+        .terminal-log { margin-bottom: 2px; }
+        .terminal-log.warn { color: #fbbf24; }
+        .terminal-log.danger { color: #fca5a5; }
+
+        .incident-card {
+            background-color: #0b1329;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 12px;
+        }
+
+        .incident-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            font-weight: 700;
+            color: #f3f4f6;
+            margin-bottom: 6px;
+        }
+
+        .incident-time { color: #64748b; font-size: 9px; }
+
+        .replay-canvas-box {
+            width: 100%;
+            height: 120px;
+            background-color: #020617;
+            border: 1px solid #1e293b;
+            border-radius: 4px;
+            margin-top: 6px;
+            position: relative;
+        }
+
+        .replay-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+        }
+
+        .btn-play {
+            background-color: #38bdf8;
+            color: #020617;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .bottom-nav {
+            background-color: #0b1329;
+            border-top: 1px solid #1e293b;
+            display: flex;
+            height: 50px;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 9px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .nav-item.active { color: #38bdf8; }
+        .nav-icon { font-size: 14px; margin-bottom: 2px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo-group">
+            <div class="logo-badge">AX</div>
+            <div>
+                <span class="brand-title">FLEET MANAGEMENT</span>
+                <span class="brand-sub">AXISHAUL CONTROL SYSTEM</span>
+            </div>
+        </div>
+        <div id="main-status" class="status-pill status-safe">NO DRIVER</div>
+    </div>
+
+    <div class="main-content">
+
+        <!-- PORTAL VIEW -->
+        <div id="page-auth" class="view-page active">
+            <h3 style="font-size: 14px; margin-bottom: 4px;">Driver Portal & Access</h3>
+            <p style="font-size: 10px; color: #64748b; margin-bottom: 12px;">Select an existing driver profile or register a new driver terminal.</p>
+
+            <div class="card">
+                <div class="card-title">Select Registered Driver</div>
+                <select id="profile-select" onchange="onProfileSelected()">
+                    <option value="">-- Create New Driver Below --</option>
+                </select>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Or Register New Driver</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>DRIVER NAME</label>
+                        <input type="text" id="driver-name" placeholder="John">
+                    </div>
+                    <div class="form-group">
+                        <label>SURNAME</label>
+                        <input type="text" id="driver-surname" placeholder="Doe">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>COMPANY NAME</label>
+                    <input type="text" id="company-name" value="AxisHaul Logistics">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>EMPLOYEE ID</label>
+                        <input type="text" id="employee-id" placeholder="AX-8801">
+                    </div>
+                    <div class="form-group">
+                        <label>TRUCK MODEL</label>
+                        <input type="text" id="truck-model" placeholder="Volvo FH16">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ORIGIN</label>
+                        <input type="text" id="origin" placeholder="Johannesburg">
+                    </div>
+                    <div class="form-group">
+                        <label>DESTINATION</label>
+                        <input type="text" id="destination" placeholder="Durban">
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="saveAndLoginDriver()">LOGIN / REGISTER & UNLOCK TERMINAL</button>
+            <button class="btn btn-secondary" onclick="logoutCurrentDriver()">LOGOUT CURRENT SESSION</button>
+        </div>
+
+        <!-- SURVEILLANCE VIEW -->
+        <div id="page-dashboard" class="view-page">
+
+            <div class="sim-container">
+                <canvas id="simCanvas"></canvas>
+            </div>
+
+            <div class="controls-grid">
+                <div class="steer-btn" id="btn-left">◀ STEER LEFT</div>
+                <div class="steer-btn" id="btn-right">STEER RIGHT ▶</div>
+            </div>
+
+            <div class="zone-grid">
+                <div id="box-zone-front" class="zone-box state-safe">
+                    <canvas id="cam1-canvas"></canvas>
+                    <div class="cam-overlay">
+                        <div class="zone-title"><span class="rec-dot"></span>CAM 1: FRONT</div>
+                        <div class="cam-bottom-row">
+                            <span id="time-cam-1" class="cam-time">LIVE</span>
+                            <span id="badge-zone-front" class="zone-badge">CLEAR</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="box-zone-rear" class="zone-box state-safe">
+                    <canvas id="cam2-canvas"></canvas>
+                    <div class="cam-overlay">
+                        <div class="zone-title"><span class="rec-dot"></span>CAM 2: REAR</div>
+                        <div class="cam-bottom-row">
+                            <span id="time-cam-2" class="cam-time">LIVE</span>
+                            <span id="badge-zone-rear" class="zone-badge">CLEAR</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="box-zone-left" class="zone-box state-safe">
+                    <canvas id="cam3-canvas"></canvas>
+                    <div class="cam-overlay">
+                        <div class="zone-title"><span class="rec-dot"></span>CAM 3: LEFT MIRROR</div>
+                        <div class="cam-bottom-row">
+                            <span id="time-cam-3" class="cam-time">LIVE</span>
+                            <span id="badge-zone-left" class="zone-badge">CLEAR</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="box-zone-right" class="zone-box state-safe">
+                    <canvas id="cam4-canvas"></canvas>
+                    <div class="cam-overlay">
+                        <div class="zone-title"><span class="rec-dot"></span>CAM 4: RIGHT MIRROR</div>
+                        <div class="cam-bottom-row">
+                            <span id="time-cam-4" class="cam-time">LIVE</span>
+                            <span id="badge-zone-right" class="zone-badge">CLEAR</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="terminal" class="terminal">
+                <div class="terminal-log">[SYSTEM] Driver terminal standby...</div>
+            </div>
+        </div>
+
+        <!-- ARCHIVE VIEW -->
+        <div id="page-archive" class="view-page">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div id="archive-header-title" class="card-title" style="margin: 0;">BLACK BOX REPLAY ARCHIVE</div>
+                <button class="btn btn-danger" style="width: auto; padding: 4px 8px; font-size: 8px; margin: 0;" onclick="clearCurrentDriverHistory()">CLEAR LOGS</button>
+            </div>
+
+            <div id="archive-list"></div>
+        </div>
+
+    </div>
+
+    <div class="bottom-nav">
+        <div id="nav-auth" class="nav-item active" onclick="switchTab('auth')">
+            <div class="nav-icon">👤</div>
+            <span>Portal</span>
+        </div>
+        <div id="nav-dash" class="nav-item" onclick="switchTab('dashboard')">
+            <div class="nav-icon">🚛</div>
+            <span>Surveillance</span>
+        </div>
+        <div id="nav-archive" class="nav-item" onclick="switchTab('archive')">
+            <div class="nav-icon">🕒</div>
+            <span>Archive</span>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const logWindow = document.getElementById('terminal');
+        const mainStatus = document.getElementById('main-status');
+
+        const cam1Canvas = document.getElementById('cam1-canvas');
+        const cam2Canvas = document.getElementById('cam2-canvas');
+        const cam3Canvas = document.getElementById('cam3-canvas');
+        const cam4Canvas = document.getElementById('cam4-canvas');
+
+        let audioCtx = null;
+        let lastBeep = 0;
+        let isSimRunning = false;
+        let simAnimationId = null;
+        let lastRecordedTime = 0;
+
+        let allProfiles = [];
+        let activeDriverId = null;
+        let allIncidents = [];
+        let telemetryBuffer = [];
+
+        let laneOffset = 0;
+        let currentLaneIndex = 1;
+        
+        const playerTruck = { x: 0, targetX: 0, y: 110, w: 26, h: 46 };
+        const traffic = [
+            { laneIndex: 0, x: 0, y: -60, speed: 1.2, color: '#ef4444' },
+            { laneIndex: 2, x: 0, y: -200, speed: 2.0, color: '#a855f7' },
+            { laneIndex: 1, x: 0, y: 250, speed: -0.8, color: '#38bdf8' }
+        ];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadStorageData();
+            populateProfileDropdown();
+            checkActiveSession();
+            startTimeUpdater();
+            
+            const btnL = document.getElementById('btn-left');
+            const btnR = document.getElementById('btn-right');
+
+            btnL.addEventListener('pointerdown', (e) => { e.preventDefault(); steer(-1); });
+            btnR.addEventListener('pointerdown', (e) => { e.preventDefault(); steer(1); });
+        });
+
+        function getLaneCenters() {
+            const roadWidth = Math.min(canvas.width * 0.8, 180);
+            const roadX = (canvas.width - roadWidth) / 2;
+            const laneWidth = roadWidth / 3;
+            return [
+                roadX + laneWidth * 0.5,
+                roadX + laneWidth * 1.5,
+                roadX + laneWidth * 2.5
+            ];
+        }
+
+        function steer(direction) {
+            currentLaneIndex += direction;
+            if (currentLaneIndex < 0) currentLaneIndex = 0;
+            if (currentLaneIndex > 2) currentLaneIndex = 2;
+
+            const lanes = getLaneCenters();
+            playerTruck.targetX = lanes[currentLaneIndex] - (playerTruck.w / 2);
+        }
+
+        function loadStorageData() {
+            const storedProfiles = localStorage.getItem('axisHaul_profiles');
+            if (storedProfiles) allProfiles = JSON.parse(storedProfiles);
+
+            const storedIncidents = localStorage.getItem('axisHaul_incidents');
+            if (storedIncidents) allIncidents = JSON.parse(storedIncidents);
+
+            activeDriverId = localStorage.getItem('axisHaul_active_driver_id');
+        }
+
+        function populateProfileDropdown() {
+            const select = document.getElementById('profile-select');
+            select.innerHTML = '<option value="">-- Create New Driver Below --</option>';
+            allProfiles.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.empId;
+                const companyName = p.company && p.company !== 'undefined' ? p.company : 'AxisHaul Logistics';
+                opt.innerText = p.name + ' ' + p.surname + ' (' + p.empId + ') - ' + companyName;
+                select.appendChild(opt);
+            });
+        }
+
+        function onProfileSelected() {
+            const empId = document.getElementById('profile-select').value;
+            if (!empId) { clearFormFields(); return; }
+            const profile = allProfiles.find(p => p.empId === empId);
+            if (profile) {
+                document.getElementById('driver-name').value = profile.name || '';
+                document.getElementById('driver-surname').value = profile.surname || '';
+                document.getElementById('company-name').value = (profile.company && profile.company !== 'undefined') ? profile.company : 'AxisHaul Logistics';
+                document.getElementById('employee-id').value = profile.empId || '';
+                document.getElementById('truck-model').value = profile.truck || '';
+                document.getElementById('origin').value = profile.origin || '';
+                document.getElementById('destination').value = profile.dest || '';
+            }
+        }
+
+        function clearFormFields() {
+            document.getElementById('driver-name').value = '';
+            document.getElementById('driver-surname').value = '';
+            document.getElementById('company-name').value = 'AxisHaul Logistics';
+            document.getElementById('employee-id').value = '';
+            document.getElementById('truck-model').value = '';
+            document.getElementById('origin').value = '';
+            document.getElementById('destination').value = '';
+        }
+
+        function saveAndLoginDriver() {
+            const empId = document.getElementById('employee-id').value.trim();
+            const name = document.getElementById('driver-name').value.trim();
+            const surname = document.getElementById('driver-surname').value.trim();
+            const company = document.getElementById('company-name').value.trim();
+            const truck = document.getElementById('truck-model').value.trim();
+            const origin = document.getElementById('origin').value.trim();
+            const dest = document.getElementById('destination').value.trim();
+            
+            if (!empId || !name || !surname || !company || !truck || !origin || !dest) {
+                alert('ACCESS DENIED: Please complete all portal fields before continuing.');
+                return;
+            }
+
+            const profileData = { empId, name, surname, company, truck, origin, dest };
+
+            const existingIndex = allProfiles.findIndex(p => p.empId === empId);
+            if (existingIndex >= 0) allProfiles[existingIndex] = profileData;
+            else allProfiles.push(profileData);
+
+            localStorage.setItem('axisHaul_profiles', JSON.stringify(allProfiles));
+            activeDriverId = empId;
+            localStorage.setItem('axisHaul_active_driver_id', activeDriverId);
+
+            populateProfileDropdown();
+            document.getElementById('profile-select').value = empId;
+
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            addLog('[LOGIN SUCCESS] Welcome back, ' + name + ' (' + empId + ')');
+            switchTab('dashboard');
+        }
+
+        function checkActiveSession() {
+            if (activeDriverId) {
+                const activeP = allProfiles.find(p => p.empId === activeDriverId);
+                if (activeP) {
+                    document.getElementById('profile-select').value = activeP.empId;
+                    onProfileSelected();
+                    mainStatus.innerText = 'ACTIVE: ' + activeP.name;
+                }
+            }
+        }
+
+        function logoutCurrentDriver() {
+            isSimRunning = false;
+            if (simAnimationId) {
+                cancelAnimationFrame(simAnimationId);
+                simAnimationId = null;
+            }
+
+            activeDriverId = null;
+            localStorage.removeItem('axisHaul_active_driver_id');
+            clearFormFields();
+            document.getElementById('profile-select').value = '';
+            
+            mainStatus.className = 'status-pill status-safe';
+            mainStatus.innerText = 'NO DRIVER';
+            
+            addLog('[LOGOUT] Driver logged out. Engine standby.', 'warn');
+            switchTab('auth');
+            alert('Driver logged out successfully.');
+        }
+
+        function startTimeUpdater() {
+            setInterval(() => {
+                const t = new Date().toLocaleTimeString();
+                for (let i = 1; i <= 4; i++) {
+                    const el = document.getElementById('time-cam-' + i);
+                    if (el) el.innerText = t;
+                }
+            }, 1000);
+        }
+
+        function switchTab(tab) {
+            // Strict Security Lock: Validate session and complete profile registration
+            if (tab === 'dashboard' || tab === 'archive') {
+                const currentDriver = allProfiles.find(p => p.empId === activeDriverId);
+                const isProfileComplete = currentDriver && 
+                                          currentDriver.name && 
+                                          currentDriver.surname && 
+                                          currentDriver.company && 
+                                          currentDriver.empId && 
+                                          currentDriver.truck && 
+                                          currentDriver.origin && 
+                                          currentDriver.dest;
+
+                if (!activeDriverId || !isProfileComplete) {
+                    alert('ACCESS DENIED: You must fill out and submit all Portal profile information before accessing Surveillance or Archives.');
+                    
+                    // Force display back to Auth Portal
+                    document.querySelectorAll('.view-page').forEach(p => p.classList.remove('active'));
+                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                    document.getElementById('page-auth').classList.add('active');
+                    document.getElementById('nav-auth').classList.add('active');
+                    return;
+                }
+            }
+
+            document.querySelectorAll('.view-page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            if (tab === 'auth') {
+                document.getElementById('page-auth').classList.add('active');
+                document.getElementById('nav-auth').classList.add('active');
+                
+                isSimRunning = false;
+                if (simAnimationId) {
+                    cancelAnimationFrame(simAnimationId);
+                    simAnimationId = null;
+                }
+
+                const currentDriver = allProfiles.find(p => p.empId === activeDriverId);
+                mainStatus.className = 'status-pill status-safe';
+                mainStatus.innerText = activeDriverId ? ('ACTIVE: ' + (currentDriver ? currentDriver.name : activeDriverId)) : 'NO DRIVER';
+
+            } else if (tab === 'dashboard') {
+                document.getElementById('page-dashboard').classList.add('active');
+                document.getElementById('nav-dash').classList.add('active');
+                resizeCanvas();
+
+                if (!isSimRunning) {
+                    isSimRunning = true;
+                    updateSimulation();
+                }
+            } else if (tab === 'archive') {
+                document.getElementById('page-archive').classList.add('active');
+                document.getElementById('nav-archive').classList.add('active');
+                
+                isSimRunning = false;
+                if (simAnimationId) {
+                    cancelAnimationFrame(simAnimationId);
+                    simAnimationId = null;
+                }
+
+                renderArchiveUI();
+            }
+        }
+
+        function logIncident(distance) {
+            if (!activeDriverId) return;
+
+            const now = Date.now();
+            if (now - lastRecordedTime < 5000) return;
+            lastRecordedTime = now;
+
+            const driverProfile = allProfiles.find(p => p.empId === activeDriverId);
+            const driverFullName = driverProfile ? (driverProfile.name + ' ' + driverProfile.surname) : 'Unknown Driver';
+            const timeStr = new Date().toLocaleTimeString();
+
+            const newIncident = {
+                id: allIncidents.length + 1,
+                driverId: activeDriverId,
+                driverName: driverFullName,
+                time: timeStr,
+                distance: distance,
+                replayData: JSON.parse(JSON.stringify(telemetryBuffer))
+            };
+
+            allIncidents.unshift(newIncident);
+            localStorage.setItem('axisHaul_incidents', JSON.stringify(allIncidents));
+            addLog('[INCIDENT ARCHIVED] Saved to profile (' + activeDriverId + ') at ' + distance + 'm', 'danger');
+        }
+
+        function playReplay(incidentId) {
+            const incident = allIncidents.find(i => i.id === incidentId);
+            if (!incident || !incident.replayData) return;
+
+            const rCanvas = document.getElementById('replay-canvas-' + incidentId);
+            const rctx = rCanvas.getContext('2d');
+            rCanvas.width = rCanvas.parentElement.clientWidth;
+            rCanvas.height = rCanvas.parentElement.clientHeight;
+
+            let frameIndex = 0;
+            const data = incident.replayData;
+
+            function renderFrame() {
+                if (frameIndex >= data.length) return;
+                const snapshot = data[frameIndex];
+
+                rctx.fillStyle = '#020617';
+                rctx.fillRect(0, 0, rCanvas.width, rCanvas.height);
+
+                const rWidth = 120;
+                const rx = (rCanvas.width - rWidth) / 2;
+                rctx.strokeStyle = '#1e293b';
+                rctx.lineWidth = 2;
+                rctx.strokeRect(rx, 0, rWidth, rCanvas.height);
+
+                rctx.fillStyle = '#0284c7';
+                rctx.fillRect(rx + (snapshot.truck.x / canvas.width) * rWidth, snapshot.truck.y / 2, 20, 30);
+
+                snapshot.traffic.forEach(car => {
+                    rctx.fillStyle = car.color;
+                    rctx.fillRect(rx + (car.x / canvas.width) * rWidth, car.y / 2, 14, 20);
+                });
+
+                rctx.fillStyle = snapshot.dist < 40 ? '#ef4444' : (snapshot.dist <= 70 ? '#f59e0b' : '#10b981');
+                rctx.font = '8px monospace';
+                rctx.fillText('T-' + ((data.length - frameIndex) * 0.03).toFixed(1) + 's | Distance: ' + (snapshot.dist/10).toFixed(1) + 'm', 8, 14);
+
+                frameIndex++;
+                setTimeout(() => requestAnimationFrame(renderFrame), 30);
+            }
+
+            renderFrame();
+        }
+
+        function renderArchiveUI() {
+            const archiveList = document.getElementById('archive-list');
+            const headerTitle = document.getElementById('archive-header-title');
+
+            if (!activeDriverId) {
+                headerTitle.innerHTML = '<span>⚠️</span> ARCHIVE (NO DRIVER LOGGED IN)';
+                archiveList.innerHTML = '<div style="font-size: 11px; color: #64748b; text-align: center; padding: 20px;">Please login or register a driver profile to view incident history.</div>';
+                return;
+            }
+
+            const currentDriver = allProfiles.find(p => p.empId === activeDriverId);
+            const driverName = currentDriver ? (currentDriver.name + ' ' + currentDriver.surname) : activeDriverId;
+            headerTitle.innerHTML = '<span>⚠️</span> REPLAY ARCHIVE: ' + driverName.toUpperCase();
+
+            const myIncidents = allIncidents.filter(i => i.driverId === activeDriverId);
+
+            if (myIncidents.length === 0) {
+                archiveList.innerHTML = '<div style="font-size: 11px; color: #64748b; text-align: center; padding: 20px;">No incidents recorded for ' + driverName + '. Clean driving record!</div>';
+                return;
+            }
+
+            archiveList.innerHTML = '';
+            myIncidents.forEach((item) => {
+                const card = document.createElement('div');
+                card.className = 'incident-card';
+                card.innerHTML = 
+                    '<div class="incident-header">' +
+                        '<span>🚨 Incident #' + item.id + ' - ' + item.driverName + '</span>' +
+                        '<span class="incident-time">' + item.time + '</span>' +
+                    '</div>' +
+                    '<div style="font-size: 10px; color: #fca5a5; margin-bottom: 4px;">Min Distance: ' + item.distance + ' meters</div>' +
+                    '<div class="replay-canvas-box">' +
+                        '<canvas id="replay-canvas-' + item.id + '"></canvas>' +
+                    '</div>' +
+                    '<div class="replay-controls">' +
+                        '<span style="font-size: 8px; color: #64748b;">5.0s Pre-Incident Telemetry</span>' +
+                        '<button class="btn-play" onclick="playReplay(' + item.id + ')">PLAY REPLAY ▶</button>' +
+                    '</div>';
+                archiveList.appendChild(card);
+            });
+        }
+
+        function clearCurrentDriverHistory() {
+            if (!activeDriverId) return;
+            allIncidents = allIncidents.filter(i => i.driverId !== activeDriverId);
+            localStorage.setItem('axisHaul_incidents', JSON.stringify(allIncidents));
+            renderArchiveUI();
+            addLog('[ARCHIVE] Personal logs cleared.', 'warn');
+        }
+
+        function playBeep(freq, duration) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            gain.gain.value = 0.08;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function addLog(text, type) {
+            const time = new Date().toLocaleTimeString();
+            const logRow = document.createElement('div');
+            logRow.className = type === 'warn' ? 'terminal-log warn' : (type === 'danger' ? 'terminal-log danger' : 'terminal-log');
+            logRow.innerText = '[' + time + '] ' + text;
+            logWindow.appendChild(logRow);
+            logWindow.scrollTop = logWindow.scrollHeight;
+        }
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            [cam1Canvas, cam2Canvas, cam3Canvas, cam4Canvas].forEach(c => {
+                if (c && c.parentElement) {
+                    c.width = c.parentElement.clientWidth;
+                    c.height = c.parentElement.clientHeight;
+                }
+            });
+
+            const lanes = getLaneCenters();
+            playerTruck.targetX = lanes[currentLaneIndex] - (playerTruck.w / 2);
+            playerTruck.x = playerTruck.targetX;
+        }
+
+        function updateZoneCard(zoneKey, dist) {
+            const box = document.getElementById('box-zone-' + zoneKey);
+            const badge = document.getElementById('badge-zone-' + zoneKey);
+
+            if (dist < 40) {
+                box.className = 'zone-box state-danger';
+                badge.innerText = 'DANGER';
+            } else if (dist <= 70) {
+                box.className = 'zone-box state-caution';
+                badge.innerText = 'CAUTION';
+            } else {
+                box.className = 'zone-box state-safe';
+                badge.innerText = 'CLEAR';
+            }
+        }
+
+        function renderCam1Front(c1) {
+            const w = cam1Canvas.width, h = cam1Canvas.height;
+            c1.fillStyle = '#0a0f1d'; c1.fillRect(0, 0, w, h);
+
+            c1.fillStyle = '#1e293b';
+            c1.fillRect(w * 0.2, 0, w * 0.6, h);
+
+            c1.strokeStyle = '#38bdf8';
+            c1.lineWidth = 1;
+            c1.setLineDash([4, 4]);
+            c1.beginPath();
+            c1.moveTo(w * 0.5, 0); c1.lineTo(w * 0.5, h);
+            c1.stroke();
+            c1.setLineDash([]);
+
+            traffic.forEach(car => {
+                if (car.y < playerTruck.y && car.y > playerTruck.y - 180) {
+                    const relY = ((car.y - (playerTruck.y - 180)) / 180) * h;
+                    const laneX = (car.laneIndex === 0) ? w * 0.3 : (car.laneIndex === 1 ? w * 0.5 : w * 0.7);
+                    
+                    c1.fillStyle = car.color;
+                    c1.fillRect(laneX - 8, relY - 6, 16, 12);
+                }
+            });
+        }
+
+        function renderCam2Rear(c2) {
+            const w = cam2Canvas.width, h = cam2Canvas.height;
+            c2.fillStyle = '#0a0f1d'; c2.fillRect(0, 0, w, h);
+
+            c2.fillStyle = '#1e293b';
+            c2.fillRect(w * 0.2, 0, w * 0.6, h);
+
+            c2.strokeStyle = '#64748b';
+            c2.lineWidth = 1;
+            c2.setLineDash([4, 4]);
+            c2.beginPath();
+            c2.moveTo(w * 0.5, 0); c2.lineTo(w * 0.5, h);
+            c2.stroke();
+            c2.setLineDash([]);
+
+            traffic.forEach(car => {
+                if (car.y > playerTruck.y && car.y < playerTruck.y + 180) {
+                    const relY = ((car.y - playerTruck.y) / 180) * h;
+                    const laneX = (car.laneIndex === 0) ? w * 0.3 : (car.laneIndex === 1 ? w * 0.5 : w * 0.7);
+
+                    c2.fillStyle = car.color;
+                    c2.fillRect(laneX - 8, relY - 6, 16, 12);
+                }
+            });
+        }
+
+        function renderCam3Left(c3) {
+            const w = cam3Canvas.width, h = cam3Canvas.height;
+            c3.fillStyle = '#030712'; c3.fillRect(0, 0, w, h);
+
+            c3.fillStyle = '#0284c7';
+            c3.fillRect(w * 0.75, 0, w * 0.25, h);
+
+            c3.fillStyle = '#1e293b';
+            c3.fillRect(0, 0, w * 0.75, h);
+
+            traffic.forEach(car => {
+                if (car.laneIndex < currentLaneIndex && Math.abs(car.y - playerTruck.y) < 120) {
+                    const relY = (((car.y - playerTruck.y) + 120) / 240) * h;
+                    c3.fillStyle = car.color;
+                    c3.fillRect(w * 0.25, relY - 6, 18, 12);
+                }
+            });
+        }
+
+        function renderCam4Right(c4) {
+            const w = cam4Canvas.width, h = cam4Canvas.height;
+            c4.fillStyle = '#030712'; c4.fillRect(0, 0, w, h);
+
+            c4.fillStyle = '#0284c7';
+            c4.fillRect(0, 0, w * 0.25, h);
+
+            c4.fillStyle = '#1e293b';
+            c4.fillRect(w * 0.25, 0, w * 0.75, h);
+
+            traffic.forEach(car => {
+                if (car.laneIndex > currentLaneIndex && Math.abs(car.y - playerTruck.y) < 120) {
+                    const relY = (((car.y - playerTruck.y) + 120) / 240) * h;
+                    c4.fillStyle = car.color;
+                    c4.fillRect(w * 0.5, relY - 6, 18, 12);
+                }
+            });
+        }
+
+        function updateSimulation() {
+            if (!isSimRunning) return;
+
+            laneOffset = (laneOffset + 2) % 24;
+            
+            ctx.fillStyle = '#060e17';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const lanes = getLaneCenters();
+            const roadWidth = Math.min(canvas.width * 0.8, 180);
+            const roadX = (canvas.width - roadWidth) / 2;
+
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(roadX, 0, roadWidth, canvas.height);
+
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([12, 12]);
+            ctx.lineDashOffset = -laneOffset;
+
+            ctx.beginPath();
+            ctx.moveTo(roadX + roadWidth/3, 0); ctx.lineTo(roadX + roadWidth/3, canvas.height);
+            ctx.moveTo(roadX + (roadWidth/3)*2, 0); ctx.lineTo(roadX + (roadWidth/3)*2, canvas.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            playerTruck.x += (playerTruck.targetX - playerTruck.x) * 0.2;
+
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.08)';
+            ctx.beginPath();
+            ctx.arc(playerTruck.x + playerTruck.w/2, playerTruck.y + playerTruck.h/2, 60, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#0284c7';
+            ctx.fillRect(playerTruck.x, playerTruck.y, playerTruck.w, playerTruck.h);
+
+            let minFront = 999, minRear = 999, minLeft = 999, minRight = 999;
+            const tCX = playerTruck.x + playerTruck.w / 2;
+            const tCY = playerTruck.y + playerTruck.h / 2;
+
+            traffic.forEach((car) => {
+                car.y += car.speed;
+                car.x = lanes[car.laneIndex] - 10;
+
+                if (car.y > canvas.height + 100) {
+                    car.y = -100;
+                    car.laneIndex = Math.floor(Math.random() * 3);
+                } else if (car.y < -100) {
+                    car.y = canvas.height + 100;
+                    car.laneIndex = Math.floor(Math.random() * 3);
+                }
+
+                ctx.fillStyle = car.color;
+                ctx.fillRect(car.x, car.y, 20, 32);
+
+                const cCX = car.x + 10;
+                const cCY = car.y + 16;
+                const dx = cCX - tCX;
+                const dy = cCY - tCY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dy < -10 && Math.abs(dx) < 30) { if (dist < minFront) minFront = dist; }
+                else if (dy > 10 && Math.abs(dx) < 30) { if (dist < minRear) minRear = dist; }
+                else if (dx < 0 && Math.abs(dy) <= 40) { if (dist < minLeft) minLeft = dist; }
+                else if (dx > 0 && Math.abs(dy) <= 40) { if (dist < minRight) minRight = dist; }
+            });
+
+            const minimumOverallDistance = Math.min(minFront, minRear, minLeft, minRight);
+
+            renderCam1Front(cam1Canvas.getContext('2d'));
+            renderCam2Rear(cam2Canvas.getContext('2d'));
+            renderCam3Left(cam3Canvas.getContext('2d'));
+            renderCam4Right(cam4Canvas.getContext('2d'));
+
+            telemetryBuffer.push({
+                truck: { x: playerTruck.x, y: playerTruck.y },
+                traffic: traffic.map(t => ({ x: t.x, y: t.y, color: t.color })),
+                dist: minimumOverallDistance
+            });
+            if (telemetryBuffer.length > 150) telemetryBuffer.shift();
+
+            updateZoneCard('front', minFront);
+            updateZoneCard('rear', minRear);
+            updateZoneCard('left', minLeft);
+            updateZoneCard('right', minRight);
+
+            const distanceMeters = (minimumOverallDistance / 10).toFixed(1);
+            const now = Date.now();
+
+            if (minimumOverallDistance < 40) {
+                mainStatus.className = 'status-pill status-danger';
+                mainStatus.innerText = 'DANGER';
+                if (now - lastBeep > 200) { playBeep(880, 0.1); lastBeep = now; }
+                logIncident(distanceMeters);
+            } else if (minimumOverallDistance <= 70) {
+                mainStatus.className = 'status-pill status-caution';
+                mainStatus.innerText = 'CAUTION';
+                if (now - lastBeep > 600) { playBeep(440, 0.15); lastBeep = now; }
+            } else {
+                mainStatus.className = 'status-pill status-safe';
+                const currentDriver = allProfiles.find(p => p.empId === activeDriverId);
+                mainStatus.innerText = activeDriverId ? ('ACTIVE: ' + (currentDriver ? currentDriver.name : activeDriverId)) : 'STANDBY';
+            }
+
+            simAnimationId = requestAnimationFrame(updateSimulation);
+        }
+    </script>
+</body>
+</html>
+                                        ];
+
+                
