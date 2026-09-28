@@ -3,198 +3,667 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VeloVault Portal</title>
+    <title>VeloVault Manager</title>
     <style>
-        body { font-family: sans-serif; background: #f0f4f8; margin: 0; padding: 16px; color: #333; }
-        h1 { color: #1e3a8a; font-size: 1.5rem; text-align: center; margin-bottom: 4px; }
-        p.sub { text-align: center; color: #64748b; font-size: 0.85rem; margin-bottom: 20px; }
-        .card { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        label { display: block; font-weight: bold; font-size: 0.85rem; margin-bottom: 6px; color: #475569; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; margin-bottom: 12px; box-sizing: border-box; }
-        button { background: #3b82f6; color: white; border: none; padding: 14px; width: 100%; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-bottom: 8px; }
-        button.success { background: #22c55e; }
-        button.danger { background: #ef4444; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.8rem; }
-        th, td { border: 1px solid #cbd5e1; padding: 8px 4px; text-align: center; }
-        th { background: #f1f5f9; color: #1e3a8a; }
-        .box { background: #f8fafc; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.9rem; }
+        :root {
+            --primary: #1e3a8a;
+            --secondary: #3b82f6;
+            --accent: #f97316;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --border: #cbd5e1;
+            --success: #22c55e;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--background); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+        
+        header { background-color: var(--primary); color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: sticky; top: 0; z-index: 100; }
+        header h1 { font-size: 1.2rem; font-weight: bold; }
+        .badge-top { background: var(--accent); color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+
+        /* NAVIGATION BAR FOR ADMIN */
+        nav { display: none; background: var(--surface); border-bottom: 1px solid var(--border); width: 100%; overflow-x: auto; flex-shrink: 0; position: sticky; top: 51px; z-index: 99; }
+        nav::-webkit-scrollbar { display: none; }
+        nav { -ms-overflow-style: none; scrollbar-width: none; }
+        nav button { flex: 1; min-width: 75px; padding: 12px 6px; background: none; border: none; font-size: 0.8rem; color: #64748b; text-align: center; cursor: pointer; white-space: nowrap; font-weight: 600; }
+        nav button.active { color: var(--primary); font-weight: bold; border-bottom: 3px solid var(--primary); background: #f1f5f9; }
+
+        .tab-content { padding: 16px; display: none; width: 100%; max-width: 600px; margin: 0 auto; }
+        .tab-content.active { display: block; }
+
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        h2 { font-size: 1.1rem; margin-bottom: 12px; color: var(--primary); font-weight: bold; }
+        
+        .form-group { margin-bottom: 14px; }
+        label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 6px; color: #475569; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: #fff; color: var(--text); }
+        
+        button.btn { background: var(--secondary); color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-bottom: 10px; }
+        button.btn-success { background: var(--success); }
+        button.btn-danger { background: var(--danger); }
+        button.btn:active { opacity: 0.8; transform: scale(0.98); }
+
+        .summary-box { background: #f1f5f9; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 0.95rem; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+        .history-item { border-left: 4px solid var(--success); padding: 12px; background: #f8fafc; margin-bottom: 10px; border-radius: 6px; font-size: 0.9rem; }
+
+        /* Tables & Dashboard grids */
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.85rem; }
+        th, td { border: 1px solid var(--border); padding: 10px 6px; text-align: center; vertical-align: middle; }
+        th { background: #f1f5f9; color: var(--primary); font-weight: bold; }
+        .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .dash-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
+        .dash-card h4 { font-size: 0.75rem; color: #64748b; margin-bottom: 4px; }
+        .dash-card .val { font-size: 1.4rem; font-weight: bold; color: var(--primary); }
+
+        /* Role Switch Overlay */
+        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--background); z-index: 999; display: flex; flex-direction: column; justify-content: center; padding: 16px; overflow-y: auto; }
     </style>
 </head>
 <body>
 
-    <h1>VeloVault</h1>
-    <p class="sub">SANS 10047 / eNaTiS Roadworthy & Testing Portal</p>
-
-    <!-- SECTION 1: CUSTOMER REGISTRATION -->
-    <div class="card">
-        <h2>Customer Walk-In Registration</h2>
-        <label>Owner Name</label>
-        <input type="text" id="reg-owner" placeholder="e.g. Sipho Dlamini">
-        
-        <label>License Plate</label>
-        <input type="text" id="reg-plate" placeholder="e.g. ND 456-789">
-        
-        <label>Vehicle Model</label>
-        <input type="text" id="reg-model" placeholder="e.g. Isuzu NPR 400">
-        
-        <label>Phone Number</label>
-        <input type="tel" id="reg-phone" placeholder="0823456789">
-        
-        <button class="success" id="btn-register">Register Vehicle & Get PIN</button>
-        <div id="reg-out"></div>
+    <!-- AUTHENTICATION / PORTAL SELECTOR SCREEN -->
+    <div id="auth-overlay">
+        <div style="text-align: center; margin-bottom: 24px;">
+            <h1 style="color: var(--primary); font-size: 2rem; margin-bottom: 6px;">VeloVault</h1>
+            <p style="font-size: 0.9rem; color: #64748b;">SANS 10047 / eNaTiS Roadworthy & Testing Portal</p>
+        </div>
+        <div class="card">
+            <h2>Customer / Walk-In Registration Portal</h2>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">Register your vehicle details or check your test status instantly.</p>
+            <button class="btn" id="btn-open-portal">Open Customer Portal</button>
+        </div>
+        <div class="card" style="margin-top: 12px;">
+            <h2>Station Admin Login</h2>
+            <div class="form-group">
+                <label>Manager Password</label>
+                <input type="password" id="admin-pass" placeholder="Enter password (admin123)">
+            </div>
+            <button class="btn btn-success" id="btn-admin-login">Login to Management Dashboard</button>
+        </div>
     </div>
 
-    <!-- SECTION 2: STATUS CHECKER -->
-    <div class="card">
-        <h2>Check Status</h2>
-        <label>Enter Plate or PIN</label>
-        <input type="text" id="search-val" placeholder="e.g. ND 456-789 or PIN">
-        <button id="btn-search">Search Status</button>
-        <div id="search-out"></div>
-    </div>
+    <header>
+        <h1><b>VeloVault</b></h1>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <div class="badge-top" id="role-badge">LOCKED</div>
+            <button id="btn-logout" style="background:none; border:1px solid #fff; color:#fff; font-size:0.75rem; padding:5px 8px; border-radius:4px; cursor:pointer;">Exit</button>
+        </div>
+    </header>
 
-    <!-- SECTION 3: INSPECTION BAY -->
-    <div class="card">
-        <h2>Bay Inspection (Admin)</h2>
-        <label>Select Vehicle</label>
-        <select id="insp-select">
-            <option value="">-- Choose Vehicle --</option>
-        </select>
+    <!-- NAVIGATION BAR FOR ADMIN (Tabs 1 to 5) -->
+    <nav id="admin-nav">
+        <button data-tab="audit">1. Audit</button>
+        <button data-tab="checkout">2. Checkout</button>
+        <button data-tab="yard">3. Yard</button>
+        <button data-tab="dashboard">4. Dashboard</button>
+        <button data-tab="history">5. History</button>
+    </nav>
+
+    <!-- PUBLIC / WALK-IN CUSTOMER PORTAL VIEW -->
+    <div id="public-view" class="tab-content">
+        <h2>Customer Self-Service Portal</h2>
         
-        <label>Brake Test Efficiency</label>
-        <select id="insp-brakes"><option>PASS</option><option>FAIL</option></select>
+        <!-- Quick Walk-In Registration -->
+        <div class="card">
+            <h2>Quick Walk-In Registration</h2>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">Enter your details to generate your test intake reference code & PIN.</p>
+            <div class="form-group">
+                <label>Owner Name & Surname</label>
+                <input type="text" id="pub-owner" placeholder="e.g. Sipho Dlamini">
+            </div>
+            <div class="form-group">
+                <label>License Plate Number</label>
+                <input type="text" id="pub-plate" placeholder="e.g. ND 456-789">
+            </div>
+            <div class="form-group">
+                <label>Vehicle Make & Model</label>
+                <input type="text" id="pub-model" placeholder="e.g. Isuzu NPR 400">
+            </div>
+            <div class="form-group">
+                <label>Phone Number (WhatsApp / SMS)</label>
+                <input type="tel" id="pub-phone" placeholder="0823456789">
+            </div>
+            <button class="btn btn-success" id="btn-pub-register">Register & Generate PIN</button>
+            <div id="self-reg-result" style="margin-top: 10px;"></div>
+        </div>
 
-        <label>Steering & Suspension</label>
-        <select id="insp-steering"><option>PASS</option><option>FAIL</option></select>
-
-        <button class="success" id="btn-pass">Pass & Certify</button>
-        <button class="danger" id="btn-fail">Fail & Log Defects</button>
+        <!-- Check Existing Status -->
+        <div class="card" style="margin-top: 15px;">
+            <h2>Check Test Status & Defects</h2>
+            <div class="form-group">
+                <label>Enter License Plate or PIN</label>
+                <input type="text" id="search-query" placeholder="e.g. ND 456-789 or PIN 739">
+            </div>
+            <button class="btn" id="btn-search-status">Search Vehicle Status</button>
+            <div id="search-result" style="margin-top: 12px;"></div>
+        </div>
     </div>
 
-    <!-- SECTION 4: YARD LIST -->
-    <div class="card">
-        <h2>Yard Registry</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Plate</th>
-                    <th>Model</th>
-                    <th>Status</th>
-                    <th>PIN</th>
-                </tr>
-            </thead>
-            <tbody id="yard-tbody">
-                <tr><td colspan="4">Loading vehicles...</td></tr>
-            </tbody>
-        </table>
+    <!-- ADMIN TAB 1: BAY AUDIT -->
+    <div id="tab-audit" class="tab-content">
+        <h2>Technical Inspection (Audit)</h2>
+        <div class="card">
+            <div class="form-group">
+                <label>Select Walk-In Vehicle from Yard</label>
+                <select id="audit-select">
+                    <option value="">-- Choose Registered Vehicle --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>1. Heavy Roller Brake Tester Efficiency (≥ 55%)</label>
+                <select id="insp-1"><option>PASS</option><option>FAIL</option></select>
+            </div>
+            <div class="form-group">
+                <label>2. Steering Linkage & Joint Play (Pit Inspection)</label>
+                <select id="insp-2"><option>PASS</option><option>FAIL</option></select>
+            </div>
+            <div class="form-group">
+                <label>3. Tyre Tread Depth (≥ 1.6mm across all axles)</label>
+                <select id="insp-3"><option>PASS</option><option>FAIL</option></select>
+            </div>
+            <div class="form-group">
+                <label>4. Headlamp Alignment & Light Voltage</label>
+                <select id="insp-4"><option>PASS</option><option>FAIL</option></select>
+            </div>
+            <div class="form-group">
+                <label>5. Exhaust Emissions & Diesel Smoke Opacity</label>
+                <select id="insp-5"><option>PASS</option><option>FAIL</option></select>
+            </div>
+            <button type="button" class="btn btn-success" id="btn-inspect-pass">Pass & Certify Vehicle</button>
+            <button type="button" class="btn btn-danger" id="btn-inspect-fail">Fail, Log Defects & Send SMS</button>
+        </div>
+    </div>
+
+    <!-- ADMIN TAB 2: CHECKOUT / SETTLEMENT -->
+    <div id="tab-checkout" class="tab-content">
+        <h2>Gate Release & Settlement</h2>
+        <div class="card">
+            <div class="form-group">
+                <label>Select Cleared Vehicle for Release</label>
+                <select id="checkout-select">
+                    <option value="">-- Select Cleared Vehicle --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Testing Fee (ZAR)</label>
+                <input type="number" id="fee-test" value="850">
+            </div>
+            <div class="form-group">
+                <label>Storage / Parking Days</label>
+                <input type="number" id="fee-days" value="1">
+            </div>
+            <div class="form-group">
+                <label>Daily Rate (ZAR)</label>
+                <input type="number" id="fee-rate" value="164">
+            </div>
+
+            <div class="summary-box" id="calc-summary">
+                <div class="summary-row"><span>Test Fee (Excl. VAT):</span><span id="lbl-test">R850.00</span></div>
+                <div class="summary-row"><span>Storage (Excl. VAT):</span><span id="lbl-storage">R164.00</span></div>
+                <div class="summary-row"><span>15% VAT:</span><span id="lbl-vat">R152.10</span></div>
+                <hr style="margin: 8px 0; border:0; border-top:1px solid #cbd5e1;">
+                <div class="summary-row" style="font-weight:bold; font-size:1.05rem; color:var(--primary);"><span>Total Payable:</span><span id="lbl-total">R1166.10</span></div>
+            </div>
+            <br>
+            <button type="button" class="btn btn-success" id="btn-process-payment">Process Payment & Authorize Gate Release</button>
+        </div>
+    </div>
+
+    <!-- ADMIN TAB 3: YARD REGISTRY -->
+    <div id="tab-yard" class="tab-content">
+        <h2>Active Yard Registry</h2>
+        <div class="card">
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Plate</th>
+                            <th>Model</th>
+                            <th>Status</th>
+                            <th>Ref</th>
+                            <th>PIN</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="yard-table-body">
+                        <tr>
+                            <td colspan="6" style="padding: 16px; color: #64748b;">No active vehicles in registry</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN TAB 4: EXECUTIVE DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content">
+        <h2>Executive Dashboard Analytics</h2>
+        <div class="card">
+            <h3 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--primary);">Yard Overview</h3>
+            <div class="dash-grid">
+                <div class="dash-card">
+                    <h4>TOTAL INTAKE</h4>
+                    <div class="val" id="dash-total-intake">0</div>
+                </div>
+                <div class="dash-card">
+                    <h4>CURRENTLY IN YARD</h4>
+                    <div class="val" id="dash-impounded" style="color: var(--accent);">0</div>
+                </div>
+                <div class="dash-card">
+                    <h4>ENATIS CLEARED</h4>
+                    <div class="val" id="dash-cleared" style="color: var(--success);">0</div>
+                </div>
+                <div class="dash-card">
+                    <h4>GATE RELEASED</h4>
+                    <div class="val" id="dash-released" style="color: var(--secondary);">0</div>
+                </div>
+            </div>
+
+            <h3 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--primary);">Financial Revenue Collection</h3>
+            <div class="summary-box">
+                <div class="summary-row"><span>Total Testing Fees:</span><span id="dash-rev-test">R0.00</span></div>
+                <div class="summary-row"><span>Total Storage Revenue:</span><span id="dash-rev-storage">R0.00</span></div>
+                <div class="summary-row"><span>Total VAT Collected (15%):</span><span id="dash-rev-vat">R0.00</span></div>
+                <hr style="margin: 8px 0; border:0; border-top:1px solid #cbd5e1;">
+                <div class="summary-row" style="font-weight:bold; font-size:1.05rem; color:var(--primary);"><span>Grand Total Revenue:</span><span id="dash-rev-grand">R0.00</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN TAB 5: HISTORY & SETTLEMENT LOGS -->
+    <div id="tab-history" class="tab-content">
+        <h2>Payment & Release History</h2>
+        <div class="card">
+            <button type="button" class="btn" style="margin-bottom: 14px; background: var(--primary);" id="btn-load-sample">Load Sample Records</button>
+            <div id="history-list-container">
+                <p style="color: #64748b;">No completed payment history found.</p>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Initialize data storage safely
-        let vehicles = JSON.parse(localStorage.getItem('vv_vehicles')) || [
-            { id: 1, plate: "ND 456-789", model: "Isuzu NPR 400", owner: "Sipho Dlamini", status: "In Yard", pin: "739" }
-        ];
-
-        function saveAndRefresh() {
-            localStorage.setItem('vv_vehicles', JSON.stringify(vehicles));
-            renderYard();
-            populateSelect();
-        }
-
-        function renderYard() {
-            const tbody = document.getElementById('yard-tbody');
-            if(vehicles.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4">No vehicles in yard</td></tr>';
-                return;
+        let yardVehicles = JSON.parse(localStorage.getItem('yardVehicles')) || [
+            {
+                id: 1727500000000,
+                plate: "ND 456-789",
+                model: "Isuzu NPR 400",
+                owner: "Sipho Dlamini",
+                phone: "0823456789",
+                status: "In Yard",
+                refCode: "REF-4821",
+                pin: "739",
+                date: new Date().toLocaleString()
             }
-            tbody.innerHTML = vehicles.map(v => `
-                <tr>
-                    <td><b>${v.plate}</b></td>
-                    <td>${v.model}</td>
-                    <td style="color:${v.status === 'Passed' ? 'green' : 'orange'};">${v.status}</td>
-                    <td>${v.pin}</td>
-                </tr>
-            `).join('');
+        ];
+        
+        let historyLogs = JSON.parse(localStorage.getItem('historyLogs')) || [];
+        localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
+        localStorage.setItem('historyLogs', JSON.stringify(historyLogs));
+
+        function openPublicPortal() {
+            document.getElementById('auth-overlay').style.display = 'none';
+            document.getElementById('public-view').style.display = 'block';
+            document.getElementById('admin-nav').style.display = 'none';
+            document.getElementById('role-badge').innerText = 'CUSTOMER PORTAL';
+            window.scrollTo(0, 0);
         }
 
-        function populateSelect() {
-            const sel = document.getElementById('insp-select');
-            sel.innerHTML = '<option value="">-- Choose Vehicle --</option>';
-            vehicles.forEach(v => {
-                sel.innerHTML += `<option value="${v.id}">${v.plate} - ${v.model}</option>`;
+        function openAdminPortal() {
+            const pass = document.getElementById('admin-pass').value.trim();
+            if(pass === 'admin123') {
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('admin-nav').style.display = 'flex';
+                document.getElementById('role-badge').innerText = 'STATION ADMIN';
+                switchTab('audit', document.querySelector('nav button'));
+                window.scrollTo(0, 0);
+            } else {
+                alert('Invalid Manager Password! (Use: admin123)');
+            }
+        }
+
+        function logoutToPortal() {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('public-view').style.display = 'none';
+            document.getElementById('admin-nav').style.display = 'none';
+            document.getElementById('auth-overlay').style.display = 'flex';
+            document.getElementById('role-badge').innerText = 'LOCKED';
+            document.getElementById('admin-pass').value = '';
+            window.scrollTo(0, 0);
+        }
+
+        function switchTab(tabName, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+            if(btnElement) btnElement.classList.add('active');
+            
+            if(tabName === 'yard') renderYard();
+            if(tabName === 'audit') populateAuditDropdown();
+            if(tabName === 'checkout') populateCheckoutDropdown();
+            if(tabName === 'dashboard') renderDashboard();
+            if(tabName === 'history') renderHistory();
+            window.scrollTo(0, 0);
+        }
+
+        function populateAuditDropdown() {
+            const select = document.getElementById('audit-select');
+            select.innerHTML = '<option value="">-- Choose Registered Vehicle --</option>';
+            yardVehicles.filter(v => v.status === 'In Yard' || v.status === 'Failed / Defective').forEach(v => {
+                select.innerHTML += `<option value="${v.id}">${v.plate} - ${v.model} (${v.status})</option>`;
             });
         }
 
-        // Standard Event Listeners (Guaranteed to fire on mobile Chrome)
-        document.getElementById('btn-register').addEventListener('click', function() {
-            const owner = document.getElementById('reg-owner').value.trim();
-            const plate = document.getElementById('reg-plate').value.trim().toUpperCase();
-            const model = document.getElementById('reg-model').value.trim();
-            const phone = document.getElementById('reg-phone').value.trim();
-            const out = document.getElementById('reg-out');
+        function populateCheckoutDropdown() {
+            const select = document.getElementById('checkout-select');
+            select.innerHTML = '<option value="">-- Select Cleared Vehicle --</option>';
+            yardVehicles.filter(v => v.status === 'Cleared/Passed').forEach(v => {
+                select.innerHTML += `<option value="${v.id}">${v.plate} - ${v.model} (${v.owner})</option>`;
+            });
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            const testFee = parseFloat(document.getElementById('fee-test').value) || 0;
+            const days = parseInt(document.getElementById('fee-days').value) || 0;
+            const rate = parseFloat(document.getElementById('fee-rate').value) || 0;
+            
+            const storageExcl = days * rate;
+            const subtotal = testFee + storageExcl;
+            const vat = subtotal * 0.15;
+            const total = subtotal + vat;
+
+            document.getElementById('lbl-test').innerText = `R${testFee.toFixed(2)}`;
+            document.getElementById('lbl-storage').innerText = `R${storageExcl.toFixed(2)}`;
+            document.getElementById('lbl-vat').innerText = `R${vat.toFixed(2)}`;
+            document.getElementById('lbl-total').innerText = `R${total.toFixed(2)}`;
+
+            return total;
+        }
+
+        function renderYard() {
+            const tbody = document.getElementById('yard-table-body');
+            if(yardVehicles.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="padding: 16px; color: #64748b;">No active vehicles in registry</td></tr>';
+                return;
+            }
+            tbody.innerHTML = yardVehicles.map(v => {
+                let statusColor = 'var(--accent)';
+                if(v.status === 'Cleared/Passed') statusColor = 'var(--success)';
+                if(v.status === 'Failed / Defective') statusColor = 'var(--danger)';
+
+                return `
+                    <tr>
+                        <td><strong>${v.plate}</strong></td>
+                        <td>${v.model}</td>
+                        <td><span style="color:${statusColor}; font-weight:bold;">${v.status}</span></td>
+                        <td>${v.refCode}</td>
+                        <td>${v.pin}</td>
+                        <td><button class="btn" style="padding: 6px 10px; font-size: 0.8rem; margin-bottom: 0;" onclick="alert('Notification sent to ${v.phone}')">SMS</button></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderDashboard() {
+            const totalIntakeCount = yardVehicles.length + historyLogs.length;
+            const impoundedCount = yardVehicles.filter(v => v.status === 'In Yard' || v.status === 'Failed / Defective').length;
+            const clearedCount = yardVehicles.filter(v => v.status === 'Cleared/Passed').length;
+            const releasedCount = historyLogs.length;
+
+            document.getElementById('dash-total-intake').innerText = totalIntakeCount;
+            document.getElementById('dash-impounded').innerText = impoundedCount;
+            document.getElementById('dash-cleared').innerText = clearedCount;
+            document.getElementById('dash-released').innerText = releasedCount;
+
+            let sumTest = 0, sumStorage = 0, sumVat = 0, sumGrand = 0;
+            historyLogs.forEach(h => {
+                sumTest += parseFloat(h.testFee) || 0;
+                sumStorage += parseFloat(h.storageExcl) || 0;
+                sumVat += parseFloat(h.vat) || 0;
+                sumGrand += parseFloat(h.totalPaid) || 0;
+            });
+
+            document.getElementById('dash-rev-test').innerText = `R${sumTest.toFixed(2)}`;
+            document.getElementById('dash-rev-storage').innerText = `R${sumStorage.toFixed(2)}`;
+            document.getElementById('dash-rev-vat').innerText = `R${sumVat.toFixed(2)}`;
+            document.getElementById('dash-rev-grand').innerText = `R${sumGrand.toFixed(2)}`;
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('history-list-container');
+            if(historyLogs.length === 0) {
+                container.innerHTML = '<p style="color: #64748b;">No completed payment history recorded yet.</p>';
+                return;
+            }
+            container.innerHTML = historyLogs.map(h => `
+                <div class="history-item">
+                    <strong>Vehicle:</strong> ${h.plate} (${h.model})<br>
+                    <strong>Owner:</strong> ${h.owner}<br>
+                    <small>Test Fee: R${h.testFee} | Storage: R${h.storageExcl.toFixed(2)} | VAT: R${h.vat.toFixed(2)}</small><br>
+                    <strong style="color: var(--primary);">Total Paid: R${h.totalPaid}</strong>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Released on: ${h.date}</div>
+                </div>
+            `).join('');
+        }
+
+        // Standard Event Listeners for Reliable Mobile Interaction
+        document.getElementById('btn-open-portal').addEventListener('click', openPublicPortal);
+        document.getElementById('btn-admin-login').addEventListener('click', openAdminPortal);
+        document.getElementById('btn-logout').addEventListener('click', logoutToPortal);
+
+        // Tab Navigation Listeners
+        document.querySelectorAll('nav button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                switchTab(this.getAttribute('data-tab'), this);
+            });
+        });
+
+        // Customer Portal Registrations
+        document.getElementById('btn-pub-register').addEventListener('click', function() {
+            const owner = document.getElementById('pub-owner').value.trim();
+            const plate = document.getElementById('pub-plate').value.trim().toUpperCase();
+            const model = document.getElementById('pub-model').value.trim();
+            const phone = document.getElementById('pub-phone').value.trim();
+            const resultBox = document.getElementById('self-reg-result');
 
             if(!owner || !plate || !model) {
-                out.innerHTML = '<p style="color:red;">Please fill in all main fields.</p>';
+                resultBox.innerHTML = '<p style="color:red; font-size:0.9rem;">Please enter owner name, plate, and vehicle model.</p>';
                 return;
             }
 
-            const newVeh = {
+            const vehicle = {
                 id: Date.now(),
                 plate: plate,
                 model: model,
                 owner: owner,
                 phone: phone || "N/A",
-                status: "In Yard",
-                pin: Math.floor(100 + Math.random() * 900)
+                status: 'In Yard',
+                defects: [],
+                refCode: 'REF-' + Math.floor(1000 + Math.random() * 9000),
+                pin: Math.floor(100 + Math.random() * 900),
+                date: new Date().toLocaleString()
             };
 
-            vehicles.push(newVeh);
-            saveAndRefresh();
+            yardVehicles.push(vehicle);
+            localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
 
-            out.innerHTML = `<div class="box" style="border-left:4px solid #22c55e;"><b>Registered!</b> PIN: <b>${newVeh.pin}</b></div>`;
-            document.getElementById('reg-owner').value = '';
-            document.getElementById('reg-plate').value = '';
-            document.getElementById('reg-model').value = '';
-            document.getElementById('reg-phone').value = '';
+            resultBox.innerHTML = `
+                <div style="background: #e2f8ed; padding: 12px; border-radius: 8px; border-left: 4px solid var(--success); margin-top:10px;">
+                    <strong style="color:var(--success);">Registration Successful!</strong><br>
+                    <strong>Reference Code:</strong> ${vehicle.refCode}<br>
+                    <strong>Your PIN:</strong> ${vehicle.pin}<br>
+                    <small style="color: #64748b; display:block; margin-top:6px;">Show this PIN or Reference to station staff.</small>
+                </div>
+            `;
+            document.getElementById('pub-owner').value = '';
+            document.getElementById('pub-plate').value = '';
+            document.getElementById('pub-model').value = '';
+            document.getElementById('pub-phone').value = '';
         });
 
-        document.getElementById('btn-search').addEventListener('click', function() {
-            const query = document.getElementById('search-val').value.trim().toUpperCase();
-            const out = document.getElementById('search-out');
-            if(!query) { out.innerHTML = '<p style="color:red;">Enter plate or PIN.</p>'; return; }
+        // Search Status
+        document.getElementById('btn-search-status').addEventListener('click', function() {
+            const query = document.getElementById('search-query').value.trim().toUpperCase();
+            const resultBox = document.getElementById('search-result');
+            if(!query) { resultBox.innerHTML = '<p style="color:red;">Please enter a license plate or PIN.</p>'; return; }
 
-            const found = vehicles.find(v => v.plate.includes(query) || v.pin == query);
+            const found = yardVehicles.find(v => v.plate.includes(query) || v.pin == query || v.refCode.toUpperCase() === query);
             if(found) {
-                out.innerHTML = `<div class="box"><b>Found:</b> ${found.plate} | Status: <b>${found.status}</b> | PIN: ${found.pin}</div>`;
+                let statusColor = 'var(--accent)';
+                if(found.status === 'Cleared/Passed') statusColor = 'var(--success)';
+                if(found.status === 'Failed / Defective') statusColor = 'var(--danger)';
+
+                let defectHtml = '';
+                if(found.defects && found.defects.length > 0) {
+                    defectHtml = `<br><strong>Failed Items:</strong> <span style="color:var(--danger);">${found.defects.join(', ')}</span>`;
+                }
+
+                resultBox.innerHTML = `
+                    <div style="background: #f1f5f9; padding: 12px; border-radius: 8px; border-left: 4px solid ${statusColor}; margin-top:10px;">
+                        <strong>Vehicle:</strong> ${found.plate} (${found.model})<br>
+                        <strong>Owner:</strong> ${found.owner}<br>
+                        <strong>Status:</strong> <span style="color:${statusColor}; font-weight:bold;">${found.status}</span>
+                        ${defectHtml}<br>
+                        <strong>Reference Code:</strong> ${found.refCode}<br>
+                        <strong>PIN:</strong> ${found.pin}
+                    </div>
+                `;
             } else {
-                out.innerHTML = '<p style="color:red;">Vehicle not found.</p>';
+                const histFound = historyLogs.find(h => h.plate.includes(query));
+                if(histFound) {
+                    resultBox.innerHTML = `
+                        <div style="background: #f1f5f9; padding: 12px; border-radius: 8px; border-left: 4px solid var(--success); margin-top:10px;">
+                            <strong>Vehicle:</strong> ${histFound.plate} (${histFound.model})<br>
+                            <strong>Status:</strong> <span style="color:var(--success); font-weight:bold;">Gate Released / Completed</span><br>
+                            <small style="color: #64748b; display:block; margin-top:6px;">Released on: ${histFound.date}</small>
+                        </div>
+                    `;
+                } else {
+                    resultBox.innerHTML = '<p style="color:red; margin-top:8px;">No matching vehicle found with that plate or PIN.</p>';
+                }
             }
         });
 
-        document.getElementById('btn-pass').addEventListener('click', function() {
-            const id = document.getElementById('insp-select').value;
-            if(!id) { alert('Select a vehicle first.'); return; }
-            const v = vehicles.find(item => item.id == id);
-            if(v) {
-                v.status = 'Passed';
-                saveAndRefresh();
-                alert('Vehicle marked as Passed!');
+        // Inspection Pass
+        document.getElementById('btn-inspect-pass').addEventListener('click', function() {
+            const id = document.getElementById('audit-select').value;
+            if(!id) { alert('Please select a vehicle from the yard first.'); return; }
+            
+            const vehicle = yardVehicles.find(v => v.id == id);
+            if(vehicle) {
+                vehicle.status = 'Cleared/Passed';
+                vehicle.defects = [];
+                localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
+                document.getElementById('audit-select').value = '';
+                populateAuditDropdown();
+                alert('Inspection passed and logged to eNaTiS terminal!');
             }
         });
 
-        document.getElementById('btn-fail').addEventListener('click', function() {
-            const id = document.getElementById('insp-select').value;
-            if(!id) { alert('Select a vehicle first.'); return; }
-            const v = vehicles.find(item => item.id == id);
-            if(v) {
-                v.status = 'Failed';
-                saveAndRefresh();
-                alert('Vehicle marked as Failed!');
+        // Inspection Fail & SMS trigger
+        document.getElementById('btn-inspect-fail').addEventListener('click', function() {
+            const id = document.getElementById('audit-select').value;
+            if(!id) { alert('Please select a vehicle from the yard first.'); return; }
+            
+            const vehicle = yardVehicles.find(v => v.id == id);
+            if(vehicle) {
+                vehicle.status = 'Failed / Defective';
+                let failedItems = [];
+                for(let i=1; i<=5; i++) {
+                    let val = document.getElementById('insp-'+i).value;
+                    if(val === 'FAIL') {
+                        if(i===1) failedItems.push('Brake Efficiency');
+                        if(i===2) failedItems.push('Steering Linkage');
+                        if(i===3) failedItems.push('Tyre Tread Depth');
+                        if(i===4) failedItems.push('Headlamp Alignment');
+                        if(i===5) failedItems.push('Exhaust Emissions');
+                    }
+                }
+                vehicle.defects = failedItems.length > 0 ? failedItems : ['General Roadworthy Defect'];
+                localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
+                document.getElementById('audit-select').value = '';
+                populateAuditDropdown();
+
+                alert(`📱 [SMS Gateway simulated to ${vehicle.phone}]\n\n"VeloVault Notice: Dear ${vehicle.owner}, your vehicle (${vehicle.plate}) has FAILED the roadworthy test. Failed items: ${vehicle.defects.join(', ')}. Please pick up your vehicle for repairs and return for re-test within 14 days."`);
             }
         });
 
-        // Run initial setup on load
-        saveAndRefresh();
+        // Calculation live inputs
+        ['fee-test', 'fee-days', 'fee-rate'].forEach(id => {
+            document.getElementById(id).addEventListener('input', calculateTotal);
+        });
+
+        // Process Payment
+        document.getElementById('btn-process-payment').addEventListener('click', function() {
+            const id = document.getElementById('checkout-select').value;
+            if(!id) { alert('Please select a cleared vehicle for release.'); return; }
+
+            const vehicleIndex = yardVehicles.findIndex(v => v.id == id);
+            if(vehicleIndex > -1) {
+                const vehicle = yardVehicles[vehicleIndex];
+                const testFee = parseFloat(document.getElementById('fee-test').value) || 0;
+                const days = parseInt(document.getElementById('fee-days').value) || 0;
+                const rate = parseFloat(document.getElementById('fee-rate').value) || 0;
+                const storageExcl = days * rate;
+                const totalPaid = calculateTotal();
+
+                const historyRecord = {
+                    id: Date.now(),
+                    plate: vehicle.plate,
+                    model: vehicle.model,
+                    owner: vehicle.owner,
+                    testFee: testFee,
+                    storageExcl: storageExcl,
+                    vat: (testFee + storageExcl) * 0.15,
+                    totalPaid: totalPaid.toFixed(2),
+                    date: new Date().toLocaleString()
+                };
+
+                historyLogs.unshift(historyRecord);
+                localStorage.setItem('historyLogs', JSON.stringify(historyLogs));
+
+                yardVehicles.splice(vehicleIndex, 1);
+                localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
+
+                alert('Payment processed successfully! Gate authorization released.');
+                document.getElementById('checkout-select').value = '';
+                populateCheckoutDropdown();
+            }
+        });
+
+        // Load sample records
+        document.getElementById('btn-load-sample').addEventListener('click', function() {
+            yardVehicles = [{
+                id: Date.now(),
+                plate: "ND 456-789",
+                model: "Isuzu NPR 400",
+                owner: "Sipho Dlamini",
+                phone: "0823456789",
+                status: "In Yard",
+                defects: [],
+                refCode: "REF-4821",
+                pin: "739",
+                date: new Date().toLocaleString()
+            }];
+            historyLogs = [{
+                id: Date.now() - 1000,
+                plate: "CA 123-456",
+                model: "Toyota Hilux 2.8GD-6",
+                owner: "Mandla Khumalo",
+                testFee: 850,
+                storageExcl: 164,
+                vat: 152.10,
+                totalPaid: "1166.10",
+                date: new Date().toLocaleString()
+            }];
+            localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
+            localStorage.setItem('historyLogs', JSON.stringify(historyLogs));
+            renderHistory();
+            alert('Sample records loaded successfully!');
+        });
     </script>
 </body>
 </html>
