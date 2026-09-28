@@ -52,34 +52,38 @@
         <div class="badge-top">SANS 10047 / eNaTiS</div>
     </header>
 
-    <!-- TAB 1: INTAKE -->
+    <!-- TAB 1: INTAKE (Restored original fields + added owner name field) -->
     <div id="tab-intake" class="tab-content active">
         <h2>JMPD Dispatched Vehicle Intake</h2>
         <div class="card">
             <form id="intake-form">
                 <div class="form-group">
-                    <label>1. License Plate Number</label>
+                    <label>License Plate Number</label>
                     <input type="text" id="v-plate" required placeholder="E.G. HG 88 GP">
                 </div>
                 <div class="form-group">
-                    <label>2. VIN (Chassis Number)</label>
+                    <label>VIN (Chassis Number)</label>
                     <input type="text" id="v-vin" required placeholder="17-DIGIT VIN">
                 </div>
                 <div class="form-group">
-                    <label>3. Make & Model</label>
+                    <label>Make & Model</label>
                     <input type="text" id="v-model" required placeholder="e.g. Isuzu NPR 400">
                 </div>
                 <div class="form-group">
-                    <label>4. Engine Number</label>
-                    <input type="text" id="v-engine" required placeholder="Engine No">
+                    <label>Engine Number</label>
+                    <input type="text" id="v-engine" placeholder="Engine No">
                 </div>
                 <div class="form-group">
-                    <label>5. Owner's Name and Surname</label>
+                    <label>JMPD PG9 Reference</label>
+                    <input type="text" id="v-jmpd" required placeholder="e.g. JMPD-PG9-88102">
+                </div>
+                <div class="form-group">
+                    <label>Owner's Name and Surname</label>
                     <input type="text" id="v-owner" required placeholder="e.g. John Smith">
                 </div>
                 <div class="form-group">
-                    <label>6. Owner's Number (SMS/WhatsApp)</label>
-                    <input type="tel" id="v-phone" required placeholder="082 123 4567">
+                    <label>Owner Phone (SMS/WhatsApp)</label>
+                    <input type="tel" id="v-phone" placeholder="0821234567">
                 </div>
                 <button type="submit" class="btn">Register Impound Intake & Generate PIN</button>
             </form>
@@ -155,7 +159,7 @@
         </div>
     </div>
 
-    <!-- TAB 4: YARD STATUS -->
+    <!-- TAB 4: YARD STATUS (Restored original style) -->
     <div id="tab-yard" class="tab-content">
         <h2>Active Yard Fleet Status</h2>
         <div class="card" id="yard-list-container">
@@ -171,7 +175,7 @@
         </div>
     </div>
 
-    <!-- TAB 6: HISTORY & SETTLEMENT LOGS -->
+    <!-- TAB 6: HISTORY & SETTLEMENT LOGS (Shows car, owner name & costs) -->
     <div id="tab-history" class="tab-content">
         <h2>Payment & Release History</h2>
         <div class="card" id="history-list-container">
@@ -215,6 +219,7 @@
                 vin: document.getElementById('v-vin').value.toUpperCase(),
                 model: document.getElementById('v-model').value,
                 engine: document.getElementById('v-engine').value,
+                jmpd: document.getElementById('v-jmpd').value,
                 owner: document.getElementById('v-owner').value,
                 phone: document.getElementById('v-phone').value,
                 status: 'In Yard',
@@ -231,7 +236,7 @@
             const select = document.getElementById('audit-select');
             select.innerHTML = '<option value="">-- Choose Dispatched Vehicle --</option>';
             yardVehicles.filter(v => v.status === 'In Yard').forEach(v => {
-                select.innerHTML += `<option value="${v.id}">${v.plate} - ${v.model} (${v.owner})</option>`;
+                select.innerHTML += `<option value="${v.id}">${v.plate} - ${v.model} (${v.jmpd})</option>`;
             });
         }
 
@@ -287,7 +292,7 @@
                 const testFee = document.getElementById('fee-test').value;
                 const days = document.getElementById('fee-days').value;
 
-                // Add to history logs
+                // Add to history logs with Car details, Owner name, and Costs
                 const historyRecord = {
                     id: Date.now(),
                     plate: vehicle.plate,
@@ -312,7 +317,7 @@
             }
         }
 
-        // 4. Render Active Yard
+        // 4. Render Active Yard (Original style)
         function renderYard() {
             const container = document.getElementById('yard-list-container');
             if(yardVehicles.length === 0) {
@@ -323,13 +328,13 @@
                 <div style="padding: 10px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <strong>${v.plate}</strong> - ${v.model}<br>
-                        <small style="color: #64748b;">Owner: <strong>${v.owner}</strong> (${v.phone}) | Status: <span style="color:${v.status==='Cleared/Passed'?'var(--success)':'var(--danger)'}; font-weight:bold;">${v.status}</span></small>
+                        <small style="color: #64748b;">Ref: ${v.jmpd} | Owner: ${v.owner} | Status: <span style="color:${v.status==='Cleared/Passed'?'var(--success)':'var(--danger)'}; font-weight:bold;">${v.status}</span></small>
                     </div>
                 </div>
             `).join('');
         }
 
-        // 6. Render History Section
+        // 6. Render History Section (Shows car, owner name, and costs)
         function renderHistory() {
             const container = document.getElementById('history-list-container');
             if(historyLogs.length === 0) {
@@ -339,9 +344,9 @@
             container.innerHTML = historyLogs.map(h => `
                 <div class="history-item">
                     <strong>Vehicle:</strong> ${h.plate} (${h.model})<br>
-                    <strong>Owner:</strong> ${h.owner}<br>
+                    <strong>Owner Name & Surname:</strong> ${h.owner}<br>
                     <small>Test Fee: R${h.testFee} | Storage Days: ${h.storageDays}</small><br>
-                    <strong style="color: var(--primary);">Total Paid: R${h.totalPaid}</strong>
+                    <strong style="color: var(--primary);">Total Costs Paid: R${h.totalPaid}</strong>
                     <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Released on: ${h.date}</div>
                 </div>
             `).join('');
@@ -349,4 +354,3 @@
     </script>
 </body>
 </html>
-
