@@ -23,7 +23,7 @@
         header h1 { font-size: 1.1rem; font-weight: bold; }
         .badge-top { background: var(--accent); color: white; font-size: 0.7rem; padding: 3px 6px; border-radius: 4px; font-weight: bold; }
 
-        /* NAVIGATION AT THE TOP */
+        /* NAVIGATION AT THE TOP (Admin Tabs) */
         nav { display: none; background: var(--surface); border-bottom: 1px solid var(--border); width: 100%; overflow-x: auto; flex-shrink: 0; z-index: 10; }
         nav button { flex: 1; min-width: 75px; padding: 10px 4px; background: none; border: none; font-size: 0.75rem; color: #64748b; text-align: center; cursor: pointer; white-space: nowrap; }
         nav button.active { color: var(--primary); font-weight: bold; border-bottom: 3px solid var(--primary); background: #f1f5f9; }
@@ -64,12 +64,12 @@
     <div id="auth-overlay">
         <div style="text-align: center; margin-bottom: 20px;">
             <h1 style="color: var(--primary); font-size: 1.8rem; margin-bottom: 6px;">VeloVault</h1>
-            <p style="font-size: 0.85rem; color: #64748b;">SANS 10047 / eNaTiS Roadworthy & Intake Portal</p>
+            <p style="font-size: 0.85rem; color: #64748b;">SANS 10047 / eNaTiS Roadworthy & Testing Portal</p>
         </div>
         <div class="card">
-            <h2>Vehicle Owner / Walk-In Portal</h2>
-            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 10px;">Quickly register your vehicle or check test status.</p>
-            <button class="btn" onclick="openPublicPortal()">Access Customer Portal</button>
+            <h2>Customer / Walk-In Registration Portal</h2>
+            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 10px;">Register your vehicle details or check your test status instantly.</p>
+            <button class="btn" onclick="openPublicPortal()">Open Customer Portal</button>
         </div>
         <div class="card" style="margin-top: 10px;">
             <h2>Station Admin Login</h2>
@@ -89,26 +89,25 @@
         </div>
     </header>
 
-    <!-- NAVIGATION BAR ON TOP (Hidden by default) -->
+    <!-- NAVIGATION BAR FOR ADMIN (Tabs 1 to 5) -->
     <nav id="admin-nav">
-        <button onclick="switchTab('intake', this)">1. Intake</button>
-        <button onclick="switchTab('audit', this)">2. Audit</button>
-        <button onclick="switchTab('checkout', this)">3. Checkout</button>
-        <button onclick="switchTab('yard', this)">4. Yard</button>
-        <button onclick="switchTab('dashboard', this)">5. Dashboard</button>
-        <button onclick="switchTab('history', this)">6. History</button>
+        <button onclick="switchTab('audit', this)">1. Audit</button>
+        <button onclick="switchTab('checkout', this)">2. Checkout</button>
+        <button onclick="switchTab('yard', this)">3. Yard</button>
+        <button onclick="switchTab('dashboard', this)">4. Dashboard</button>
+        <button onclick="switchTab('history', this)">5. History</button>
     </nav>
 
-    <!-- PUBLIC OWNER PORTAL VIEW -->
+    <!-- PUBLIC / WALK-IN CUSTOMER PORTAL VIEW -->
     <div id="public-view" class="tab-content">
         <h2>Customer Self-Service Portal</h2>
         
-        <!-- Quick Self-Registration Card -->
+        <!-- Quick Walk-In Registration -->
         <div class="card">
             <h2>Quick Walk-In Registration</h2>
-            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 10px;">Just arrived? Register your details below to instantly get your tracking PIN and reference code.</p>
+            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 10px;">Enter your details to generate your test intake reference code & PIN for the station staff.</p>
             <div class="form-group">
-                <label>Your Name & Surname</label>
+                <label>Owner Name & Surname</label>
                 <input type="text" id="pub-owner" placeholder="e.g. Sipho Dlamini">
             </div>
             <div class="form-group">
@@ -123,13 +122,13 @@
                 <label>Phone Number (WhatsApp / SMS)</label>
                 <input type="tel" id="pub-phone" placeholder="0823456789">
             </div>
-            <button class="btn btn-success" onclick="publicSelfRegister()">Generate My Reference & PIN</button>
+            <button class="btn btn-success" onclick="publicSelfRegister()">Register & Generate PIN</button>
             <div id="self-reg-result" style="margin-top: 10px;"></div>
         </div>
 
-        <!-- Check Status Card -->
+        <!-- Check Existing Status -->
         <div class="card" style="margin-top: 15px;">
-            <h2>Check Existing Test Status</h2>
+            <h2>Check Test Status</h2>
             <div class="form-group">
                 <label>Enter License Plate or PIN</label>
                 <input type="text" id="search-query" placeholder="e.g. ND 456-789 or PIN 739">
@@ -139,48 +138,14 @@
         </div>
     </div>
 
-    <!-- ADMIN TAB 1: INTAKE -->
-    <div id="tab-intake" class="tab-content">
-        <h2>Registration</h2>
-        <div class="card">
-            <form id="intake-form">
-                <div class="form-group">
-                    <label>License Plate Number</label>
-                    <input type="text" id="v-plate" required placeholder="E.G. ND 456-789" value="ND 456-789">
-                </div>
-                <div class="form-group">
-                    <label>VIN (Chassis Number)</label>
-                    <input type="text" id="v-vin" required placeholder="17-DIGIT VIN" value="AHT35NPR001234567">
-                </div>
-                <div class="form-group">
-                    <label>Make & Model</label>
-                    <input type="text" id="v-model" required placeholder="e.g. Isuzu NPR 400" value="Isuzu NPR 400">
-                </div>
-                <div class="form-group">
-                    <label>Engine Number</label>
-                    <input type="text" id="v-engine" placeholder="Engine No" value="4HF1-889922">
-                </div>
-                <div class="form-group">
-                    <label>Owner's Name and Surname</label>
-                    <input type="text" id="v-owner" required placeholder="e.g. Sipho Dlamini" value="Sipho Dlamini">
-                </div>
-                <div class="form-group">
-                    <label>Owner Phone (SMS/WhatsApp)</label>
-                    <input type="tel" id="v-phone" placeholder="0823456789" value="0823456789">
-                </div>
-                <button type="submit" class="btn">Register Impound Intake & Generate PIN</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- ADMIN TAB 2: BAY AUDIT -->
+    <!-- ADMIN TAB 1: BAY AUDIT -->
     <div id="tab-audit" class="tab-content">
-        <h2>Technical Inspection</h2>
+        <h2>Technical Inspection (Audit)</h2>
         <div class="card">
             <div class="form-group">
-                <label>Select Vehicle from Yard</label>
+                <label>Select Walk-In Vehicle from Yard</label>
                 <select id="audit-select">
-                    <option value="">-- Choose Dispatched Vehicle --</option>
+                    <option value="">-- Choose Registered Vehicle --</option>
                 </select>
             </div>
             <div class="form-group">
@@ -207,9 +172,9 @@
         </div>
     </div>
 
-    <!-- ADMIN TAB 3: CHECKOUT / SETTLEMENT -->
+    <!-- ADMIN TAB 2: CHECKOUT / SETTLEMENT -->
     <div id="tab-checkout" class="tab-content">
-        <h2>Gate Release</h2>
+        <h2>Gate Release & Settlement</h2>
         <div class="card">
             <div class="form-group">
                 <label>Select Cleared Vehicle for Release</label>
@@ -222,29 +187,29 @@
                 <input type="number" id="fee-test" value="850" oninput="calculateTotal()">
             </div>
             <div class="form-group">
-                <label>Impound Storage Days</label>
-                <input type="number" id="fee-days" value="4" oninput="calculateTotal()">
+                <label>Storage / Parking Days</label>
+                <input type="number" id="fee-days" value="1" oninput="calculateTotal()">
             </div>
             <div class="form-group">
-                <label>Daily Storage Rate (ZAR)</label>
+                <label>Daily Rate (ZAR)</label>
                 <input type="number" id="fee-rate" value="164" oninput="calculateTotal()">
             </div>
 
             <div class="summary-box" id="calc-summary">
                 <div class="summary-row"><span>Test Fee (Excl. VAT):</span><span id="lbl-test">R850.00</span></div>
-                <div class="summary-row"><span>Yard Storage (Excl. VAT):</span><span id="lbl-storage">R492.00</span></div>
-                <div class="summary-row"><span>15% VAT:</span><span id="lbl-vat">R201.30</span></div>
+                <div class="summary-row"><span>Storage (Excl. VAT):</span><span id="lbl-storage">R164.00</span></div>
+                <div class="summary-row"><span>15% VAT:</span><span id="lbl-vat">R152.10</span></div>
                 <hr style="margin: 6px 0; border:0; border-top:1px solid #cbd5e1;">
-                <div class="summary-row" style="font-weight:bold; font-size:1rem; color:var(--primary);"><span>Total Payable:</span><span id="lbl-total">R1543.30</span></div>
+                <div class="summary-row" style="font-weight:bold; font-size:1rem; color:var(--primary);"><span>Total Payable:</span><span id="lbl-total">R1166.10</span></div>
             </div>
             <br>
             <button type="button" class="btn btn-success" onclick="processPayment()">Process Payment & Authorize Gate Release</button>
         </div>
     </div>
 
-    <!-- ADMIN TAB 4: YARD REGISTRY -->
+    <!-- ADMIN TAB 3: YARD REGISTRY -->
     <div id="tab-yard" class="tab-content">
-        <h2>Yard Registration</h2>
+        <h2>Active Yard Registry</h2>
         <div class="card">
             <table>
                 <thead>
@@ -253,7 +218,7 @@
                         <th>Model</th>
                         <th>Status</th>
                         <th>Ref Code</th>
-                        <th>Owner PIN</th>
+                        <th>PIN</th>
                         <th>Notify</th>
                     </tr>
                 </thead>
@@ -266,7 +231,7 @@
         </div>
     </div>
 
-    <!-- ADMIN TAB 5: EXECUTIVE DASHBOARD -->
+    <!-- ADMIN TAB 4: EXECUTIVE DASHBOARD -->
     <div id="tab-dashboard" class="tab-content">
         <h2>Executive Dashboard Analytics</h2>
         <div class="card">
@@ -277,7 +242,7 @@
                     <div class="val" id="dash-total-intake">0</div>
                 </div>
                 <div class="dash-card">
-                    <h4>CURRENTLY IMPOUNDED</h4>
+                    <h4>CURRENTLY IN YARD</h4>
                     <div class="val" id="dash-impounded" style="color: var(--accent);">0</div>
                 </div>
                 <div class="dash-card">
@@ -293,7 +258,7 @@
             <h3 style="font-size: 0.9rem; margin-bottom: 8px; color: var(--primary);">Financial Revenue Collection</h3>
             <div class="summary-box">
                 <div class="summary-row"><span>Total Testing Fees (SANS 10047):</span><span id="dash-rev-test">R0.00</span></div>
-                <div class="summary-row"><span>Total Yard Storage Revenue:</span><span id="dash-rev-storage">R0.00</span></div>
+                <div class="summary-row"><span>Total Storage Revenue:</span><span id="dash-rev-storage">R0.00</span></div>
                 <div class="summary-row"><span>Total VAT Collected (15%):</span><span id="dash-rev-vat">R0.00</span></div>
                 <hr style="margin: 6px 0; border:0; border-top:1px solid #cbd5e1;">
                 <div class="summary-row" style="font-weight:bold; font-size:1rem; color:var(--primary);"><span>Grand Total Revenue:</span><span id="dash-rev-grand">R0.00</span></div>
@@ -301,11 +266,11 @@
         </div>
     </div>
 
-    <!-- ADMIN TAB 6: HISTORY & SETTLEMENT LOGS -->
+    <!-- ADMIN TAB 5: HISTORY & SETTLEMENT LOGS -->
     <div id="tab-history" class="tab-content">
         <h2>Payment & Release History</h2>
         <div class="card">
-            <button type="button" class="btn" style="margin-bottom: 12px; background: var(--primary);" onclick="loadSampleData()">Load Sample Test History & Records</button>
+            <button type="button" class="btn" style="margin-bottom: 12px; background: var(--primary);" onclick="loadSampleData()">Load Sample History & Records</button>
             <div id="history-list-container">
                 <p>No completed payment history found.</p>
             </div>
@@ -317,9 +282,7 @@
             {
                 id: 1727500000000,
                 plate: "ND 456-789",
-                vin: "AHT35NPR001234567",
                 model: "Isuzu NPR 400",
-                engine: "4HF1-889922",
                 owner: "Sipho Dlamini",
                 phone: "0823456789",
                 status: "In Yard",
@@ -329,19 +292,7 @@
             }
         ];
         
-        let historyLogs = JSON.parse(localStorage.getItem('historyLogs')) || [
-            {
-                id: 1727400000000,
-                plate: "CA 123-456",
-                model: "Toyota Hilux 2.8GD-6",
-                owner: "Mandla Khumalo",
-                testFee: 850,
-                storageExcl: 656,
-                vat: 225.90,
-                totalPaid: "1731.90",
-                date: "2026-09-27 14:30"
-            }
-        ];
+        let historyLogs = JSON.parse(localStorage.getItem('historyLogs')) || [];
 
         localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
         localStorage.setItem('historyLogs', JSON.stringify(historyLogs));
@@ -359,7 +310,7 @@
                 document.getElementById('auth-overlay').style.display = 'none';
                 document.getElementById('admin-nav').style.display = 'flex';
                 document.getElementById('role-badge').innerText = 'STATION ADMIN';
-                switchTab('intake', document.querySelector('nav button'));
+                switchTab('audit', document.querySelector('nav button'));
             } else {
                 alert('Invalid Manager Password! (Use: admin123)');
             }
@@ -382,16 +333,14 @@
             const resultBox = document.getElementById('self-reg-result');
 
             if(!owner || !plate || !model) {
-                resultBox.innerHTML = '<p style="color:red; font-size:0.85rem;">Please enter your name, license plate, and vehicle model.</p>';
+                resultBox.innerHTML = '<p style="color:red; font-size:0.85rem;">Please enter owner name, plate, and vehicle model.</p>';
                 return;
             }
 
             const vehicle = {
                 id: Date.now(),
                 plate: plate,
-                vin: "N/A (Walk-in)",
                 model: model,
-                engine: "N/A",
                 owner: owner,
                 phone: phone || "N/A",
                 status: 'In Yard',
@@ -408,7 +357,7 @@
                     <strong style="color:var(--success);">Registration Successful!</strong><br>
                     <strong>Reference Code:</strong> ${vehicle.refCode}<br>
                     <strong>Your PIN:</strong> ${vehicle.pin}<br>
-                    <small style="color: #64748b; display:block; margin-top:6px;">Save or screenshot your PIN. Station staff will use this to process your test.</small>
+                    <small style="color: #64748b; display:block; margin-top:6px;">Show this PIN or Reference to station staff for your test.</small>
                 </div>
             `;
 
@@ -432,7 +381,7 @@
                         <strong>Status:</strong> <span style="color:${found.status==='Cleared/Passed'?'var(--success)':'var(--accent)'}; font-weight:bold;">${found.status}</span><br>
                         <strong>Reference Code:</strong> ${found.refCode}<br>
                         <strong>PIN:</strong> ${found.pin}<br>
-                        <small style="color: #64748b; display:block; margin-top:6px;">Intake Date: ${found.date}</small>
+                        <small style="color: #64748b; display:block; margin-top:6px;">Registered on: ${found.date}</small>
                     </div>
                 `;
             } else {
@@ -441,7 +390,7 @@
                     resultBox.innerHTML = `
                         <div style="background: #f1f5f9; padding: 12px; border-radius: 6px; border-left: 4px solid var(--success); margin-top:10px;">
                             <strong>Vehicle:</strong> ${histFound.plate} (${histFound.model})<br>
-                            <strong>Status:</strong> <span style="color:var(--success); font-weight:bold;">Gate Released / Settled</span><br>
+                            <strong>Status:</strong> <span style="color:var(--success); font-weight:bold;">Gate Released / Completed</span><br>
                             <small style="color: #64748b; display:block; margin-top:6px;">Released on: ${histFound.date}</small>
                         </div>
                     `;
@@ -464,32 +413,11 @@
             if(tabName === 'history') renderHistory();
         }
 
-        document.getElementById('intake-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const vehicle = {
-                id: Date.now(),
-                plate: document.getElementById('v-plate').value.toUpperCase(),
-                vin: document.getElementById('v-vin').value.toUpperCase(),
-                model: document.getElementById('v-model').value,
-                engine: document.getElementById('v-engine').value,
-                owner: document.getElementById('v-owner').value,
-                phone: document.getElementById('v-phone').value,
-                status: 'In Yard',
-                refCode: 'REF-' + Math.floor(1000 + Math.random() * 9000),
-                pin: Math.floor(100 + Math.random() * 900),
-                date: new Date().toLocaleString()
-            };
-            yardVehicles.push(vehicle);
-            localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
-            alert('Vehicle successfully registered & dispatched to yard!');
-            this.reset();
-        });
-
         function populateAuditDropdown() {
             const select = document.getElementById('audit-select');
-            select.innerHTML = '<option value="">-- Choose Dispatched Vehicle --</option>';
+            select.innerHTML = '<option value="">-- Choose Registered Vehicle --</option>';
             yardVehicles.filter(v => v.status === 'In Yard').forEach(v => {
-                select.innerHTML += `<option value="${v.id}">${v.plate} - ${v.model}</option>`;
+                select.innerHTML += `<option value="${v.id}">${v.plate} - ${v.model} (${v.owner})</option>`;
             });
         }
 
@@ -512,6 +440,7 @@
                 localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
                 alert('Inspection passed and logged to eNaTiS terminal!');
                 document.getElementById('audit-select').value = '';
+                populateAuditDropdown();
             }
         }
 
@@ -583,7 +512,7 @@
                     <td><span style="color:${v.status==='Cleared/Passed'?'var(--success)':'var(--accent)'}; font-weight:bold;">${v.status}</span></td>
                     <td>${v.refCode}</td>
                     <td>${v.pin}</td>
-                    <td><button class="btn" style="padding: 4px 8px; font-size: 0.75rem; margin-bottom: 0;" onclick="alert('SMS notification sent to ${v.phone}')">SMS</button></td>
+                    <td><button class="btn" style="padding: 4px 8px; font-size: 0.75rem; margin-bottom: 0;" onclick="alert('Notification sent to ${v.phone}')">SMS</button></td>
                 </tr>
             `).join('');
         }
@@ -626,9 +555,9 @@
             container.innerHTML = historyLogs.map(h => `
                 <div class="history-item">
                     <strong>Vehicle:</strong> ${h.plate} (${h.model})<br>
-                    <strong>Owner Name & Surname:</strong> ${h.owner}<br>
+                    <strong>Owner:</strong> ${h.owner}<br>
                     <small>Test Fee: R${h.testFee} | Storage: R${h.storageExcl.toFixed(2)} | VAT: R${h.vat.toFixed(2)}</small><br>
-                    <strong style="color: var(--primary);">Total Costs Paid: R${h.totalPaid}</strong>
+                    <strong style="color: var(--primary);">Total Paid: R${h.totalPaid}</strong>
                     <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Released on: ${h.date}</div>
                 </div>
             `).join('');
@@ -638,9 +567,7 @@
             yardVehicles = [{
                 id: Date.now(),
                 plate: "ND 456-789",
-                vin: "AHT35NPR001234567",
                 model: "Isuzu NPR 400",
-                engine: "4HF1-889922",
                 owner: "Sipho Dlamini",
                 phone: "0823456789",
                 status: "In Yard",
@@ -654,15 +581,15 @@
                 model: "Toyota Hilux 2.8GD-6",
                 owner: "Mandla Khumalo",
                 testFee: 850,
-                storageExcl: 656,
-                vat: 225.90,
-                totalPaid: "1731.90",
+                storageExcl: 164,
+                vat: 152.10,
+                totalPaid: "1166.10",
                 date: new Date().toLocaleString()
             }];
             localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
             localStorage.setItem('historyLogs', JSON.stringify(historyLogs));
             renderHistory();
-            alert('Sample test history loaded successfully!');
+            alert('Sample records loaded successfully!');
         }
     </script>
 </body>
