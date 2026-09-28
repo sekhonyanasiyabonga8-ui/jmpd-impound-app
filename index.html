@@ -23,12 +23,13 @@
         header h1 { font-size: 1.1rem; font-weight: bold; }
         .badge-top { background: var(--accent); color: white; font-size: 0.7rem; padding: 3px 6px; border-radius: 4px; font-weight: bold; }
 
+        /* NAVIGATION AT THE TOP */
+        nav { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); width: 100%; overflow-x: auto; flex-shrink: 0; z-index: 10; }
+        nav button { flex: 1; min-width: 75px; padding: 10px 4px; background: none; border: none; font-size: 0.75rem; color: #64748b; text-align: center; cursor: pointer; white-space: nowrap; }
+        nav button.active { color: var(--primary); font-weight: bold; border-bottom: 3px solid var(--primary); background: #f1f5f9; }
+
         .tab-content { flex: 1; overflow-y: auto; padding: 16px; display: none; }
         .tab-content.active { display: block; }
-
-        nav { display: flex; background: var(--surface); border-top: 1px solid var(--border); position: sticky; bottom: 0; width: 100%; overflow-x: auto; flex-shrink: 0; z-index: 10; }
-        nav button { flex: 1; min-width: 70px; padding: 10px 4px; background: none; border: none; font-size: 0.68rem; color: #64748b; text-align: center; cursor: pointer; white-space: nowrap; }
-        nav button.active { color: var(--primary); font-weight: bold; border-top: 2px solid var(--primary); background: #f1f5f9; }
 
         .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         h2 { font-size: 1.05rem; margin-bottom: 12px; color: var(--primary); font-weight: bold; }
@@ -37,7 +38,7 @@
         label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 4px; color: #475569; }
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; background: #fff; }
         
-        button.btn { background: var(--secondary); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.95rem; }
+        button.btn { background: var(--secondary); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.95rem; margin-bottom: 20px; }
         button.btn-success { background: var(--success); }
 
         .summary-box { background: #f1f5f9; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.9rem; }
@@ -61,6 +62,16 @@
         <div class="badge-top">SANS 10047 / eNaTiS</div>
     </header>
 
+    <!-- NAVIGATION BAR ON TOP -->
+    <nav>
+        <button onclick="switchTab('intake', this)" class="active">1. Intake</button>
+        <button onclick="switchTab('audit', this)">2. Audit</button>
+        <button onclick="switchTab('checkout', this)">3. Checkout</button>
+        <button onclick="switchTab('yard', this)">4. Yard</button>
+        <button onclick="switchTab('dashboard', this)">5. Dashboard</button>
+        <button onclick="switchTab('history', this)">6. History</button>
+    </nav>
+
     <!-- TAB 1: INTAKE -->
     <div id="tab-intake" class="tab-content active">
         <h2>JMPD Dispatched Vehicle Intake</h2>
@@ -81,10 +92,6 @@
                 <div class="form-group">
                     <label>Engine Number</label>
                     <input type="text" id="v-engine" placeholder="Engine No">
-                </div>
-                <div class="form-group">
-                    <label>JMPD PG9 Reference</label>
-                    <input type="text" id="v-jmpd" required placeholder="e.g. JMPD-PG9-88102">
                 </div>
                 <div class="form-group">
                     <label>Owner's Name and Surname</label>
@@ -176,7 +183,7 @@
                 <thead>
                     <tr>
                         <th>Plate</th>
-                        <th>JMPD Ref</th>
+                        <th>Model</th>
                         <th>Status</th>
                         <th>Ref Code</th>
                         <th>Owner PIN</th>
@@ -235,16 +242,6 @@
         </div>
     </div>
 
-    <!-- NAVIGATION BAR -->
-    <nav>
-        <button onclick="switchTab('intake', this)" class="active">1. Intake</button>
-        <button onclick="switchTab('audit', this)">2. Audit</button>
-        <button onclick="switchTab('checkout', this)">3. Checkout</button>
-        <button onclick="switchTab('yard', this)">4. Yard Registry</button>
-        <button onclick="switchTab('dashboard', this)">5. Dashboard</button>
-        <button onclick="switchTab('history', this)">6. History</button>
-    </nav>
-
     <script>
         let yardVehicles = JSON.parse(localStorage.getItem('yardVehicles')) || [];
         let historyLogs = JSON.parse(localStorage.getItem('historyLogs')) || [];
@@ -270,7 +267,6 @@
                 vin: document.getElementById('v-vin').value.toUpperCase(),
                 model: document.getElementById('v-model').value,
                 engine: document.getElementById('v-engine').value,
-                jmpd: document.getElementById('v-jmpd').value,
                 owner: document.getElementById('v-owner').value,
                 phone: document.getElementById('v-phone').value,
                 status: 'In Yard',
@@ -288,7 +284,7 @@
             const select = document.getElementById('audit-select');
             select.innerHTML = '<option value="">-- Choose Dispatched Vehicle --</option>';
             yardVehicles.filter(v => v.status === 'In Yard').forEach(v => {
-                select.innerHTML += `<option value="${v.id}">${v.plate} - ${v.model} (${v.jmpd})</option>`;
+                select.innerHTML += `<option value="${v.id}">${v.plate} - ${v.model}</option>`;
             });
         }
 
@@ -378,11 +374,11 @@
             tbody.innerHTML = yardVehicles.map(v => `
                 <tr>
                     <td><strong>${v.plate}</strong></td>
-                    <td>${v.jmpd}</td>
+                    <td>${v.model}</td>
                     <td><span style="color:${v.status==='Cleared/Passed'?'var(--success)':'var(--accent)'}; font-weight:bold;">${v.status}</span></td>
                     <td>${v.refCode}</td>
                     <td>${v.pin}</td>
-                    <td><button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="alert('SMS notification sent to ${v.phone}')">SMS</button></td>
+                    <td><button class="btn" style="padding: 4px 8px; font-size: 0.75rem; margin-bottom: 0;" onclick="alert('SMS notification sent to ${v.phone}')">SMS</button></td>
                 </tr>
             `).join('');
         }
