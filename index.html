@@ -43,6 +43,15 @@
         .summary-box { background: #f1f5f9; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.9rem; }
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
         .history-item { border-left: 4px solid var(--success); padding: 10px 12px; background: #f8fafc; margin-bottom: 8px; border-radius: 4px; font-size: 0.85rem; }
+
+        /* Tables & Dashboard grids */
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.85rem; }
+        th, td { border: 1px solid var(--border); padding: 8px; text-align: center; }
+        th { background: #f1f5f9; color: var(--primary); }
+        .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .dash-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 12px; text-align: center; }
+        .dash-card h4 { font-size: 0.75rem; color: #64748b; margin-bottom: 6px; }
+        .dash-card .val { font-size: 1.4rem; font-weight: bold; color: var(--primary); }
     </style>
 </head>
 <body>
@@ -52,7 +61,7 @@
         <div class="badge-top">SANS 10047 / eNaTiS</div>
     </header>
 
-    <!-- TAB 1: INTAKE (Restored original fields + added owner name field) -->
+    <!-- TAB 1: INTAKE -->
     <div id="tab-intake" class="tab-content active">
         <h2>JMPD Dispatched Vehicle Intake</h2>
         <div class="card">
@@ -96,7 +105,7 @@
         <div class="card">
             <div class="form-group">
                 <label>Select Vehicle from Yard</label>
-                <select id="audit-select" onchange="loadVehicleAuditData()">
+                <select id="audit-select">
                     <option value="">-- Choose Dispatched Vehicle --</option>
                 </select>
             </div>
@@ -159,23 +168,66 @@
         </div>
     </div>
 
-    <!-- TAB 4: YARD STATUS (Restored original style) -->
+    <!-- TAB 4: YARD REGISTRY -->
     <div id="tab-yard" class="tab-content">
-        <h2>Active Yard Fleet Status</h2>
-        <div class="card" id="yard-list-container">
-            <p>No vehicles in yard.</p>
-        </div>
-    </div>
-
-    <!-- TAB 5: REPORTS -->
-    <div id="tab-reports" class="tab-content">
-        <h2>Audit & Operational Reports</h2>
+        <h2>Active Impound Yard Registry</h2>
         <div class="card">
-            <p>Daily intake logs, test certificates issued, and shift revenue reconciliations.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Plate</th>
+                        <th>JMPD Ref</th>
+                        <th>Status</th>
+                        <th>Ref Code</th>
+                        <th>Owner PIN</th>
+                        <th>Notify</th>
+                    </tr>
+                </thead>
+                <tbody id="yard-table-body">
+                    <tr>
+                        <td colspan="6" style="padding: 14px; color: #64748b;">No active vehicles in registry</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <!-- TAB 6: HISTORY & SETTLEMENT LOGS (Shows car, owner name & costs) -->
+    <!-- TAB 5: EXECUTIVE DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content">
+        <h2>Executive Dashboard Analytics</h2>
+        <div class="card">
+            <h3 style="font-size: 0.9rem; margin-bottom: 8px; color: var(--primary);">Yard Overview</h3>
+            <div class="dash-grid">
+                <div class="dash-card">
+                    <h4>TOTAL INTAKE</h4>
+                    <div class="val" id="dash-total-intake">0</div>
+                </div>
+                <div class="dash-card">
+                    <h4>CURRENTLY IMPOUNDED</h4>
+                    <div class="val" id="dash-impounded" style="color: var(--accent);">0</div>
+                </div>
+                <div class="dash-card">
+                    <h4>ENATIS CLEARED</h4>
+                    <div class="val" id="dash-cleared" style="color: var(--success);">0</div>
+                </div>
+                <div class="dash-card">
+                    <h4>GATE RELEASED</h4>
+                    <div class="val" id="dash-released" style="color: var(--secondary);">0</div>
+                </div>
+            </div>
+
+            <h3 style="font-size: 0.9rem; margin-bottom: 8px; color: var(--primary);">Financial Revenue Collection</h3>
+            <div class="summary-box">
+                <div class="summary-row"><span>Total Testing Fees (SANS 10047):</span><span id="dash-rev-test">R0.00</span></div>
+                <div class="summary-row"><span>Total Yard Storage Revenue:</span><span id="dash-rev-storage">R0.00</span></div>
+                <div class="summary-row"><span>Total VAT Collected (15%):</span><span id="dash-rev-vat">R0.00</span></div>
+                <hr style="margin: 6px 0; border:0; border-top:1px solid #cbd5e1;">
+                <div class="summary-row" style="font-weight:bold; font-size:1rem; color:var(--primary);"><span>Grand Total Revenue:</span><span id="dash-rev-grand">R0.00</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 6: HISTORY & SETTLEMENT LOGS -->
     <div id="tab-history" class="tab-content">
         <h2>Payment & Release History</h2>
         <div class="card" id="history-list-container">
@@ -188,13 +240,12 @@
         <button onclick="switchTab('intake', this)" class="active">1. Intake</button>
         <button onclick="switchTab('audit', this)">2. Audit</button>
         <button onclick="switchTab('checkout', this)">3. Checkout</button>
-        <button onclick="switchTab('yard', this)">4. Yard</button>
-        <button onclick="switchTab('reports', this)">5. Reports</button>
+        <button onclick="switchTab('yard', this)">4. Yard Registry</button>
+        <button onclick="switchTab('dashboard', this)">5. Dashboard</button>
         <button onclick="switchTab('history', this)">6. History</button>
     </nav>
 
     <script>
-        // State Management
         let yardVehicles = JSON.parse(localStorage.getItem('yardVehicles')) || [];
         let historyLogs = JSON.parse(localStorage.getItem('historyLogs')) || [];
 
@@ -207,10 +258,10 @@
             if(tabName === 'yard') renderYard();
             if(tabName === 'audit') populateAuditDropdown();
             if(tabName === 'checkout') populateCheckoutDropdown();
+            if(tabName === 'dashboard') renderDashboard();
             if(tabName === 'history') renderHistory();
         }
 
-        // 1. Intake Form Submission
         document.getElementById('intake-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const vehicle = {
@@ -223,6 +274,8 @@
                 owner: document.getElementById('v-owner').value,
                 phone: document.getElementById('v-phone').value,
                 status: 'In Yard',
+                refCode: 'REF-' + Math.floor(1000 + Math.random() * 9000),
+                pin: Math.floor(100 + Math.random() * 900),
                 date: new Date().toLocaleString()
             };
             yardVehicles.push(vehicle);
@@ -231,7 +284,6 @@
             this.reset();
         });
 
-        // 2. Populate Dropdowns
         function populateAuditDropdown() {
             const select = document.getElementById('audit-select');
             select.innerHTML = '<option value="">-- Choose Dispatched Vehicle --</option>';
@@ -262,7 +314,6 @@
             }
         }
 
-        // 3. Calculator & Payment Checkout
         function calculateTotal() {
             const testFee = parseFloat(document.getElementById('fee-test').value) || 0;
             const days = parseInt(document.getElementById('fee-days').value) || 0;
@@ -288,18 +339,20 @@
             const vehicleIndex = yardVehicles.findIndex(v => v.id == id);
             if(vehicleIndex > -1) {
                 const vehicle = yardVehicles[vehicleIndex];
+                const testFee = parseFloat(document.getElementById('fee-test').value) || 0;
+                const days = parseInt(document.getElementById('fee-days').value) || 0;
+                const rate = parseFloat(document.getElementById('fee-rate').value) || 0;
+                const storageExcl = days * rate;
                 const totalPaid = calculateTotal();
-                const testFee = document.getElementById('fee-test').value;
-                const days = document.getElementById('fee-days').value;
 
-                // Add to history logs with Car details, Owner name, and Costs
                 const historyRecord = {
                     id: Date.now(),
                     plate: vehicle.plate,
                     model: vehicle.model,
                     owner: vehicle.owner,
                     testFee: testFee,
-                    storageDays: days,
+                    storageExcl: storageExcl,
+                    vat: (testFee + storageExcl) * 0.15,
                     totalPaid: totalPaid.toFixed(2),
                     date: new Date().toLocaleString()
                 };
@@ -307,7 +360,6 @@
                 historyLogs.unshift(historyRecord);
                 localStorage.setItem('historyLogs', JSON.stringify(historyLogs));
 
-                // Remove from active yard inventory
                 yardVehicles.splice(vehicleIndex, 1);
                 localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
 
@@ -317,24 +369,53 @@
             }
         }
 
-        // 4. Render Active Yard (Original style)
         function renderYard() {
-            const container = document.getElementById('yard-list-container');
+            const tbody = document.getElementById('yard-table-body');
             if(yardVehicles.length === 0) {
-                container.innerHTML = '<p>No active vehicles currently logged in the yard.</p>';
+                tbody.innerHTML = '<tr><td colspan="6" style="padding: 14px; color: #64748b;">No active vehicles in registry</td></tr>';
                 return;
             }
-            container.innerHTML = yardVehicles.map(v => `
-                <div style="padding: 10px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <strong>${v.plate}</strong> - ${v.model}<br>
-                        <small style="color: #64748b;">Ref: ${v.jmpd} | Owner: ${v.owner} | Status: <span style="color:${v.status==='Cleared/Passed'?'var(--success)':'var(--danger)'}; font-weight:bold;">${v.status}</span></small>
-                    </div>
-                </div>
+            tbody.innerHTML = yardVehicles.map(v => `
+                <tr>
+                    <td><strong>${v.plate}</strong></td>
+                    <td>${v.jmpd}</td>
+                    <td><span style="color:${v.status==='Cleared/Passed'?'var(--success)':'var(--accent)'}; font-weight:bold;">${v.status}</span></td>
+                    <td>${v.refCode}</td>
+                    <td>${v.pin}</td>
+                    <td><button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="alert('SMS notification sent to ${v.phone}')">SMS</button></td>
+                </tr>
             `).join('');
         }
 
-        // 6. Render History Section (Shows car, owner name, and costs)
+        function renderDashboard() {
+            const totalIntakeCount = yardVehicles.length + historyLogs.length;
+            const impoundedCount = yardVehicles.filter(v => v.status === 'In Yard').length;
+            const clearedCount = yardVehicles.filter(v => v.status === 'Cleared/Passed').length;
+            const releasedCount = historyLogs.length;
+
+            document.getElementById('dash-total-intake').innerText = totalIntakeCount;
+            document.getElementById('dash-impounded').innerText = impoundedCount;
+            document.getElementById('dash-cleared').innerText = clearedCount;
+            document.getElementById('dash-released').innerText = releasedCount;
+
+            let sumTest = 0;
+            let sumStorage = 0;
+            let sumVat = 0;
+            let sumGrand = 0;
+
+            historyLogs.forEach(h => {
+                sumTest += parseFloat(h.testFee) || 0;
+                sumStorage += parseFloat(h.storageExcl) || 0;
+                sumVat += parseFloat(h.vat) || 0;
+                sumGrand += parseFloat(h.totalPaid) || 0;
+            });
+
+            document.getElementById('dash-rev-test').innerText = `R${sumTest.toFixed(2)}`;
+            document.getElementById('dash-rev-storage').innerText = `R${sumStorage.toFixed(2)}`;
+            document.getElementById('dash-rev-vat').innerText = `R${sumVat.toFixed(2)}`;
+            document.getElementById('dash-rev-grand').innerText = `R${sumGrand.toFixed(2)}`;
+        }
+
         function renderHistory() {
             const container = document.getElementById('history-list-container');
             if(historyLogs.length === 0) {
@@ -345,7 +426,7 @@
                 <div class="history-item">
                     <strong>Vehicle:</strong> ${h.plate} (${h.model})<br>
                     <strong>Owner Name & Surname:</strong> ${h.owner}<br>
-                    <small>Test Fee: R${h.testFee} | Storage Days: ${h.storageDays}</small><br>
+                    <small>Test Fee: R${h.testFee} | Storage: R${h.storageExcl.toFixed(2)} | VAT: R${h.vat.toFixed(2)}</small><br>
                     <strong style="color: var(--primary);">Total Costs Paid: R${h.totalPaid}</strong>
                     <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Released on: ${h.date}</div>
                 </div>
