@@ -60,24 +60,24 @@
 </head>
 <body>
 
-    <!-- AUTHENTICATION / PORTAL SELECTOR SCREEN (DEFAULT ON LOAD) -->
+    <!-- AUTHENTICATION / PORTAL SELECTOR SCREEN -->
     <div id="auth-overlay">
         <div style="text-align: center; margin-bottom: 20px;">
             <h1 style="color: var(--primary); font-size: 1.8rem; margin-bottom: 6px;">VeloVault</h1>
-            <p style="font-size: 0.85rem; color: #64748b;">SANS 10047 / eNaTiS Impound & Testing Manager</p>
+            <p style="font-size: 0.85rem; color: #64748b;">SANS 10047 / eNaTiS Roadworthy & Intake Portal</p>
         </div>
         <div class="card">
-            <h2>Vehicle Owner Portal (Public)</h2>
-            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 10px;">Check your vehicle status, reference code, and PIN.</p>
-            <button class="btn" onclick="openPublicPortal()">Access Owner Status Portal</button>
+            <h2>Vehicle Owner / Walk-In Portal</h2>
+            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 10px;">Quickly register your vehicle or check test status.</p>
+            <button class="btn" onclick="openPublicPortal()">Access Customer Portal</button>
         </div>
         <div class="card" style="margin-top: 10px;">
-            <h2>Roadworthy Station Login (Full Access)</h2>
+            <h2>Station Admin Login</h2>
             <div class="form-group">
-                <label>Manager / Station Password</label>
+                <label>Manager Password</label>
                 <input type="password" id="admin-pass" placeholder="Enter password (admin123)">
             </div>
-            <button class="btn btn-success" onclick="openAdminPortal()">Login to Full Management Dashboard</button>
+            <button class="btn btn-success" onclick="openAdminPortal()">Login to Management Dashboard</button>
         </div>
     </div>
 
@@ -85,7 +85,7 @@
         <h1><b>VeloVault</b></h1>
         <div style="display: flex; gap: 8px; align-items: center;">
             <div class="badge-top" id="role-badge">LOCKED</div>
-            <button onclick="logoutToPortal()" style="background:none; border:1px solid #fff; color:#fff; font-size:0.7rem; padding:3px 6px; border-radius:4px; cursor:pointer;">Logout</button>
+            <button onclick="logoutToPortal()" style="background:none; border:1px solid #fff; color:#fff; font-size:0.7rem; padding:3px 6px; border-radius:4px; cursor:pointer;">Exit</button>
         </div>
     </header>
 
@@ -101,8 +101,35 @@
 
     <!-- PUBLIC OWNER PORTAL VIEW -->
     <div id="public-view" class="tab-content">
-        <h2>Vehicle Owner Status Check</h2>
+        <h2>Customer Self-Service Portal</h2>
+        
+        <!-- Quick Self-Registration Card -->
         <div class="card">
+            <h2>Quick Walk-In Registration</h2>
+            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 10px;">Just arrived? Register your details below to instantly get your tracking PIN and reference code.</p>
+            <div class="form-group">
+                <label>Your Name & Surname</label>
+                <input type="text" id="pub-owner" placeholder="e.g. Sipho Dlamini">
+            </div>
+            <div class="form-group">
+                <label>License Plate Number</label>
+                <input type="text" id="pub-plate" placeholder="e.g. ND 456-789">
+            </div>
+            <div class="form-group">
+                <label>Vehicle Make & Model</label>
+                <input type="text" id="pub-model" placeholder="e.g. Isuzu NPR 400">
+            </div>
+            <div class="form-group">
+                <label>Phone Number (WhatsApp / SMS)</label>
+                <input type="tel" id="pub-phone" placeholder="0823456789">
+            </div>
+            <button class="btn btn-success" onclick="publicSelfRegister()">Generate My Reference & PIN</button>
+            <div id="self-reg-result" style="margin-top: 10px;"></div>
+        </div>
+
+        <!-- Check Status Card -->
+        <div class="card" style="margin-top: 15px;">
+            <h2>Check Existing Test Status</h2>
             <div class="form-group">
                 <label>Enter License Plate or PIN</label>
                 <input type="text" id="search-query" placeholder="e.g. ND 456-789 or PIN 739">
@@ -323,7 +350,7 @@
             document.getElementById('auth-overlay').style.display = 'none';
             document.getElementById('public-view').style.display = 'block';
             document.getElementById('admin-nav').style.display = 'none';
-            document.getElementById('role-badge').innerText = 'PUBLIC PORTAL';
+            document.getElementById('role-badge').innerText = 'CUSTOMER PORTAL';
         }
 
         function openAdminPortal() {
@@ -345,6 +372,50 @@
             document.getElementById('auth-overlay').style.display = 'flex';
             document.getElementById('role-badge').innerText = 'LOCKED';
             document.getElementById('admin-pass').value = '';
+        }
+
+        function publicSelfRegister() {
+            const owner = document.getElementById('pub-owner').value.trim();
+            const plate = document.getElementById('pub-plate').value.trim().toUpperCase();
+            const model = document.getElementById('pub-model').value.trim();
+            const phone = document.getElementById('pub-phone').value.trim();
+            const resultBox = document.getElementById('self-reg-result');
+
+            if(!owner || !plate || !model) {
+                resultBox.innerHTML = '<p style="color:red; font-size:0.85rem;">Please enter your name, license plate, and vehicle model.</p>';
+                return;
+            }
+
+            const vehicle = {
+                id: Date.now(),
+                plate: plate,
+                vin: "N/A (Walk-in)",
+                model: model,
+                engine: "N/A",
+                owner: owner,
+                phone: phone || "N/A",
+                status: 'In Yard',
+                refCode: 'REF-' + Math.floor(1000 + Math.random() * 9000),
+                pin: Math.floor(100 + Math.random() * 900),
+                date: new Date().toLocaleString()
+            };
+
+            yardVehicles.push(vehicle);
+            localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
+
+            resultBox.innerHTML = `
+                <div style="background: #e2f8ed; padding: 12px; border-radius: 6px; border-left: 4px solid var(--success); margin-top:10px;">
+                    <strong style="color:var(--success);">Registration Successful!</strong><br>
+                    <strong>Reference Code:</strong> ${vehicle.refCode}<br>
+                    <strong>Your PIN:</strong> ${vehicle.pin}<br>
+                    <small style="color: #64748b; display:block; margin-top:6px;">Save or screenshot your PIN. Station staff will use this to process your test.</small>
+                </div>
+            `;
+
+            document.getElementById('pub-owner').value = '';
+            document.getElementById('pub-plate').value = '';
+            document.getElementById('pub-model').value = '';
+            document.getElementById('pub-phone').value = '';
         }
 
         function searchVehicleStatus() {
