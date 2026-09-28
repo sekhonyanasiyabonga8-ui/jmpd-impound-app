@@ -23,7 +23,7 @@
         header h1 { font-size: 1.1rem; font-weight: bold; }
         .badge-top { background: var(--accent); color: white; font-size: 0.7rem; padding: 3px 6px; border-radius: 4px; font-weight: bold; }
 
-        /* NAVIGATION AT THE TOP (Admin Tabs) */
+        /* NAVIGATION BAR FOR ADMIN (Tabs 1 to 5) */
         nav { display: none; background: var(--surface); border-bottom: 1px solid var(--border); width: 100%; overflow-x: auto; flex-shrink: 0; z-index: 10; }
         nav button { flex: 1; min-width: 75px; padding: 10px 4px; background: none; border: none; font-size: 0.75rem; color: #64748b; text-align: center; cursor: pointer; white-space: nowrap; }
         nav button.active { color: var(--primary); font-weight: bold; border-bottom: 3px solid var(--primary); background: #f1f5f9; }
@@ -40,6 +40,7 @@
         
         button.btn { background: var(--secondary); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.95rem; margin-bottom: 12px; }
         button.btn-success { background: var(--success); }
+        button.btn-danger { background: var(--danger); }
 
         .summary-box { background: #f1f5f9; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.9rem; }
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
@@ -128,7 +129,7 @@
 
         <!-- Check Existing Status -->
         <div class="card" style="margin-top: 15px;">
-            <h2>Check Test Status</h2>
+            <h2>Check Test Status & Defects</h2>
             <div class="form-group">
                 <label>Enter License Plate or PIN</label>
                 <input type="text" id="search-query" placeholder="e.g. ND 456-789 or PIN 739">
@@ -168,7 +169,8 @@
                 <label>5. Exhaust Emissions & Diesel Smoke Opacity</label>
                 <select id="insp-5"><option>PASS</option><option>FAIL</option></select>
             </div>
-            <button type="button" class="btn btn-success" onclick="submitInspection()">Submit Inspection to eNaTiS Terminal</button>
+            <button type="button" class="btn btn-success" onclick="submitInspection(true)">Pass & Certify Vehicle</button>
+            <button type="button" class="btn btn-danger" onclick="submitInspection(false)">Fail, Log Defects & Send SMS</button>
         </div>
     </div>
 
@@ -344,6 +346,7 @@
                 owner: owner,
                 phone: phone || "N/A",
                 status: 'In Yard',
+                defects: [],
                 refCode: 'REF-' + Math.floor(1000 + Math.random() * 9000),
                 pin: Math.floor(100 + Math.random() * 900),
                 date: new Date().toLocaleString()
@@ -374,11 +377,21 @@
 
             const found = yardVehicles.find(v => v.plate.includes(query) || v.pin == query || v.refCode.toUpperCase() === query);
             if(found) {
+                let statusColor = 'var(--accent)';
+                if(found.status === 'Cleared/Passed') statusColor = 'var(--success)';
+                if(found.status === 'Failed / Defective') statusColor = 'var(--danger)';
+
+                let defectHtml = '';
+                if(found.defects && found.defects.length > 0) {
+                    defectHtml = `<br><strong>Failed Items:</strong> <span style="color:var(--danger);">${found.defects.join(', ')}</span>`;
+                }
+
                 resultBox.innerHTML = `
-                    <div style="background: #f1f5f9; padding: 12px; border-radius: 6px; border-left: 4px solid var(--primary); margin-top:10px;">
+                    <div style="background: #f1f5f9; padding: 12px; border-radius: 6px; border-left: 4px solid ${statusColor}; margin-top:10px;">
                         <strong>Vehicle:</strong> ${found.plate} (${found.model})<br>
                         <strong>Owner:</strong> ${found.owner}<br>
-                        <strong>Status:</strong> <span style="color:${found.status==='Cleared/Passed'?'var(--success)':'var(--accent)'}; font-weight:bold;">${found.status}</span><br>
+                        <strong>Status:</strong> <span style="color:${statusColor}; font-weight:bold;">${found.status}</span>
+                        ${defectHtml}<br>
                         <strong>Reference Code:</strong> ${found.refCode}<br>
                         <strong>PIN:</strong> ${found.pin}<br>
                         <small style="color: #64748b; display:block; margin-top:6px;">Registered on: ${found.date}</small>
@@ -416,8 +429,8 @@
         function populateAuditDropdown() {
             const select = document.getElementById('audit-select');
             select.innerHTML = '<option value="">-- Choose Registered Vehicle --</option>';
-            yardVehicles.filter(v => v.status === 'In Yard').forEach(v => {
-                select.innerHTML += `<option value="${v.id}">${v.plate} - ${v.model} (${v.owner})</option>`;
+            yardVehicles.filter(v => v.status === 'In Yard' || v.status === 'Failed / Defective').forEach(v => {
+                select.innerHTML += `<option value="${v.id}">${v.plate} - ${v.model} (${v.status})</option>`;
             });
         }
 
@@ -430,15 +443,35 @@
             calculateTotal();
         }
 
-        function submitInspection() {
+        function submitInspection(isPassed) {
             const id = document.getElementById('audit-select').value;
             if(!id) { alert('Please select a vehicle from the yard first.'); return; }
             
             const vehicle = yardVehicles.find(v => v.id == id);
             if(vehicle) {
-                vehicle.status = 'Cleared/Passed';
+                if(isPassed) {
+                    vehicle.status = 'Cleared/Passed';
+                    vehicle.defects = [];
+                    alert('Inspection passed and logged to eNaTiS terminal!');
+                } else {
+                    vehicle.status = 'Failed / Defective';
+                    let failedItems = [];
+                    for(let i=1; i<=5; i++) {
+                        let val = document.getElementById('insp-'+i).value;
+                        if(val === 'FAIL') {
+                            if(i===1) failedItems.push('Brake Efficiency');
+                            if(i===2) failedItems.push('Steering Linkage');
+                            if(i===3) failedItems.push('Tyre Tread Depth');
+                            if(i===4) failedItems.push('Headlamp Alignment');
+                            if(i===5) failedItems.push('Exhaust Emissions');
+                        }
+                    }
+                    vehicle.defects = failedItems.length > 0 ? failedItems : ['General Roadworthy Defect'];
+                    
+                    // AUTOMATED SMS SIMULATION TRIGGER
+                    alert(`📱 [SMS Gateway simulated to ${vehicle.phone}]\n\n"VeloVault Notice: Dear ${vehicle.owner}, your vehicle (${vehicle.plate}) has FAILED the roadworthy test. Failed items: ${vehicle.defects.join(', ')}. Please pick up your vehicle for repairs and return for re-test within 14 days."`);
+                }
                 localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
-                alert('Inspection passed and logged to eNaTiS terminal!');
                 document.getElementById('audit-select').value = '';
                 populateAuditDropdown();
             }
@@ -454,7 +487,7 @@
             const vat = subtotal * 0.15;
             const total = subtotal + vat;
 
-            document.getElementById('lbl-test').innerText = `R${testFee.toFixed(2)}`;
+             = `R${testFee.toFixed(2)}`;
             document.getElementById('lbl-storage').innerText = `R${storageExcl.toFixed(2)}`;
             document.getElementById('lbl-vat').innerText = `R${vat.toFixed(2)}`;
             document.getElementById('lbl-total').innerText = `R${total.toFixed(2)}`;
@@ -464,133 +497,3 @@
 
         function processPayment() {
             const id = document.getElementById('checkout-select').value;
-            if(!id) { alert('Please select a cleared vehicle for release.'); return; }
-
-            const vehicleIndex = yardVehicles.findIndex(v => v.id == id);
-            if(vehicleIndex > -1) {
-                const vehicle = yardVehicles[vehicleIndex];
-                const testFee = parseFloat(document.getElementById('fee-test').value) || 0;
-                const days = parseInt(document.getElementById('fee-days').value) || 0;
-                const rate = parseFloat(document.getElementById('fee-rate').value) || 0;
-                const storageExcl = days * rate;
-                const totalPaid = calculateTotal();
-
-                const historyRecord = {
-                    id: Date.now(),
-                    plate: vehicle.plate,
-                    model: vehicle.model,
-                    owner: vehicle.owner,
-                    testFee: testFee,
-                    storageExcl: storageExcl,
-                    vat: (testFee + storageExcl) * 0.15,
-                    totalPaid: totalPaid.toFixed(2),
-                    date: new Date().toLocaleString()
-                };
-
-                historyLogs.unshift(historyRecord);
-                localStorage.setItem('historyLogs', JSON.stringify(historyLogs));
-
-                yardVehicles.splice(vehicleIndex, 1);
-                localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
-
-                alert('Payment processed successfully! Gate authorization released.');
-                document.getElementById('checkout-select').value = '';
-                populateCheckoutDropdown();
-            }
-        }
-
-        function renderYard() {
-            const tbody = document.getElementById('yard-table-body');
-            if(yardVehicles.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="padding: 14px; color: #64748b;">No active vehicles in registry</td></tr>';
-                return;
-            }
-            tbody.innerHTML = yardVehicles.map(v => `
-                <tr>
-                    <td><strong>${v.plate}</strong></td>
-                    <td>${v.model}</td>
-                    <td><span style="color:${v.status==='Cleared/Passed'?'var(--success)':'var(--accent)'}; font-weight:bold;">${v.status}</span></td>
-                    <td>${v.refCode}</td>
-                    <td>${v.pin}</td>
-                    <td><button class="btn" style="padding: 4px 8px; font-size: 0.75rem; margin-bottom: 0;" onclick="alert('Notification sent to ${v.phone}')">SMS</button></td>
-                </tr>
-            `).join('');
-        }
-
-        function renderDashboard() {
-            const totalIntakeCount = yardVehicles.length + historyLogs.length;
-            const impoundedCount = yardVehicles.filter(v => v.status === 'In Yard').length;
-            const clearedCount = yardVehicles.filter(v => v.status === 'Cleared/Passed').length;
-            const releasedCount = historyLogs.length;
-
-            document.getElementById('dash-total-intake').innerText = totalIntakeCount;
-            document.getElementById('dash-impounded').innerText = impoundedCount;
-            document.getElementById('dash-cleared').innerText = clearedCount;
-            document.getElementById('dash-released').innerText = releasedCount;
-
-            let sumTest = 0;
-            let sumStorage = 0;
-            let sumVat = 0;
-            let sumGrand = 0;
-
-            historyLogs.forEach(h => {
-                sumTest += parseFloat(h.testFee) || 0;
-                sumStorage += parseFloat(h.storageExcl) || 0;
-                sumVat += parseFloat(h.vat) || 0;
-                sumGrand += parseFloat(h.totalPaid) || 0;
-            });
-
-            document.getElementById('dash-rev-test').innerText = `R${sumTest.toFixed(2)}`;
-            document.getElementById('dash-rev-storage').innerText = `R${sumStorage.toFixed(2)}`;
-            document.getElementById('dash-rev-vat').innerText = `R${sumVat.toFixed(2)}`;
-            document.getElementById('dash-rev-grand').innerText = `R${sumGrand.toFixed(2)}`;
-        }
-
-        function renderHistory() {
-            const container = document.getElementById('history-list-container');
-            if(historyLogs.length === 0) {
-                container.innerHTML = '<p>No completed payment history recorded yet.</p>';
-                return;
-            }
-            container.innerHTML = historyLogs.map(h => `
-                <div class="history-item">
-                    <strong>Vehicle:</strong> ${h.plate} (${h.model})<br>
-                    <strong>Owner:</strong> ${h.owner}<br>
-                    <small>Test Fee: R${h.testFee} | Storage: R${h.storageExcl.toFixed(2)} | VAT: R${h.vat.toFixed(2)}</small><br>
-                    <strong style="color: var(--primary);">Total Paid: R${h.totalPaid}</strong>
-                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Released on: ${h.date}</div>
-                </div>
-            `).join('');
-        }
-
-        function loadSampleData() {
-            yardVehicles = [{
-                id: Date.now(),
-                plate: "ND 456-789",
-                model: "Isuzu NPR 400",
-                owner: "Sipho Dlamini",
-                phone: "0823456789",
-                status: "In Yard",
-                refCode: "REF-4821",
-                pin: "739",
-                date: new Date().toLocaleString()
-            }];
-            historyLogs = [{
-                id: Date.now() - 1000,
-                plate: "CA 123-456",
-                model: "Toyota Hilux 2.8GD-6",
-                owner: "Mandla Khumalo",
-                testFee: 850,
-                storageExcl: 164,
-                vat: 152.10,
-                totalPaid: "1166.10",
-                date: new Date().toLocaleString()
-            }];
-            localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
-            localStorage.setItem('historyLogs', JSON.stringify(historyLogs));
-            renderHistory();
-            alert('Sample records loaded successfully!');
-        }
-    </script>
-</body>
-</html>
