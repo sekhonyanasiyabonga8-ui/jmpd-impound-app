@@ -66,6 +66,16 @@
         #scanner-container { display: none; margin-bottom: 14px; border: 2px dashed var(--secondary); border-radius: 8px; padding: 10px; background: #000; text-align: center; }
         #reader { width: 100%; max-height: 300px; border-radius: 6px; overflow: hidden; }
 
+        /* Scanning Laser Animation Effect */
+        @keyframes scanLaser {
+            0% { background-color: rgba(59, 130, 246, 0.1); border-color: var(--secondary); }
+            50% { background-color: rgba(34, 197, 94, 0.25); border-color: var(--success); box-shadow: 0 0 15px var(--success); }
+            100% { background-color: rgba(59, 130, 246, 0.1); border-color: var(--secondary); }
+        }
+        .scanning-active {
+            animation: scanLaser 0.6s ease-in-out infinite;
+        }
+
         /* Role Switch Overlay */
         #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--background); z-index: 999; display: flex; flex-direction: column; justify-content: center; padding: 16px; overflow-y: auto; }
     </style>
@@ -117,7 +127,7 @@
         <!-- Quick Walk-In Registration -->
         <div class="card">
             <h2>Quick Walk-In Registration</h2>
-            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">Type your 17-digit VIN or use your camera to scan the barcode instantly.</p>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">Type your 17-digit VIN, simulate a barcode scan instantly, or use your live camera.</p>
             
             <!-- Camera Scanner Box -->
             <div id="scanner-container">
@@ -127,11 +137,14 @@
 
             <div class="form-group">
                 <label>17-Digit VIN (Vehicle Identification Number)</label>
-                <div style="display: flex; gap: 8px;">
+                <div style="display: flex; gap: 6px; margin-bottom: 4px;">
                     <input type="text" id="pub-vin" placeholder="e.g. AAV1234567890ABCD" maxlength="17" style="text-transform: uppercase; font-family: monospace; letter-spacing: 1px;">
-                    <button type="button" class="btn btn-accent" id="btn-start-scan" style="width: 120px; margin-bottom:0; font-size: 0.85rem;">📷 Scan VIN</button>
                 </div>
-                <small style="color: #64748b; font-size: 0.75rem;" id="vin-counter">0 / 17 characters entered</small>
+                <div style="display: flex; gap: 6px; margin-top: 6px;">
+                    <button type="button" class="btn btn-accent" id="btn-sim-scan" style="flex:1; margin-bottom:0; font-size: 0.8rem; padding: 10px;">⚡ Simulate Barcode Scan</button>
+                    <button type="button" class="btn" id="btn-start-scan" style="flex:1; margin-bottom:0; font-size: 0.8rem; padding: 10px; background: #475569;">📷 Live Camera</button>
+                </div>
+                <small style="color: #64748b; font-size: 0.75rem; display: block; margin-top: 4px;" id="vin-counter">0 / 17 characters entered</small>
             </div>
 
             <div class="form-group">
@@ -483,6 +496,18 @@
             `).join('');
         }
 
+        // Simulated Barcode Scan Button Action
+        document.getElementById('btn-sim-scan').addEventListener('click', function() {
+            const vinInputEl = document.getElementById('pub-vin');
+            vinInputEl.classList.add('scanning-active');
+            
+            setTimeout(() => {
+                vinInputEl.value = "1HGCR2F83HA999999";
+                vinInputEl.classList.remove('scanning-active');
+                updateVinCounter();
+            }, 500);
+        });
+
         // Camera Barcode Scanner Controls
         document.getElementById('btn-start-scan').addEventListener('click', function() {
             const container = document.getElementById('scanner-container');
@@ -496,16 +521,13 @@
                 { facingMode: "environment" },
                 { fps: 10, qrbox: { width: 250, height: 100 } },
                 (decodedText, decodedResult) => {
-                    // Successful Scan
                     let cleanVin = decodedText.trim().toUpperCase();
                     document.getElementById('pub-vin').value = cleanVin.substring(0, 17);
                     updateVinCounter();
                     stopScanner();
-                    alert('Successfully scanned VIN code!');
+                    alert('Successfully scanned barcode!');
                 },
-                (errorMessage) => {
-                    // Scanning in progress / ignore frame errors
-                }
+                (errorMessage) => {}
             ).catch(err => {
                 alert('Unable to access camera. Please check camera permissions in your browser settings.');
                 container.style.display = 'none';
@@ -538,16 +560,15 @@
             }
         }
         vinInput.addEventListener('input', function() {
-            this.value = this.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, ''); // Standard legal VIN character filter
+            this.value = this.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, ''); 
             updateVinCounter();
         });
 
-        // Standard Event Listeners for Reliable Mobile Interaction
+        // Event Listeners
         document.getElementById('btn-open-portal').addEventListener('click', openPublicPortal);
         document.getElementById('btn-admin-login').addEventListener('click', openAdminPortal);
         document.getElementById('btn-logout').addEventListener('click', logoutToPortal);
 
-        // Tab Navigation Listeners
         document.querySelectorAll('nav button').forEach(btn => {
             btn.addEventListener('click', function() {
                 switchTab(this.getAttribute('data-tab'), this);
@@ -564,7 +585,7 @@
             const resultBox = document.getElementById('self-reg-result');
 
             if(!vin || vin.length < 17) {
-                resultBox.innerHTML = '<p style="color:red; font-size:0.9rem;">Please provide a valid 17-digit VIN number (type or scan).</p>';
+                resultBox.innerHTML = '<p style="color:red; font-size:0.9rem;">Please provide a valid 17-digit VIN number.</p>';
                 return;
             }
             if(!owner || !plate || !model) {
@@ -650,25 +671,17 @@
             }
         });
 
-        // Audit dropdown selection listener
         document.getElementById('audit-select').addEventListener('change', function() {
             const id = this.value;
             const vinDisplay = document.getElementById('audit-vin-display');
-            if(!id) {
-                vinDisplay.innerText = 'VIN: Not selected';
-                return;
-            }
+            if(!id) { vinDisplay.innerText = 'VIN: Not selected'; return; }
             const vehicle = yardVehicles.find(v => v.id == id);
-            if(vehicle) {
-                vinDisplay.innerText = `VIN: ${vehicle.vin || 'Not provided'}`;
-            }
+            if(vehicle) { vinDisplay.innerText = `VIN: ${vehicle.vin || 'Not provided'}`; }
         });
 
-        // Inspection Pass
         document.getElementById('btn-inspect-pass').addEventListener('click', function() {
             const id = document.getElementById('audit-select').value;
             if(!id) { alert('Please select a vehicle from the yard first.'); return; }
-            
             const vehicle = yardVehicles.find(v => v.id == id);
             if(vehicle) {
                 vehicle.status = 'Cleared/Passed';
@@ -680,11 +693,9 @@
             }
         });
 
-        // Inspection Fail & SMS trigger
         document.getElementById('btn-inspect-fail').addEventListener('click', function() {
             const id = document.getElementById('audit-select').value;
             if(!id) { alert('Please select a vehicle from the yard first.'); return; }
-            
             const vehicle = yardVehicles.find(v => v.id == id);
             if(vehicle) {
                 vehicle.status = 'Failed / Defective';
@@ -703,17 +714,14 @@
                 localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
                 document.getElementById('audit-select').value = '';
                 populateAuditDropdown();
-
                 alert(`📱 [SMS Gateway simulated to ${vehicle.phone}]\n\n"VeloVault Notice: Dear ${vehicle.owner}, vehicle VIN ${vehicle.vin || vehicle.plate} has FAILED roadworthy testing. Defects: ${vehicle.defects.join(', ')}."`);
             }
         });
 
-        // Calculation live inputs
         ['fee-test', 'fee-days', 'fee-rate'].forEach(id => {
             document.getElementById(id).addEventListener('input', calculateTotal);
         });
 
-        // Process Payment
         document.getElementById('btn-process-payment').addEventListener('click', function() {
             const id = document.getElementById('checkout-select').value;
             if(!id) { alert('Please select a cleared vehicle for release.'); return; }
@@ -742,7 +750,6 @@
 
                 historyLogs.unshift(historyRecord);
                 localStorage.setItem('historyLogs', JSON.stringify(historyLogs));
-
                 yardVehicles.splice(vehicleIndex, 1);
                 localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
 
@@ -752,7 +759,6 @@
             }
         });
 
-        // Load sample records
         document.getElementById('btn-load-sample').addEventListener('click', function() {
             yardVehicles = [{
                 id: Date.now(),
