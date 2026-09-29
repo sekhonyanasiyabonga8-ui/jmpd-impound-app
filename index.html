@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VeloVault Manager</title>
+    <!-- Include HTML5 QR & Barcode Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
             --primary: #1e3a8a;
@@ -39,10 +41,12 @@
         .form-group { margin-bottom: 14px; }
         label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 6px; color: #475569; }
         input, select, textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: #fff; color: var(--text); }
+        input:focus, select:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
         
         button.btn { background: var(--secondary); color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-bottom: 10px; }
         button.btn-success { background: var(--success); }
         button.btn-danger { background: var(--danger); }
+        button.btn-accent { background: var(--accent); }
         button.btn:active { opacity: 0.8; transform: scale(0.98); }
 
         .summary-box { background: #f1f5f9; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 0.95rem; }
@@ -58,6 +62,10 @@
         .dash-card h4 { font-size: 0.75rem; color: #64748b; margin-bottom: 4px; }
         .dash-card .val { font-size: 1.4rem; font-weight: bold; color: var(--primary); }
 
+        /* Scanner Modal / Box Styling */
+        #scanner-container { display: none; margin-bottom: 14px; border: 2px dashed var(--secondary); border-radius: 8px; padding: 10px; background: #000; text-align: center; }
+        #reader { width: 100%; max-height: 300px; border-radius: 6px; overflow: hidden; }
+
         /* Role Switch Overlay */
         #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--background); z-index: 999; display: flex; flex-direction: column; justify-content: center; padding: 16px; overflow-y: auto; }
     </style>
@@ -72,7 +80,7 @@
         </div>
         <div class="card">
             <h2>Customer / Walk-In Registration Portal</h2>
-            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">Register your vehicle details or check your test status instantly.</p>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">Register your vehicle details using your 17-digit VIN or check your test status instantly.</p>
             <button class="btn" id="btn-open-portal">Open Customer Portal</button>
         </div>
         <div class="card" style="margin-top: 12px;">
@@ -109,7 +117,23 @@
         <!-- Quick Walk-In Registration -->
         <div class="card">
             <h2>Quick Walk-In Registration</h2>
-            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">Enter your details to generate your test intake reference code & PIN.</p>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">Type your 17-digit VIN or use your camera to scan the barcode instantly.</p>
+            
+            <!-- Camera Scanner Box -->
+            <div id="scanner-container">
+                <div id="reader"></div>
+                <button type="button" class="btn btn-danger" id="btn-stop-scan" style="margin-top: 10px; margin-bottom:0; padding:8px;">Close Camera Scanner</button>
+            </div>
+
+            <div class="form-group">
+                <label>17-Digit VIN (Vehicle Identification Number)</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="pub-vin" placeholder="e.g. AAV1234567890ABCD" maxlength="17" style="text-transform: uppercase; font-family: monospace; letter-spacing: 1px;">
+                    <button type="button" class="btn btn-accent" id="btn-start-scan" style="width: 120px; margin-bottom:0; font-size: 0.85rem;">📷 Scan VIN</button>
+                </div>
+                <small style="color: #64748b; font-size: 0.75rem;" id="vin-counter">0 / 17 characters entered</small>
+            </div>
+
             <div class="form-group">
                 <label>Owner Name & Surname</label>
                 <input type="text" id="pub-owner" placeholder="e.g. Sipho Dlamini">
@@ -134,8 +158,8 @@
         <div class="card" style="margin-top: 15px;">
             <h2>Check Test Status & Defects</h2>
             <div class="form-group">
-                <label>Enter License Plate or PIN</label>
-                <input type="text" id="search-query" placeholder="e.g. ND 456-789 or PIN 739">
+                <label>Enter License Plate, 17-Digit VIN, or PIN</label>
+                <input type="text" id="search-query" placeholder="e.g. Plate, VIN, or PIN 739">
             </div>
             <button class="btn" id="btn-search-status">Search Vehicle Status</button>
             <div id="search-result" style="margin-top: 12px;"></div>
@@ -151,6 +175,9 @@
                 <select id="audit-select">
                     <option value="">-- Choose Registered Vehicle --</option>
                 </select>
+            </div>
+            <div class="form-group" id="audit-vin-display" style="font-size: 0.85rem; color: #64748b; background: #f1f5f9; padding: 8px; border-radius: 6px; margin-bottom: 12px;">
+                VIN: Not selected
             </div>
             <div class="form-group">
                 <label>1. Heavy Roller Brake Tester Efficiency (≥ 55%)</label>
@@ -220,7 +247,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Plate</th>
+                            <th>Plate / VIN</th>
                             <th>Model</th>
                             <th>Status</th>
                             <th>Ref</th>
@@ -288,6 +315,7 @@
         let yardVehicles = JSON.parse(localStorage.getItem('yardVehicles')) || [
             {
                 id: 1727500000000,
+                vin: "1HGCR2F83HA000000",
                 plate: "ND 456-789",
                 model: "Isuzu NPR 400",
                 owner: "Sipho Dlamini",
@@ -302,6 +330,8 @@
         let historyLogs = JSON.parse(localStorage.getItem('historyLogs')) || [];
         localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
         localStorage.setItem('historyLogs', JSON.stringify(historyLogs));
+
+        let html5QrCode = null;
 
         function openPublicPortal() {
             document.getElementById('auth-overlay').style.display = 'none';
@@ -325,6 +355,7 @@
         }
 
         function logoutToPortal() {
+            stopScanner();
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById('public-view').style.display = 'none';
             document.getElementById('admin-nav').style.display = 'none';
@@ -335,6 +366,7 @@
         }
 
         function switchTab(tabName, btnElement) {
+            stopScanner();
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('nav button').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + tabName).classList.add('active');
@@ -354,6 +386,7 @@
             yardVehicles.filter(v => v.status === 'In Yard' || v.status === 'Failed / Defective').forEach(v => {
                 select.innerHTML += `<option value="${v.id}">${v.plate} - ${v.model} (${v.status})</option>`;
             });
+            document.getElementById('audit-vin-display').innerText = 'VIN: Not selected';
         }
 
         function populateCheckoutDropdown() {
@@ -396,12 +429,12 @@
 
                 return `
                     <tr>
-                        <td><strong>${v.plate}</strong></td>
+                        <td><strong>${v.plate}</strong><br><small style="font-family:monospace; font-size:0.75rem; color:#64748b;">${v.vin || 'No VIN'}</small></td>
                         <td>${v.model}</td>
                         <td><span style="color:${statusColor}; font-weight:bold;">${v.status}</span></td>
                         <td>${v.refCode}</td>
                         <td>${v.pin}</td>
-                        <td><button class="btn" style="padding: 6px 10px; font-size: 0.8rem; margin-bottom: 0;" onclick="alert('Notification sent to ${v.phone}')">SMS</button></td>
+                        <td><button class="btn" style="padding: 6px 10px; font-size: 0.8rem; margin-bottom: 0;" onclick="alert('SMS notification sent to ${v.phone}')">SMS</button></td>
                     </tr>
                 `;
             }).join('');
@@ -441,6 +474,7 @@
             container.innerHTML = historyLogs.map(h => `
                 <div class="history-item">
                     <strong>Vehicle:</strong> ${h.plate} (${h.model})<br>
+                    <small style="font-family:monospace; color:#64748b;">VIN: ${h.vin || 'N/A'}</small><br>
                     <strong>Owner:</strong> ${h.owner}<br>
                     <small>Test Fee: R${h.testFee} | Storage: R${h.storageExcl.toFixed(2)} | VAT: R${h.vat.toFixed(2)}</small><br>
                     <strong style="color: var(--primary);">Total Paid: R${h.totalPaid}</strong>
@@ -448,6 +482,65 @@
                 </div>
             `).join('');
         }
+
+        // Camera Barcode Scanner Controls
+        document.getElementById('btn-start-scan').addEventListener('click', function() {
+            const container = document.getElementById('scanner-container');
+            container.style.display = 'block';
+
+            if(!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 100 } },
+                (decodedText, decodedResult) => {
+                    // Successful Scan
+                    let cleanVin = decodedText.trim().toUpperCase();
+                    document.getElementById('pub-vin').value = cleanVin.substring(0, 17);
+                    updateVinCounter();
+                    stopScanner();
+                    alert('Successfully scanned VIN code!');
+                },
+                (errorMessage) => {
+                    // Scanning in progress / ignore frame errors
+                }
+            ).catch(err => {
+                alert('Unable to access camera. Please check camera permissions in your browser settings.');
+                container.style.display = 'none';
+            });
+        });
+
+        function stopScanner() {
+            if(html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    document.getElementById('scanner-container').style.display = 'none';
+                }).catch(err => {
+                    document.getElementById('scanner-container').style.display = 'none';
+                });
+            } else {
+                document.getElementById('scanner-container').style.display = 'none';
+            }
+        }
+
+        document.getElementById('btn-stop-scan').addEventListener('click', stopScanner);
+
+        // VIN Character Counter and Auto-Format
+        const vinInput = document.getElementById('pub-vin');
+        function updateVinCounter() {
+            const len = vinInput.value.length;
+            document.getElementById('vin-counter').innerText = `${len} / 17 characters entered`;
+            if(len === 17) {
+                document.getElementById('vin-counter').style.color = 'var(--success)';
+            } else {
+                document.getElementById('vin-counter').style.color = '#64748b';
+            }
+        }
+        vinInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, ''); // Standard legal VIN character filter
+            updateVinCounter();
+        });
 
         // Standard Event Listeners for Reliable Mobile Interaction
         document.getElementById('btn-open-portal').addEventListener('click', openPublicPortal);
@@ -463,19 +556,25 @@
 
         // Customer Portal Registrations
         document.getElementById('btn-pub-register').addEventListener('click', function() {
+            const vin = document.getElementById('pub-vin').value.trim();
             const owner = document.getElementById('pub-owner').value.trim();
             const plate = document.getElementById('pub-plate').value.trim().toUpperCase();
             const model = document.getElementById('pub-model').value.trim();
             const phone = document.getElementById('pub-phone').value.trim();
             const resultBox = document.getElementById('self-reg-result');
 
+            if(!vin || vin.length < 17) {
+                resultBox.innerHTML = '<p style="color:red; font-size:0.9rem;">Please provide a valid 17-digit VIN number (type or scan).</p>';
+                return;
+            }
             if(!owner || !plate || !model) {
-                resultBox.innerHTML = '<p style="color:red; font-size:0.9rem;">Please enter owner name, plate, and vehicle model.</p>';
+                resultBox.innerHTML = '<p style="color:red; font-size:0.9rem;">Please fill in owner name, plate, and model.</p>';
                 return;
             }
 
             const vehicle = {
                 id: Date.now(),
+                vin: vin,
                 plate: plate,
                 model: model,
                 owner: owner,
@@ -493,24 +592,27 @@
             resultBox.innerHTML = `
                 <div style="background: #e2f8ed; padding: 12px; border-radius: 8px; border-left: 4px solid var(--success); margin-top:10px;">
                     <strong style="color:var(--success);">Registration Successful!</strong><br>
+                    <strong>VIN:</strong> ${vehicle.vin}<br>
                     <strong>Reference Code:</strong> ${vehicle.refCode}<br>
                     <strong>Your PIN:</strong> ${vehicle.pin}<br>
                     <small style="color: #64748b; display:block; margin-top:6px;">Show this PIN or Reference to station staff.</small>
                 </div>
             `;
+            document.getElementById('pub-vin').value = '';
             document.getElementById('pub-owner').value = '';
             document.getElementById('pub-plate').value = '';
             document.getElementById('pub-model').value = '';
             document.getElementById('pub-phone').value = '';
+            updateVinCounter();
         });
 
         // Search Status
         document.getElementById('btn-search-status').addEventListener('click', function() {
             const query = document.getElementById('search-query').value.trim().toUpperCase();
             const resultBox = document.getElementById('search-result');
-            if(!query) { resultBox.innerHTML = '<p style="color:red;">Please enter a license plate or PIN.</p>'; return; }
+            if(!query) { resultBox.innerHTML = '<p style="color:red;">Please enter a plate, 17-digit VIN, or PIN.</p>'; return; }
 
-            const found = yardVehicles.find(v => v.plate.includes(query) || v.pin == query || v.refCode.toUpperCase() === query);
+            const found = yardVehicles.find(v => (v.vin && v.vin.includes(query)) || v.plate.includes(query) || v.pin == query || v.refCode.toUpperCase() === query);
             if(found) {
                 let statusColor = 'var(--accent)';
                 if(found.status === 'Cleared/Passed') statusColor = 'var(--success)';
@@ -524,26 +626,41 @@
                 resultBox.innerHTML = `
                     <div style="background: #f1f5f9; padding: 12px; border-radius: 8px; border-left: 4px solid ${statusColor}; margin-top:10px;">
                         <strong>Vehicle:</strong> ${found.plate} (${found.model})<br>
+                        <small style="font-family:monospace; color:#64748b;">VIN: ${found.vin || 'N/A'}</small><br>
                         <strong>Owner:</strong> ${found.owner}<br>
                         <strong>Status:</strong> <span style="color:${statusColor}; font-weight:bold;">${found.status}</span>
                         ${defectHtml}<br>
-                        <strong>Reference Code:</strong> ${found.refCode}<br>
-                        <strong>PIN:</strong> ${found.pin}
+                        <strong>Reference Code:</strong> ${found.refCode} | <strong>PIN:</strong> ${found.pin}
                     </div>
                 `;
             } else {
-                const histFound = historyLogs.find(h => h.plate.includes(query));
+                const histFound = historyLogs.find(h => (h.vin && h.vin.includes(query)) || h.plate.includes(query));
                 if(histFound) {
                     resultBox.innerHTML = `
                         <div style="background: #f1f5f9; padding: 12px; border-radius: 8px; border-left: 4px solid var(--success); margin-top:10px;">
                             <strong>Vehicle:</strong> ${histFound.plate} (${histFound.model})<br>
+                            <small style="font-family:monospace; color:#64748b;">VIN: ${histFound.vin || 'N/A'}</small><br>
                             <strong>Status:</strong> <span style="color:var(--success); font-weight:bold;">Gate Released / Completed</span><br>
                             <small style="color: #64748b; display:block; margin-top:6px;">Released on: ${histFound.date}</small>
                         </div>
                     `;
                 } else {
-                    resultBox.innerHTML = '<p style="color:red; margin-top:8px;">No matching vehicle found with that plate or PIN.</p>';
+                    resultBox.innerHTML = '<p style="color:red; margin-top:8px;">No matching vehicle found with that VIN, plate, or PIN.</p>';
                 }
+            }
+        });
+
+        // Audit dropdown selection listener
+        document.getElementById('audit-select').addEventListener('change', function() {
+            const id = this.value;
+            const vinDisplay = document.getElementById('audit-vin-display');
+            if(!id) {
+                vinDisplay.innerText = 'VIN: Not selected';
+                return;
+            }
+            const vehicle = yardVehicles.find(v => v.id == id);
+            if(vehicle) {
+                vinDisplay.innerText = `VIN: ${vehicle.vin || 'Not provided'}`;
             }
         });
 
@@ -587,7 +704,7 @@
                 document.getElementById('audit-select').value = '';
                 populateAuditDropdown();
 
-                alert(`📱 [SMS Gateway simulated to ${vehicle.phone}]\n\n"VeloVault Notice: Dear ${vehicle.owner}, your vehicle (${vehicle.plate}) has FAILED the roadworthy test. Failed items: ${vehicle.defects.join(', ')}. Please pick up your vehicle for repairs and return for re-test within 14 days."`);
+                alert(`📱 [SMS Gateway simulated to ${vehicle.phone}]\n\n"VeloVault Notice: Dear ${vehicle.owner}, vehicle VIN ${vehicle.vin || vehicle.plate} has FAILED roadworthy testing. Defects: ${vehicle.defects.join(', ')}."`);
             }
         });
 
@@ -612,6 +729,7 @@
 
                 const historyRecord = {
                     id: Date.now(),
+                    vin: vehicle.vin,
                     plate: vehicle.plate,
                     model: vehicle.model,
                     owner: vehicle.owner,
@@ -638,6 +756,7 @@
         document.getElementById('btn-load-sample').addEventListener('click', function() {
             yardVehicles = [{
                 id: Date.now(),
+                vin: "1HGCR2F83HA000000",
                 plate: "ND 456-789",
                 model: "Isuzu NPR 400",
                 owner: "Sipho Dlamini",
@@ -650,6 +769,7 @@
             }];
             historyLogs = [{
                 id: Date.now() - 1000,
+                vin: "4T1B11HK5NU123456",
                 plate: "CA 123-456",
                 model: "Toyota Hilux 2.8GD-6",
                 owner: "Mandla Khumalo",
