@@ -72,9 +72,7 @@
             50% { background-color: rgba(34, 197, 94, 0.25); border-color: var(--success); box-shadow: 0 0 15px var(--success); }
             100% { background-color: rgba(59, 130, 246, 0.1); border-color: var(--secondary); }
         }
-        .scanning-active {
-            animation: scanLaser 0.6s ease-in-out infinite;
-        }
+        .scanning-active { animation: scanLaser 0.6s ease-in-out infinite; }
 
         /* Role Switch Overlay */
         #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--background); z-index: 999; display: flex; flex-direction: column; justify-content: center; padding: 16px; overflow-y: auto; }
@@ -86,7 +84,7 @@
     <div id="auth-overlay">
         <div style="text-align: center; margin-bottom: 24px;">
             <h1 style="color: var(--primary); font-size: 2rem; margin-bottom: 6px;">VeloVault</h1>
-            <p style="font-size: 0.9rem; color: #64748b;">SANS 10047 / eNaTiS Roadworthy & Testing Portal</p>
+            <p style="font-size: 0.9rem; color: #64748b;">SANS 10047 / eNaTiS Cloud Roadworthy & Testing Portal</p>
         </div>
         <div class="card">
             <h2>Customer / Walk-In Registration Portal</h2>
@@ -270,7 +268,7 @@
                     </thead>
                     <tbody id="yard-table-body">
                         <tr>
-                            <td colspan="6" style="padding: 16px; color: #64748b;">No active vehicles in registry</td>
+                            <td colspan="6" style="padding: 16px; color: #64748b;">Loading cloud registry...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -317,36 +315,75 @@
     <div id="tab-history" class="tab-content">
         <h2>Payment & Release History</h2>
         <div class="card">
-            <button type="button" class="btn" style="margin-bottom: 14px; background: var(--primary);" id="btn-load-sample">Load Sample Records</button>
             <div id="history-list-container">
-                <p style="color: #64748b;">No completed payment history found.</p>
+                <p style="color: #64748b;">Loading cloud history logs...</p>
             </div>
         </div>
     </div>
 
-    <script>
-        let yardVehicles = JSON.parse(localStorage.getItem('yardVehicles')) || [
-            {
-                id: 1727500000000,
-                vin: "1HGCR2F83HA000000",
-                plate: "ND 456-789",
-                model: "Isuzu NPR 400",
-                owner: "Sipho Dlamini",
-                phone: "0823456789",
-                status: "In Yard",
-                refCode: "REF-4821",
-                pin: "739",
-                date: new Date().toLocaleString()
-            }
-        ];
-        
-        let historyLogs = JSON.parse(localStorage.getItem('historyLogs')) || [];
-        localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
-        localStorage.setItem('historyLogs', JSON.stringify(historyLogs));
+    <!-- Firebase & Firestore Cloud Integration -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
+        const firebaseConfig = {
+            apiKey: "AIzaSyBfY4P-Gr7wXIzPg8mNq5EX_vEl0YTViQ8",
+            authDomain: "velovault-b9bff.firebaseapp.com",
+            projectId: "velovault-b9bff",
+            storageBucket: "velovault-b9bff.firebasestorage.app",
+            messagingSenderId: "1097387850861",
+            appId: "1:1097387850861:web:3281370c6bba824ce15364"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let yardVehicles = [];
+        let historyLogs = [];
         let html5QrCode = null;
 
-        function openPublicPortal() {
+        // Real-time Cloud Sync for Active Yard Vehicles
+        onSnapshot(collection(db, "registrations"), (snapshot) => {
+            yardVehicles = [];
+            snapshot.forEach((docSnap) => {
+                yardVehicles.push({
+                    id: docSnap.id,
+                    ...docSnap.data()
+                });
+            });
+            const activeTab = document.querySelector('nav button.active');
+            if (activeTab) {
+                const tabName = activeTab.getAttribute('data-tab');
+                if(tabName === 'yard') renderYard();
+                if(tabName === 'audit') populateAuditDropdown();
+                if(tabName === 'checkout') populateCheckoutDropdown();
+                if(tabName === 'dashboard') renderDashboard();
+            }
+        }, (error) => {
+            console.error("Firestore error (registrations):", error);
+        });
+
+        // Real-time Cloud Sync for Completed History Logs
+        onSnapshot(collection(db, "history"), (snapshot) => {
+            historyLogs = [];
+            snapshot.forEach((docSnap) => {
+                historyLogs.push({
+                    id: docSnap.id,
+                    ...docSnap.data()
+                });
+            });
+            const activeTab = document.querySelector('nav button.active');
+            if (activeTab && activeTab.getAttribute('data-tab') === 'history') {
+                renderHistory();
+            }
+            if (activeTab && activeTab.getAttribute('data-tab') === 'dashboard') {
+                renderDashboard();
+            }
+        }, (error) => {
+            console.error("Firestore error (history):", error);
+        });
+
+        window.openPublicPortal = function() {
             document.getElementById('auth-overlay').style.display = 'none';
             document.getElementById('public-view').style.display = 'block';
             document.getElementById('admin-nav').style.display = 'none';
@@ -354,7 +391,7 @@
             window.scrollTo(0, 0);
         }
 
-        function openAdminPortal() {
+        window.openAdminPortal = function() {
             const pass = document.getElementById('admin-pass').value.trim();
             if(pass === 'admin123') {
                 document.getElementById('auth-overlay').style.display = 'none';
@@ -367,7 +404,7 @@
             }
         }
 
-        function logoutToPortal() {
+        window.logoutToPortal = function() {
             stopScanner();
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById('public-view').style.display = 'none';
@@ -378,7 +415,7 @@
             window.scrollTo(0, 0);
         }
 
-        function switchTab(tabName, btnElement) {
+        window.switchTab = function(tabName, btnElement) {
             stopScanner();
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('nav button').forEach(el => el.classList.remove('active'));
@@ -397,7 +434,7 @@
             const select = document.getElementById('audit-select');
             select.innerHTML = '<option value="">-- Choose Registered Vehicle --</option>';
             yardVehicles.filter(v => v.status === 'In Yard' || v.status === 'Failed / Defective').forEach(v => {
-                select.innerHTML += `<option value="${v.id}">${v.plate} - ${v.model} (${v.status})</option>`;
+                select.innerHTML += `<option value="${v.id}">${v.plate || 'NO PLATE'} - ${v.model} (${v.status})</option>`;
             });
             document.getElementById('audit-vin-display').innerText = 'VIN: Not selected';
         }
@@ -406,7 +443,7 @@
             const select = document.getElementById('checkout-select');
             select.innerHTML = '<option value="">-- Select Cleared Vehicle --</option>';
             yardVehicles.filter(v => v.status === 'Cleared/Passed').forEach(v => {
-                select.innerHTML += `<option value="${v.id}">${v.plate} - ${v.model} (${v.owner})</option>`;
+                select.innerHTML += `<option value="${v.id}">${v.plate || 'NO PLATE'} - ${v.model} (${v.owner})</option>`;
             });
             calculateTotal();
         }
@@ -432,7 +469,7 @@
         function renderYard() {
             const tbody = document.getElementById('yard-table-body');
             if(yardVehicles.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="padding: 16px; color: #64748b;">No active vehicles in registry</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="padding: 16px; color: #64748b;">No active vehicles in cloud registry</td></tr>';
                 return;
             }
             tbody.innerHTML = yardVehicles.map(v => {
@@ -442,12 +479,12 @@
 
                 return `
                     <tr>
-                        <td><strong>${v.plate}</strong><br><small style="font-family:monospace; font-size:0.75rem; color:#64748b;">${v.vin || 'No VIN'}</small></td>
-                        <td>${v.model}</td>
-                        <td><span style="color:${statusColor}; font-weight:bold;">${v.status}</span></td>
-                        <td>${v.refCode}</td>
-                        <td>${v.pin}</td>
-                        <td><button class="btn" style="padding: 6px 10px; font-size: 0.8rem; margin-bottom: 0;" onclick="alert('SMS notification sent to ${v.phone}')">SMS</button></td>
+                        <td><strong>${v.plate || 'N/A'}</strong><br><small style="font-family:monospace; font-size:0.75rem; color:#64748b;">${v.vin || 'No VIN'}</small></td>
+                        <td>${v.model || 'N/A'}</td>
+                        <td><span style="color:${statusColor}; font-weight:bold;">${v.status || 'In Yard'}</span></td>
+                        <td>${v.refCode || 'N/A'}</td>
+                        <td>${v.pin || 'N/A'}</td>
+                        <td><button class="btn" style="padding: 6px 10px; font-size: 0.8rem; margin-bottom: 0;" onclick="alert('SMS notification sent to ${v.phone || 'N/A'}')">SMS</button></td>
                     </tr>
                 `;
             }).join('');
@@ -455,7 +492,7 @@
 
         function renderDashboard() {
             const totalIntakeCount = yardVehicles.length + historyLogs.length;
-            const impoundedCount = yardVehicles.filter(v => v.status === 'In Yard' || v.status === 'Failed / Defective').length;
+            const impoundedCount = yardVehicles.filter(v => v.status === 'In Yard' || v.status === 'Failed / Defective' || !v.status).length;
             const clearedCount = yardVehicles.filter(v => v.status === 'Cleared/Passed').length;
             const releasedCount = historyLogs.length;
 
@@ -481,7 +518,7 @@
         function renderHistory() {
             const container = document.getElementById('history-list-container');
             if(historyLogs.length === 0) {
-                container.innerHTML = '<p style="color: #64748b;">No completed payment history recorded yet.</p>';
+                container.innerHTML = '<p style="color: #64748b;">No completed payment history recorded in cloud yet.</p>';
                 return;
             }
             container.innerHTML = historyLogs.map(h => `
@@ -489,9 +526,9 @@
                     <strong>Vehicle:</strong> ${h.plate} (${h.model})<br>
                     <small style="font-family:monospace; color:#64748b;">VIN: ${h.vin || 'N/A'}</small><br>
                     <strong>Owner:</strong> ${h.owner}<br>
-                    <small>Test Fee: R${h.testFee} | Storage: R${h.storageExcl.toFixed(2)} | VAT: R${h.vat.toFixed(2)}</small><br>
+                    <small>Test Fee: R${h.testFee} | Storage: R${h.storageExcl ? h.storageExcl.toFixed(2) : '0.00'} | VAT: R${h.vat ? h.vat.toFixed(2) : '0.00'}</small><br>
                     <strong style="color: var(--primary);">Total Paid: R${h.totalPaid}</strong>
-                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Released on: ${h.date}</div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Released on: ${h.date || 'Recent'}</div>
                 </div>
             `).join('');
         }
@@ -564,7 +601,7 @@
             updateVinCounter();
         });
 
-        // Event Listeners
+        // Event Listeners for Buttons & Tabs
         document.getElementById('btn-open-portal').addEventListener('click', openPublicPortal);
         document.getElementById('btn-admin-login').addEventListener('click', openAdminPortal);
         document.getElementById('btn-logout').addEventListener('click', logoutToPortal);
@@ -575,14 +612,15 @@
             });
         });
 
-        // Customer Portal Registrations
-        document.getElementById('btn-pub-register').addEventListener('click', function() {
+        // Customer Portal Registrations -> Saved directly to Firebase Firestore
+        document.getElementById('btn-pub-register').addEventListener('click', async function() {
             const vin = document.getElementById('pub-vin').value.trim();
             const owner = document.getElementById('pub-owner').value.trim();
             const plate = document.getElementById('pub-plate').value.trim().toUpperCase();
             const model = document.getElementById('pub-model').value.trim();
             const phone = document.getElementById('pub-phone').value.trim();
             const resultBox = document.getElementById('self-reg-result');
+            const submitBtn = this;
 
             if(!vin || vin.length < 17) {
                 resultBox.innerHTML = '<p style="color:red; font-size:0.9rem;">Please provide a valid 17-digit VIN number.</p>';
@@ -593,47 +631,58 @@
                 return;
             }
 
-            const vehicle = {
-                id: Date.now(),
-                vin: vin,
-                plate: plate,
-                model: model,
-                owner: owner,
-                phone: phone || "N/A",
-                status: 'In Yard',
-                defects: [],
-                refCode: 'REF-' + Math.floor(1000 + Math.random() * 9000),
-                pin: Math.floor(100 + Math.random() * 900),
-                date: new Date().toLocaleString()
-            };
+            const refCode = 'REF-' + Math.floor(1000 + Math.random() * 9000);
+            const pin = Math.floor(100 + Math.random() * 900);
 
-            yardVehicles.push(vehicle);
-            localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerText = "Syncing to Cloud...";
 
-            resultBox.innerHTML = `
-                <div style="background: #e2f8ed; padding: 12px; border-radius: 8px; border-left: 4px solid var(--success); margin-top:10px;">
-                    <strong style="color:var(--success);">Registration Successful!</strong><br>
-                    <strong>VIN:</strong> ${vehicle.vin}<br>
-                    <strong>Reference Code:</strong> ${vehicle.refCode}<br>
-                    <strong>Your PIN:</strong> ${vehicle.pin}<br>
-                    <small style="color: #64748b; display:block; margin-top:6px;">Show this PIN or Reference to station staff.</small>
-                </div>
-            `;
-            document.getElementById('pub-vin').value = '';
-            document.getElementById('pub-owner').value = '';
-            document.getElementById('pub-plate').value = '';
-            document.getElementById('pub-model').value = '';
-            document.getElementById('pub-phone').value = '';
-            updateVinCounter();
+                await addDoc(collection(db, "registrations"), {
+                    vin: vin,
+                    plate: plate,
+                    model: model,
+                    owner: owner,
+                    phone: phone || "N/A",
+                    status: 'In Yard',
+                    defects: [],
+                    refCode: refCode,
+                    pin: pin.toString(),
+                    timestamp: serverTimestamp(),
+                    date: new Date().toLocaleString()
+                });
+
+                resultBox.innerHTML = `
+                    <div style="background: #e2f8ed; padding: 12px; border-radius: 8px; border-left: 4px solid var(--success); margin-top:10px;">
+                        <strong style="color:var(--success);">Cloud Registration Successful!</strong><br>
+                        <strong>VIN:</strong> ${vin}<br>
+                        <strong>Reference Code:</strong> ${refCode}<br>
+                        <strong>Your PIN:</strong> ${pin}<br>
+                        <small style="color: #64748b; display:block; margin-top:6px;">Show this PIN or Reference to station staff.</small>
+                    </div>
+                `;
+                document.getElementById('pub-vin').value = '';
+                document.getElementById('pub-owner').value = '';
+                document.getElementById('pub-plate').value = '';
+                document.getElementById('pub-model').value = '';
+                document.getElementById('pub-phone').value = '';
+                updateVinCounter();
+            } catch (error) {
+                console.error("Error writing document: ", error);
+                alert("Failed to save to cloud database. Check console.");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Register & Generate PIN";
+            }
         });
 
-        // Search Status
+        // Search Status across Cloud records
         document.getElementById('btn-search-status').addEventListener('click', function() {
             const query = document.getElementById('search-query').value.trim().toUpperCase();
             const resultBox = document.getElementById('search-result');
             if(!query) { resultBox.innerHTML = '<p style="color:red;">Please enter a plate, 17-digit VIN, or PIN.</p>'; return; }
 
-            const found = yardVehicles.find(v => (v.vin && v.vin.includes(query)) || v.plate.includes(query) || v.pin == query || v.refCode.toUpperCase() === query);
+            const found = yardVehicles.find(v => (v.vin && v.vin.toUpperCase().includes(query)) || (v.plate && v.plate.toUpperCase().includes(query)) || v.pin == query || (v.refCode && v.refCode.toUpperCase() === query));
             if(found) {
                 let statusColor = 'var(--accent)';
                 if(found.status === 'Cleared/Passed') statusColor = 'var(--success)';
@@ -649,13 +698,13 @@
                         <strong>Vehicle:</strong> ${found.plate} (${found.model})<br>
                         <small style="font-family:monospace; color:#64748b;">VIN: ${found.vin || 'N/A'}</small><br>
                         <strong>Owner:</strong> ${found.owner}<br>
-                        <strong>Status:</strong> <span style="color:${statusColor}; font-weight:bold;">${found.status}</span>
+                        <strong>Status:</strong> <span style="color:${statusColor}; font-weight:bold;">${found.status || 'In Yard'}</span>
                         ${defectHtml}<br>
                         <strong>Reference Code:</strong> ${found.refCode} | <strong>PIN:</strong> ${found.pin}
                     </div>
                 `;
             } else {
-                const histFound = historyLogs.find(h => (h.vin && h.vin.includes(query)) || h.plate.includes(query));
+                const histFound = historyLogs.find(h => (h.vin && h.vin.toUpperCase().includes(query)) || (h.plate && h.plate.toUpperCase().includes(query)));
                 if(histFound) {
                     resultBox.innerHTML = `
                         <div style="background: #f1f5f9; padding: 12px; border-radius: 8px; border-left: 4px solid var(--success); margin-top:10px;">
@@ -666,7 +715,7 @@
                         </div>
                     `;
                 } else {
-                    resultBox.innerHTML = '<p style="color:red; margin-top:8px;">No matching vehicle found with that VIN, plate, or PIN.</p>';
+                    resultBox.innerHTML = '<p style="color:red; margin-top:8px;">No matching vehicle found with that VIN, plate, or PIN in cloud.</p>';
                 }
             }
         });
@@ -679,42 +728,57 @@
             if(vehicle) { vinDisplay.innerText = `VIN: ${vehicle.vin || 'Not provided'}`; }
         });
 
-        document.getElementById('btn-inspect-pass').addEventListener('click', function() {
+        // Pass Inspection -> Updates Firebase Firestore
+        document.getElementById('btn-inspect-pass').addEventListener('click', async function() {
             const id = document.getElementById('audit-select').value;
             if(!id) { alert('Please select a vehicle from the yard first.'); return; }
-            const vehicle = yardVehicles.find(v => v.id == id);
-            if(vehicle) {
-                vehicle.status = 'Cleared/Passed';
-                vehicle.defects = [];
-                localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
+            
+            try {
+                const vehicleRef = doc(db, "registrations", id);
+                await updateDoc(vehicleRef, {
+                    status: 'Cleared/Passed',
+                    defects: []
+                });
                 document.getElementById('audit-select').value = '';
                 populateAuditDropdown();
-                alert('Inspection passed and logged to eNaTiS terminal!');
+                alert('Inspection passed and updated in cloud database!');
+            } catch(e) {
+                console.error("Error updating inspection:", e);
+                alert("Failed to update status in cloud.");
             }
         });
 
-        document.getElementById('btn-inspect-fail').addEventListener('click', function() {
+        // Fail Inspection -> Updates Firebase Firestore
+        document.getElementById('btn-inspect-fail').addEventListener('click', async function() {
             const id = document.getElementById('audit-select').value;
             if(!id) { alert('Please select a vehicle from the yard first.'); return; }
             const vehicle = yardVehicles.find(v => v.id == id);
-            if(vehicle) {
-                vehicle.status = 'Failed / Defective';
-                let failedItems = [];
-                for(let i=1; i<=5; i++) {
-                    let val = document.getElementById('insp-'+i).value;
-                    if(val === 'FAIL') {
-                        if(i===1) failedItems.push('Brake Efficiency');
-                        if(i===2) failedItems.push('Steering Linkage');
-                        if(i===3) failedItems.push('Tyre Tread Depth');
-                        if(i===4) failedItems.push('Headlamp Alignment');
-                        if(i===5) failedItems.push('Exhaust Emissions');
-                    }
+            
+            let failedItems = [];
+            for(let i=1; i<=5; i++) {
+                let val = document.getElementById('insp-'+i).value;
+                if(val === 'FAIL') {
+                    if(i===1) failedItems.push('Brake Efficiency');
+                    if(i===2) failedItems.push('Steering Linkage');
+                    if(i===3) failedItems.push('Tyre Tread Depth');
+                    if(i===4) failedItems.push('Headlamp Alignment');
+                    if(i===5) failedItems.push('Exhaust Emissions');
                 }
-                vehicle.defects = failedItems.length > 0 ? failedItems : ['General Roadworthy Defect'];
-                localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
+            }
+            const defectsArr = failedItems.length > 0 ? failedItems : ['General Roadworthy Defect'];
+
+            try {
+                const vehicleRef = doc(db, "registrations", id);
+                await updateDoc(vehicleRef, {
+                    status: 'Failed / Defective',
+                    defects: defectsArr
+                });
                 document.getElementById('audit-select').value = '';
                 populateAuditDropdown();
-                alert(`📱 [SMS Gateway simulated to ${vehicle.phone}]\n\n"VeloVault Notice: Dear ${vehicle.owner}, vehicle VIN ${vehicle.vin || vehicle.plate} has FAILED roadworthy testing. Defects: ${vehicle.defects.join(', ')}."`);
+                alert(`📱 [SMS Gateway simulated to ${vehicle.phone}]\n\n"VeloVault Notice: Dear ${vehicle.owner}, vehicle VIN ${vehicle.vin || vehicle.plate} has FAILED roadworthy testing. Defects: ${defectsArr.join(', ')}."`);
+            } catch(e) {
+                console.error("Error failing inspection:", e);
+                alert("Failed to update defect status in cloud.");
             }
         });
 
@@ -722,73 +786,45 @@
             document.getElementById(id).addEventListener('input', calculateTotal);
         });
 
-        document.getElementById('btn-process-payment').addEventListener('click', function() {
+        // Checkout & Gate Release -> Moves record from registrations to history in Firestore
+        document.getElementById('btn-process-payment').addEventListener('click', async function() {
             const id = document.getElementById('checkout-select').value;
             if(!id) { alert('Please select a cleared vehicle for release.'); return; }
 
-            const vehicleIndex = yardVehicles.findIndex(v => v.id == id);
-            if(vehicleIndex > -1) {
-                const vehicle = yardVehicles[vehicleIndex];
-                const testFee = parseFloat(document.getElementById('fee-test').value) || 0;
-                const days = parseInt(document.getElementById('fee-days').value) || 0;
-                const rate = parseFloat(document.getElementById('fee-rate').value) || 0;
-                const storageExcl = days * rate;
-                const totalPaid = calculateTotal();
+            const vehicle = yardVehicles.find(v => v.id == id);
+            if(!vehicle) { alert('Vehicle not found.'); return; }
 
-                const historyRecord = {
-                    id: Date.now(),
-                    vin: vehicle.vin,
-                    plate: vehicle.plate,
-                    model: vehicle.model,
-                    owner: vehicle.owner,
+            const testFee = parseFloat(document.getElementById('fee-test').value) || 0;
+            const days = parseInt(document.getElementById('fee-days').value) || 0;
+            const rate = parseFloat(document.getElementById('fee-rate').value) || 0;
+            const storageExcl = days * rate;
+            const totalPaid = calculateTotal();
+
+            try {
+                // 1. Add to history collection
+                await addDoc(collection(db, "history"), {
+                    vin: vehicle.vin || "",
+                    plate: vehicle.plate || "",
+                    model: vehicle.model || "",
+                    owner: vehicle.owner || "",
                     testFee: testFee,
                     storageExcl: storageExcl,
                     vat: (testFee + storageExcl) * 0.15,
                     totalPaid: totalPaid.toFixed(2),
+                    timestamp: serverTimestamp(),
                     date: new Date().toLocaleString()
-                };
+                });
 
-                historyLogs.unshift(historyRecord);
-                localStorage.setItem('historyLogs', JSON.stringify(historyLogs));
-                yardVehicles.splice(vehicleIndex, 1);
-                localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
+                // 2. Delete from active registrations collection
+                await deleteDoc(doc(db, "registrations", id));
 
-                alert('Payment processed successfully! Gate authorization released.');
+                alert('Payment processed successfully! Gate authorization released and synced across cloud.');
                 document.getElementById('checkout-select').value = '';
                 populateCheckoutDropdown();
+            } catch(e) {
+                console.error("Error processing checkout:", e);
+                alert("Error completing checkout transaction.");
             }
-        });
-
-        document.getElementById('btn-load-sample').addEventListener('click', function() {
-            yardVehicles = [{
-                id: Date.now(),
-                vin: "1HGCR2F83HA000000",
-                plate: "ND 456-789",
-                model: "Isuzu NPR 400",
-                owner: "Sipho Dlamini",
-                phone: "0823456789",
-                status: "In Yard",
-                defects: [],
-                refCode: "REF-4821",
-                pin: "739",
-                date: new Date().toLocaleString()
-            }];
-            historyLogs = [{
-                id: Date.now() - 1000,
-                vin: "4T1B11HK5NU123456",
-                plate: "CA 123-456",
-                model: "Toyota Hilux 2.8GD-6",
-                owner: "Mandla Khumalo",
-                testFee: 850,
-                storageExcl: 164,
-                vat: 152.10,
-                totalPaid: "1166.10",
-                date: new Date().toLocaleString()
-            }];
-            localStorage.setItem('yardVehicles', JSON.stringify(yardVehicles));
-            localStorage.setItem('historyLogs', JSON.stringify(historyLogs));
-            renderHistory();
-            alert('Sample records loaded successfully!');
         });
     </script>
 </body>
