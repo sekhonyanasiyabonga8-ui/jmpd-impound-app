@@ -14,11 +14,11 @@
     <header class="bg-blue-900 text-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <h1 class="text-xl font-bold tracking-wider">VeloVault</h1>
+                <h1 id="headerTitle" class="text-xl font-bold tracking-wider">VeloVault</h1>
                 <span class="bg-amber-500 text-xs font-semibold px-2.5 py-1 rounded text-white">SANS 10047 / eNaTiS</span>
             </div>
-            <div>
-                <button onclick="showLandingScreen()" class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded text-sm font-medium transition">Home / Login</button>
+            <div id="headerRightBtn">
+                <button onclick="showLandingScreen()" id="exitPortalBtn" class="hidden bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-xs font-semibold transition">Exit</button>
             </div>
         </div>
     </header>
@@ -27,26 +27,26 @@
     <div id="landingScreen" class="max-w-md mx-auto p-4 sm:p-6 mt-10 space-y-6">
         <div class="text-center space-y-1">
             <h2 class="text-2xl font-bold text-blue-900">VeloVault</h2>
-            <p class="text-xs text-slate-500">SANS 10047 / eNaTiS Impound & Testing Manager</p>
+            <p class="text-xs text-slate-500">SANS 10047 / eNaTiS Roadworthy & Testing Portal</p>
         </div>
 
-        <!-- Vehicle Owner Portal (Public) -->
+        <!-- Customer / Walk-In Registration Portal -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
             <div>
-                <h3 class="font-bold text-blue-900 text-base">Vehicle Owner Portal (Public)</h3>
-                <p class="text-xs text-slate-500 mt-0.5">Check your vehicle status, reference code, and PIN.</p>
+                <h3 class="font-bold text-blue-900 text-base">Customer / Walk-In Registration Portal</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Register your vehicle details or check your test status instantly.</p>
             </div>
-            <button onclick="openOwnerPortal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Access Owner Status Portal</button>
+            <button onclick="openCustomerPortal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Open Customer Portal</button>
         </div>
 
-        <!-- Roadworthy Station Login (Full Access) -->
+        <!-- Station Admin Login -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
             <div>
-                <h3 class="font-bold text-blue-900 text-base">Roadworthy Station Login (Full Access)</h3>
-                <label class="block text-xs font-semibold uppercase text-slate-500 mt-2 mb-1">Manager / Station Password</label>
+                <h3 class="font-bold text-blue-900 text-base">Station Admin Login</h3>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mt-2 mb-1">Manager Password</label>
             </div>
             <input type="password" id="landingPasswordInput" placeholder="Enter password (admin123)" class="w-full border rounded-lg p-2.5 text-sm">
-            <button onclick="verifyLandingLogin()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Login to Full Management Dashboard</button>
+            <button onclick="verifyLandingLogin()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Login to Management Dashboard</button>
         </div>
     </div>
 
@@ -68,7 +68,51 @@
 
             <!-- TAB 1: INTAKE -->
             <section id="tab-intake" class="space-y-6">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <!-- Customer Portal View Form -->
+                <div id="customerIntakeView" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-6 hidden">
+                    <div>
+                        <h2 class="text-lg font-bold text-blue-900">Quick Walk-In Registration</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Just arrived? Register your details below to instantly get your tracking PIN and reference code.</p>
+                    </div>
+                    <form id="customerRegistrationForm" onsubmit="handleCustomerRegistration(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Your Name & Surname</label>
+                            <input type="text" id="custOwner" required placeholder="e.g. Sipho Dlamini" class="w-full border rounded-lg p-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">License Plate Number</label>
+                            <input type="text" id="custPlate" required placeholder="e.g. ND 456-789" class="w-full border rounded-lg p-2.5 text-sm uppercase">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Vehicle Make & Model</label>
+                            <input type="text" id="custModel" required placeholder="e.g. Isuzu NPR 400" class="w-full border rounded-lg p-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Phone Number (WhatsApp / SMS)</label>
+                            <input type="tel" id="custPhone" required placeholder="0823456789" class="w-full border rounded-lg p-2.5 text-sm">
+                        </div>
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Generate My Reference & PIN</button>
+                    </form>
+
+                    <div id="customerSuccessBox" class="hidden bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg space-y-1 text-sm text-slate-800">
+                        <div class="font-bold text-emerald-800">Registration Successful!</div>
+                        <div>Reference Code: <span id="successRef" class="font-mono font-bold"></span></div>
+                        <div>Your PIN: <span id="successPin" class="font-mono font-bold text-blue-600 text-base"></span></div>
+                        <div class="text-xs text-slate-500 pt-1">Save or screenshot your PIN. Station staff will use this to process your test.</div>
+                    </div>
+
+                    <div class="border-t pt-4 space-y-3">
+                        <h3 class="font-bold text-blue-900 text-sm">Check Existing Test Status</h3>
+                        <div class="flex gap-2">
+                            <input type="text" id="checkPlateOrPin" placeholder="Enter License Plate or PIN" class="flex-1 border rounded-lg p-2 text-sm uppercase">
+                            <button onclick="checkVehicleStatus()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">Check</button>
+                        </div>
+                        <div id="statusResultBox" class="hidden bg-slate-50 p-3 rounded-lg border text-sm space-y-1"></div>
+                    </div>
+                </div>
+
+                <!-- Admin Intake Full Form -->
+                <div id="adminIntakeView" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                     <h2 class="text-lg font-bold text-blue-900 mb-4">Registration</h2>
                     <form id="registrationForm" onsubmit="handleRegistration(event)" class="space-y-4">
                         <div>
@@ -179,11 +223,12 @@
                             <input type="number" id="feeDailyRate" value="164" oninput="calculateTotal()" class="w-full border rounded-lg p-2.5 text-sm">
                         </div>
 
-                        <!-- Calculation Block (VAT line removed as requested) -->
+                        <!-- Calculation Block with VAT restored -->
                         <div class="bg-slate-50 border p-4 rounded-lg space-y-2 text-sm text-slate-800">
-                            <div class="flex justify-between"><span>Test Fee:</span> <span id="calcTestFee">R850.00</span></div>
-                            <div class="flex justify-between"><span>Yard Storage:</span> <span id="calcStorage">R656.00</span></div>
-                            <div class="border-t pt-2 flex justify-between font-bold text-base text-blue-900"><span>Total Payable:</span> <span id="calcTotalPayable">R1506.00</span></div>
+                            <div class="flex justify-between"><span>Test Fee (Excl. VAT):</span> <span id="calcTestFee">R850.00</span></div>
+                            <div class="flex justify-between"><span>Yard Storage (Excl. VAT):</span> <span id="calcStorage">R656.00</span></div>
+                            <div class="flex justify-between"><span>15% VAT:</span> <span id="calcVat">R225.90</span></div>
+                            <div class="border-t pt-2 flex justify-between font-bold text-base text-blue-900"><span>Total Payable:</span> <span id="calcTotalPayable">R1731.90</span></div>
                         </div>
 
                         <button onclick="processCheckout()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Process Payment & Authorize Gate Release</button>
@@ -270,6 +315,7 @@
         let vehiclesData = [];
         let selectedAuditId = null;
         let selectedCheckoutId = null;
+        let isCustomerPortalMode = false;
 
         db.collection("vehicles").onSnapshot((snapshot) => {
             vehiclesData = [];
@@ -282,23 +328,46 @@
         function verifyLandingLogin() {
             const pwd = document.getElementById('landingPasswordInput').value;
             if (pwd === "admin123") {
+                isCustomerPortalMode = false;
                 document.getElementById('landingScreen').classList.add('hidden');
                 document.getElementById('mainAppContainer').classList.remove('hidden');
+                document.getElementById('exitPortalBtn').classList.remove('hidden');
+                document.getElementById('headerTitle').innerHTML = 'VTS Grade A Manager <span class="bg-amber-500 text-xs font-semibold px-2 py-0.5 rounded text-white ml-2">STATION ADMIN</span>';
+                
+                // Show all admin tabs
+                document.querySelectorAll('nav button').forEach(b => b.classList.remove('hidden'));
+                document.getElementById('adminIntakeView').classList.remove('hidden');
+                document.getElementById('customerIntakeView').classList.add('hidden');
                 switchTab('intake');
             } else {
                 alert("Incorrect password!");
             }
         }
 
-        function openOwnerPortal() {
+        function openCustomerPortal() {
+            isCustomerPortalMode = true;
             document.getElementById('landingScreen').classList.add('hidden');
             document.getElementById('mainAppContainer').classList.remove('hidden');
-            switchTab('yard');
+            document.getElementById('exitPortalBtn').classList.remove('hidden');
+            document.getElementById('headerTitle').innerHTML = 'VeloVault <span class="bg-orange-500 text-xs font-semibold px-2 py-0.5 rounded text-white ml-2">CUSTOMER PORTAL</span>';
+            
+            // Hide admin tabs except Intake & Yard status views
+            document.querySelectorAll('nav button').forEach((b, idx) => {
+                if (idx > 0 && idx !== 3) b.classList.add('hidden'); // keep intake (0) and yard/status (3)
+                else b.classList.remove('hidden');
+            });
+
+            document.getElementById('adminIntakeView').classList.add('hidden');
+            document.getElementById('customerIntakeView').classList.remove('hidden');
+            switchTab('intake');
         }
 
         function showLandingScreen() {
             document.getElementById('mainAppContainer').classList.add('hidden');
             document.getElementById('landingScreen').classList.remove('hidden');
+            document.getElementById('exitPortalBtn').classList.add('hidden');
+            document.getElementById('headerTitle').innerText = 'VeloVault';
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('hidden'));
         }
 
         function switchTab(tabName) {
@@ -310,6 +379,34 @@
                 btn.classList.add('border-transparent', 'text-slate-500');
             });
             event.currentTarget.classList.add('border-blue-600', 'text-blue-600', 'font-semibold');
+        }
+
+        async function handleCustomerRegistration(e) {
+            e.preventDefault();
+            const owner = document.getElementById('custOwner').value.trim();
+            const plate = document.getElementById('custPlate').value.trim().toUpperCase();
+            const model = document.getElementById('custModel').value.trim();
+            const phone = document.getElementById('custPhone').value.trim();
+
+            const refCode = "REF-" + Math.floor(1000 + Math.random() * 9000);
+            const pinCode = Math.floor(100 + Math.random() * 900);
+
+            try {
+                await db.collection("vehicles").add({
+                    plate, vin: "WALK-IN-VIN", model, engine: "N/A", owner, phone,
+                    ref: refCode,
+                    pin: pinCode.toString(),
+                    status: "In Yard",
+                    timestamp: new Date().toISOString()
+                });
+                document.getElementById('successRef').innerText = refCode;
+                document.getElementById('successPin').innerText = pinCode;
+                document.getElementById('customerSuccessBox').classList.remove('hidden');
+                document.getElementById('customerRegistrationForm').reset();
+            } catch (err) {
+                console.error(err);
+                alert("Error saving record.");
+            }
         }
 
         async function handleRegistration(e) {
@@ -337,6 +434,25 @@
             } catch (err) {
                 console.error(err);
                 alert("Error saving record.");
+            }
+        }
+
+        function checkVehicleStatus() {
+            const query = document.getElementById('checkPlateOrPin').value.trim().toUpperCase();
+            const resultBox = document.getElementById('statusResultBox');
+            if (!query) return;
+
+            const found = vehiclesData.find(v => v.plate === query || v.pin === query || v.ref.toUpperCase() === query);
+            resultBox.classList.remove('hidden');
+
+            if (found) {
+                resultBox.innerHTML = `
+                    <div class="font-bold text-blue-900">Vehicle: ${found.plate} (${found.model})</div>
+                    <div>Status: <span class="font-semibold text-amber-600">${found.status}</span></div>
+                    <div class="text-xs text-slate-500">Owner: ${found.owner} | Ref: ${found.ref}</div>
+                `;
+            } else {
+                resultBox.innerHTML = `<div class="text-red-600 font-medium">No vehicle found matching "${query}"</div>`;
             }
         }
 
@@ -415,10 +531,14 @@
             const days = parseFloat(document.getElementById('feeDays').value) || 0;
             const dailyRate = parseFloat(document.getElementById('feeDailyRate').value) || 0;
             const storageTotal = days * dailyRate;
-            const totalPayable = testFee + storageTotal;
+            
+            const subtotal = testFee + storageTotal;
+            const vat = subtotal * 0.15;
+            const totalPayable = subtotal + vat;
 
             document.getElementById('calcTestFee').innerText = `R${testFee.toFixed(2)}`;
             document.getElementById('calcStorage').innerText = `R${storageTotal.toFixed(2)}`;
+            document.getElementById('calcVat').innerText = `R${vat.toFixed(2)}`;
             document.getElementById('calcTotalPayable').innerText = `R${totalPayable.toFixed(2)}`;
         }
 
@@ -427,7 +547,8 @@
             const testFee = parseFloat(document.getElementById('feeTesting').value) || 0;
             const days = parseFloat(document.getElementById('feeDays').value) || 0;
             const dailyRate = parseFloat(document.getElementById('feeDailyRate').value) || 0;
-            const totalPayable = testFee + (days * dailyRate);
+            const subtotal = testFee + (days * dailyRate);
+            const totalPayable = subtotal + (subtotal * 0.15);
 
             try {
                 await db.collection("vehicles").doc(selectedCheckoutId).update({
