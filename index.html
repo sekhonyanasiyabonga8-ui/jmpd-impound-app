@@ -18,222 +18,240 @@
                 <span class="bg-amber-500 text-xs font-semibold px-2.5 py-1 rounded text-white">SANS 10047 / eNaTiS</span>
             </div>
             <div>
-                <button onclick="openLoginModal()" class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded text-sm font-medium transition">Station Login</button>
+                <button onclick="showMainApp()" class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded text-sm font-medium transition">Dashboard Access</button>
             </div>
         </div>
     </header>
 
-    <!-- Main Navigation Tabs -->
-    <nav class="bg-white shadow-sm border-b overflow-x-auto">
-        <div class="max-w-7xl mx-auto px-4 flex space-x-6">
-            <button onclick="switchTab('intake')" class="tab-btn py-3 px-2 border-b-2 border-blue-600 font-semibold text-blue-600 text-sm whitespace-nowrap">1. Intake</button>
-            <button onclick="switchTab('audit')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">2. Audit</button>
-            <button onclick="switchTab('checkout')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">3. Checkout</button>
-            <button onclick="switchTab('yard')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">4. Yard</button>
-            <button onclick="switchTab('dashboard')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">5. Dashboard</button>
-            <button onclick="switchTab('history')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">6. History</button>
+    <!-- Landing Intro Screen (Matching Screenshot) -->
+    <div id="landingScreen" class="max-w-md mx-auto p-4 sm:p-6 mt-10 space-y-6">
+        <div class="text-center space-y-1">
+            <h2 class="text-2xl font-bold text-blue-900">VeloVault</h2>
+            <p class="text-xs text-slate-500">SANS 10047 / eNaTiS Impound & Testing Manager</p>
         </div>
-    </nav>
 
-    <!-- App Container -->
-    <main class="max-w-4xl mx-auto p-4 sm:p-6">
-
-        <!-- TAB 1: INTAKE -->
-        <section id="tab-intake" class="space-y-6">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg font-bold text-blue-900 mb-4">Registration</h2>
-                <form id="registrationForm" onsubmit="handleRegistration(event)" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">License Plate Number</label>
-                        <input type="text" id="regPlate" required placeholder="ND 456-789" class="w-full border rounded-lg p-2.5 text-sm uppercase">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">VIN (Chassis Number)</label>
-                        <input type="text" id="regVin" required maxlength="17" placeholder="AHT35NPR001234567" class="w-full border rounded-lg p-2.5 text-sm uppercase">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Make & Model</label>
-                        <input type="text" id="regModel" required placeholder="Isuzu NPR 400" class="w-full border rounded-lg p-2.5 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Engine Number</label>
-                        <input type="text" id="regEngine" required placeholder="4HF1-889922" class="w-full border rounded-lg p-2.5 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Owner's Name and Surname</label>
-                        <input type="text" id="regOwner" required placeholder="Sipho Dlamini" class="w-full border rounded-lg p-2.5 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Owner Phone (SMS/WhatsApp)</label>
-                        <input type="tel" id="regPhone" required placeholder="0823456789" class="w-full border rounded-lg p-2.5 text-sm">
-                    </div>
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Register Impound Intake & Generate PIN</button>
-                </form>
+        <!-- Vehicle Owner Portal Card -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+            <div>
+                <h3 class="font-bold text-blue-900 text-base">Vehicle Owner Portal (Public)</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Check your vehicle status, reference code, and PIN.</p>
             </div>
-        </section>
-
-        <!-- TAB 2: AUDIT -->
-        <section id="tab-audit" class="space-y-6 hidden">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg font-bold text-blue-900 mb-4">Grade A Technical Inspection (SANS 10047)</h2>
-                <div class="mb-4">
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Select Vehicle from Yard</label>
-                    <select id="auditVehicleSelect" onchange="loadAuditDetails()" class="w-full border rounded-lg p-2.5 text-sm bg-white">
-                        <option value="">-- Choose Dispatched Vehicle --</option>
-                    </select>
-                </div>
-
-                <div id="auditFormContainer" class="hidden space-y-4 border-t pt-4">
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">1. Heavy Roller Brake Tester Efficiency (&ge; 55%)</label>
-                            <select class="audit-dropdown w-full border rounded-lg p-2.5 text-sm bg-white">
-                                <option value="PASS">PASS</option>
-                                <option value="FAIL">FAIL</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">2. Steering Linkage & Joint Play (Pit Inspection)</label>
-                            <select class="audit-dropdown w-full border rounded-lg p-2.5 text-sm bg-white">
-                                <option value="PASS">PASS</option>
-                                <option value="FAIL">FAIL</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">3. Tyre Tread Depth (&ge; 1.6mm across all axles)</label>
-                            <select class="audit-dropdown w-full border rounded-lg p-2.5 text-sm bg-white">
-                                <option value="PASS">PASS</option>
-                                <option value="FAIL">FAIL</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">4. Headlamp Alignment & Light Voltage</label>
-                            <select class="audit-dropdown w-full border rounded-lg p-2.5 text-sm bg-white">
-                                <option value="PASS">PASS</option>
-                                <option value="FAIL">FAIL</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">5. Exhaust Emissions & Diesel Smoke Opacity</label>
-                            <select class="audit-dropdown w-full border rounded-lg p-2.5 text-sm bg-white">
-                                <option value="PASS">PASS</option>
-                                <option value="FAIL">FAIL</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button onclick="submitAudit()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Submit Inspection to eNaTiS Terminal</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 3: CHECKOUT -->
-        <section id="tab-checkout" class="space-y-6 hidden">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg font-bold text-blue-900 mb-4">Impound Settlement & Gate Release</h2>
-                <div class="mb-4">
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Select Cleared Vehicle for Release</label>
-                    <select id="checkoutVehicleSelect" onchange="loadCheckoutDetails()" class="w-full border rounded-lg p-2.5 text-sm bg-white">
-                        <option value="">-- Select Cleared Vehicle --</option>
-                    </select>
-                </div>
-
-                <div id="checkoutFormContainer" class="hidden space-y-4 border-t pt-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Testing Fee (ZAR)</label>
-                        <input type="number" id="feeTesting" value="850" oninput="calculateTotal()" class="w-full border rounded-lg p-2.5 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Impound Storage Days</label>
-                        <input type="number" id="feeDays" value="4" oninput="calculateTotal()" class="w-full border rounded-lg p-2.5 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Daily Storage Rate (ZAR)</label>
-                        <input type="number" id="feeDailyRate" value="164" oninput="calculateTotal()" class="w-full border rounded-lg p-2.5 text-sm">
-                    </div>
-
-                    <!-- Calculation Block (VAT line removed) -->
-                    <div class="bg-slate-50 border p-4 rounded-lg space-y-2 text-sm text-slate-800">
-                        <div class="flex justify-between"><span>Test Fee:</span> <span id="calcTestFee">R850.00</span></div>
-                        <div class="flex justify-between"><span>Yard Storage:</span> <span id="calcStorage">R656.00</span></div>
-                        <div class="border-t pt-2 flex justify-between font-bold text-base text-blue-900"><span>Total Payable:</span> <span id="calcTotalPayable">R1506.00</span></div>
-                    </div>
-
-                    <button onclick="processCheckout()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Process Payment & Authorize Gate Release</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 4: YARD -->
-        <section id="tab-yard" class="space-y-6 hidden">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg font-bold text-blue-900 mb-4">Active Impound Yard Registry</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-sm">
-                        <thead>
-                            <tr class="border-b bg-slate-50 text-slate-600">
-                                <th class="p-3">Plate</th>
-                                <th class="p-3">Model</th>
-                                <th class="p-3">Status</th>
-                                <th class="p-3">Ref Code</th>
-                                <th class="p-3">Owner PIN</th>
-                                <th class="p-3">Notify</th>
-                            </tr>
-                        </thead>
-                        <tbody id="yardTableBody">
-                            <tr><td colspan="6" class="p-4 text-center text-slate-400">No active vehicles in registry</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 5: DASHBOARD -->
-        <section id="tab-dashboard" class="space-y-6 hidden">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
-                <h2 class="text-lg font-bold text-blue-900">Station Dashboard</h2>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div class="bg-slate-50 border p-4 rounded-xl text-center">
-                        <div class="text-xs uppercase font-semibold text-slate-500">Total Intake</div>
-                        <div id="dashIntake" class="text-2xl font-bold text-slate-800 mt-1">0</div>
-                    </div>
-                    <div class="bg-slate-50 border p-4 rounded-xl text-center">
-                        <div class="text-xs uppercase font-semibold text-slate-500">In Yard</div>
-                        <div id="dashInYard" class="text-2xl font-bold text-amber-600 mt-1">0</div>
-                    </div>
-                    <div class="bg-slate-50 border p-4 rounded-xl text-center">
-                        <div class="text-xs uppercase font-semibold text-slate-500">Cleared</div>
-                        <div id="dashCleared" class="text-2xl font-bold text-emerald-600 mt-1">0</div>
-                    </div>
-                    <div class="bg-slate-50 border p-4 rounded-xl text-center">
-                        <div class="text-xs uppercase font-semibold text-slate-500">Released</div>
-                        <div id="dashReleased" class="text-2xl font-bold text-blue-600 mt-1">0</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 6: HISTORY -->
-        <section id="tab-history" class="space-y-6 hidden">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg font-bold text-blue-900 mb-4">Payment & Release History</h2>
-                <div id="historyList">
-                    <div class="p-4 text-center text-slate-400 text-sm">No completed payment history found.</div>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Login Modal -->
-    <div id="loginModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-white rounded-xl max-w-sm w-full p-6 shadow-xl space-y-4">
-            <h3 class="text-lg font-bold text-blue-900">Station Login</h3>
-            <input type="password" id="adminPasswordInput" placeholder="Enter password (admin123)" class="w-full border rounded-lg p-2.5 text-sm">
-            <div class="flex space-x-3 pt-2">
-                <button onclick="closeLoginModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-2.5 rounded-lg text-sm font-medium">Cancel</button>
-                <button onclick="verifyLogin()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-sm font-medium">Login</button>
-            </div>
+            <button onclick="openOwnerPortal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Access Owner Status Portal</button>
         </div>
+
+        <!-- Roadworthy Station Login Card -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+            <div>
+                <h3 class="font-bold text-blue-900 text-base">Roadworthy Station Login (Full Access)</h3>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mt-2 mb-1">Manager / Station Password</label>
+            </div>
+            <input type="password" id="landingPasswordInput" placeholder="Enter password (admin123)" class="w-full border rounded-lg p-2.5 text-sm">
+            <button onclick="verifyLandingLogin()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Login to Full Management Dashboard</button>
+        </div>
+    </div>
+
+    <!-- Main Application Shell (Hidden initially until login/portal access) -->
+    <div id="mainAppContainer" class="hidden">
+        <!-- Main Navigation Tabs -->
+        <nav class="bg-white shadow-sm border-b overflow-x-auto">
+            <div class="max-w-7xl mx-auto px-4 flex space-x-6">
+                <button onclick="switchTab('intake')" class="tab-btn py-3 px-2 border-b-2 border-blue-600 font-semibold text-blue-600 text-sm whitespace-nowrap">1. Intake</button>
+                <button onclick="switchTab('audit')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">2. Audit</button>
+                <button onclick="switchTab('checkout')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">3. Checkout</button>
+                <button onclick="switchTab('yard')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">4. Yard</button>
+                <button onclick="switchTab('dashboard')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">5. Dashboard</button>
+                <button onclick="switchTab('history')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">6. History</button>
+            </div>
+        </nav>
+
+        <!-- App Container -->
+        <main class="max-w-4xl mx-auto p-4 sm:p-6">
+
+            <!-- TAB 1: INTAKE -->
+            <section id="tab-intake" class="space-y-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-bold text-blue-900 mb-4">Registration</h2>
+                    <form id="registrationForm" onsubmit="handleRegistration(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">License Plate Number</label>
+                            <input type="text" id="regPlate" required placeholder="ND 456-789" class="w-full border rounded-lg p-2.5 text-sm uppercase">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">VIN (Chassis Number)</label>
+                            <input type="text" id="regVin" required maxlength="17" placeholder="AHT35NPR001234567" class="w-full border rounded-lg p-2.5 text-sm uppercase">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Make & Model</label>
+                            <input type="text" id="regModel" required placeholder="Isuzu NPR 400" class="w-full border rounded-lg p-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Engine Number</label>
+                            <input type="text" id="regEngine" required placeholder="4HF1-889922" class="w-full border rounded-lg p-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Owner's Name and Surname</label>
+                            <input type="text" id="regOwner" required placeholder="Sipho Dlamini" class="w-full border rounded-lg p-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Owner Phone (SMS/WhatsApp)</label>
+                            <input type="tel" id="regPhone" required placeholder="0823456789" class="w-full border rounded-lg p-2.5 text-sm">
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Register Impound Intake & Generate PIN</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- TAB 2: AUDIT -->
+            <section id="tab-audit" class="space-y-6 hidden">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-bold text-blue-900 mb-4">Grade A Technical Inspection (SANS 10047)</h2>
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Select Vehicle from Yard</label>
+                        <select id="auditVehicleSelect" onchange="loadAuditDetails()" class="w-full border rounded-lg p-2.5 text-sm bg-white">
+                            <option value="">-- Choose Dispatched Vehicle --</option>
+                        </select>
+                    </div>
+
+                    <div id="auditFormContainer" class="hidden space-y-4 border-t pt-4">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">1. Heavy Roller Brake Tester Efficiency (&ge; 55%)</label>
+                                <select class="audit-dropdown w-full border rounded-lg p-2.5 text-sm bg-white">
+                                    <option value="PASS">PASS</option>
+                                    <option value="FAIL">FAIL</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">2. Steering Linkage & Joint Play (Pit Inspection)</label>
+                                <select class="audit-dropdown w-full border rounded-lg p-2.5 text-sm bg-white">
+                                    <option value="PASS">PASS</option>
+                                    <option value="FAIL">FAIL</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">3. Tyre Tread Depth (&ge; 1.6mm across all axles)</label>
+                                <select class="audit-dropdown w-full border rounded-lg p-2.5 text-sm bg-white">
+                                    <option value="PASS">PASS</option>
+                                    <option value="FAIL">FAIL</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">4. Headlamp Alignment & Light Voltage</label>
+                                <select class="audit-dropdown w-full border rounded-lg p-2.5 text-sm bg-white">
+                                    <option value="PASS">PASS</option>
+                                    <option value="FAIL">FAIL</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">5. Exhaust Emissions & Diesel Smoke Opacity</label>
+                                <select class="audit-dropdown w-full border rounded-lg p-2.5 text-sm bg-white">
+                                    <option value="PASS">PASS</option>
+                                    <option value="FAIL">FAIL</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="submitAudit()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Submit Inspection to eNaTiS Terminal</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: CHECKOUT -->
+            <section id="tab-checkout" class="space-y-6 hidden">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-bold text-blue-900 mb-4">Impound Settlement & Gate Release</h2>
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Select Cleared Vehicle for Release</label>
+                        <select id="checkoutVehicleSelect" onchange="loadCheckoutDetails()" class="w-full border rounded-lg p-2.5 text-sm bg-white">
+                            <option value="">-- Select Cleared Vehicle --</option>
+                        </select>
+                    </div>
+
+                    <div id="checkoutFormContainer" class="hidden space-y-4 border-t pt-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Testing Fee (ZAR)</label>
+                            <input type="number" id="feeTesting" value="850" oninput="calculateTotal()" class="w-full border rounded-lg p-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Impound Storage Days</label>
+                            <input type="number" id="feeDays" value="4" oninput="calculateTotal()" class="w-full border rounded-lg p-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Daily Storage Rate (ZAR)</label>
+                            <input type="number" id="feeDailyRate" value="164" oninput="calculateTotal()" class="w-full border rounded-lg p-2.5 text-sm">
+                        </div>
+
+                        <!-- Calculation Block matching screenshot layout (VAT removed) -->
+                        <div class="bg-slate-50 border p-4 rounded-lg space-y-2 text-sm text-slate-800">
+                            <div class="flex justify-between"><span>Test Fee (Excl. VAT):</span> <span id="calcTestFee">R850.00</span></div>
+                            <div class="flex justify-between"><span>Yard Storage (Excl. VAT):</span> <span id="calcStorage">R656.00</span></div>
+                            <div class="border-t pt-2 flex justify-between font-bold text-base text-blue-900"><span>Total Payable:</span> <span id="calcTotalPayable">R1506.00</span></div>
+                        </div>
+
+                        <button onclick="processCheckout()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Process Payment & Authorize Gate Release</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: YARD -->
+            <section id="tab-yard" class="space-y-6 hidden">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-bold text-blue-900 mb-4">Active Impound Yard Registry</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="border-b bg-slate-50 text-slate-600">
+                                    <th class="p-3">Plate</th>
+                                    <th class="p-3">Model</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3">Ref Code</th>
+                                    <th class="p-3">Owner PIN</th>
+                                    <th class="p-3">Notify</th>
+                                </tr>
+                            </thead>
+                            <tbody id="yardTableBody">
+                                <tr><td colspan="6" class="p-4 text-center text-slate-400">No active vehicles in registry</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: DASHBOARD -->
+            <section id="tab-dashboard" class="space-y-6 hidden">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                    <h2 class="text-lg font-bold text-blue-900">Station Dashboard</h2>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div class="bg-slate-50 border p-4 rounded-xl text-center">
+                            <div class="text-xs uppercase font-semibold text-slate-500">Total Intake</div>
+                            <div id="dashIntake" class="text-2xl font-bold text-slate-800 mt-1">0</div>
+                        </div>
+                        <div class="bg-slate-50 border p-4 rounded-xl text-center">
+                            <div class="text-xs uppercase font-semibold text-slate-500">In Yard</div>
+                            <div id="dashInYard" class="text-2xl font-bold text-amber-600 mt-1">0</div>
+                        </div>
+                        <div class="bg-slate-50 border p-4 rounded-xl text-center">
+                            <div class="text-xs uppercase font-semibold text-slate-500">Cleared</div>
+                            <div id="dashCleared" class="text-2xl font-bold text-emerald-600 mt-1">0</div>
+                        </div>
+                        <div class="bg-slate-50 border p-4 rounded-xl text-center">
+                            <div class="text-xs uppercase font-semibold text-slate-500">Released</div>
+                            <div id="dashReleased" class="text-2xl font-bold text-blue-600 mt-1">0</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 6: HISTORY -->
+            <section id="tab-history" class="space-y-6 hidden">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-bold text-blue-900 mb-4">Payment & Release History</h2>
+                    <div id="historyList">
+                        <div class="p-4 text-center text-slate-400 text-sm">No completed payment history found.</div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
     </div>
 
     <!-- Script Logic -->
@@ -262,6 +280,29 @@
             refreshAllViews();
         });
 
+        function verifyLandingLogin() {
+            const pwd = document.getElementById('landingPasswordInput').value;
+            if (pwd === "admin123") {
+                document.getElementById('landingScreen').classList.add('hidden');
+                document.getElementById('mainAppContainer').classList.remove('hidden');
+                switchTab('intake');
+            } else {
+                alert("Incorrect station password! Try 'admin123'");
+            }
+        }
+
+        function openOwnerPortal() {
+            document.getElementById('landingScreen').classList.add('hidden');
+            document.getElementById('mainAppContainer').classList.remove('hidden');
+            switchTab('yard');
+        }
+
+        function showMainApp() {
+            document.getElementById('landingScreen').classList.add('hidden');
+            document.getElementById('mainAppContainer').classList.remove('hidden');
+            switchTab('intake');
+        }
+
         function switchTab(tabName) {
             document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
             document.getElementById(`tab-${tabName}`).classList.remove('hidden');
@@ -271,17 +312,6 @@
                 btn.classList.add('border-transparent', 'text-slate-500');
             });
             event.currentTarget.classList.add('border-blue-600', 'text-blue-600', 'font-semibold');
-        }
-
-        function openLoginModal() { document.getElementById('loginModal').classList.remove('hidden'); }
-        function closeLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
-        function verifyLogin() {
-            if (document.getElementById('adminPasswordInput').value === "admin123") {
-                closeLoginModal();
-                alert("Logged in successfully!");
-            } else {
-                alert("Incorrect password!");
-            }
         }
 
         async function handleRegistration(e) {
