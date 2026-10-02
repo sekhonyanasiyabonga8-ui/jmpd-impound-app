@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VeloVault - Roadworthy & Testing Portal</title>
-    <!-- Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <!-- QuaggaJS for Barcode Scanning -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 </head>
 <body class="bg-slate-100 min-h-screen font-sans text-slate-800">
@@ -22,7 +19,7 @@
                 <span id="roleBadge" class="bg-amber-500 text-xs font-semibold px-2.5 py-1 rounded text-white">CUSTOMER PORTAL</span>
             </div>
             <div>
-                <button id="toggleAuthBtn" onclick="openLoginModal()" class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded text-sm font-medium transition">Station Admin</button>
+                <button id="toggleAuthBtn" onclick="openLoginModal()" class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded text-sm font-medium transition">STATION ADMIN</button>
             </div>
         </div>
     </header>
@@ -30,19 +27,18 @@
     <!-- Main Navigation Tabs -->
     <nav class="bg-white shadow-sm border-b overflow-x-auto">
         <div class="max-w-7xl mx-auto px-4 flex space-x-6">
-            <button onclick="switchTab('customer')" class="tab-btn py-3 px-2 border-b-2 border-blue-600 font-semibold text-blue-600 text-sm whitespace-nowrap">1. Customer Portal</button>
-            <button onclick="switchTab('audit')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap admin-restricted hidden">2. Bay Audit</button>
-            <button onclick="switchTab('checkout')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap admin-restricted hidden">3. Checkout / Release</button>
-            <button onclick="switchTab('yard')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">4. Active Yard</button>
-            <button onclick="switchTab('dashboard')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap admin-restricted hidden">5. Dashboard</button>
-            <button onclick="switchTab('history')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">6. History</button>
+            <button onclick="switchTab('customer')" class="tab-btn py-3 px-2 border-b-2 border-blue-600 font-semibold text-blue-600 text-sm whitespace-nowrap">1. Audit</button>
+            <button onclick="switchTab('checkout')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap admin-restricted hidden">2. Checkout</button>
+            <button onclick="switchTab('yard')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">3. Yard</button>
+            <button onclick="switchTab('dashboard')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap admin-restricted hidden">4. Dashboard</button>
+            <button onclick="switchTab('history')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">5. History</button>
         </div>
     </nav>
 
     <!-- App Container -->
     <main class="max-w-4xl mx-auto p-4 sm:p-6">
 
-        <!-- TAB 1: CUSTOMER PORTAL -->
+        <!-- TAB 1: CUSTOMER PORTAL / AUDIT & REGISTRATION -->
         <section id="tab-customer" class="space-y-6">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <h2 class="text-lg font-bold text-blue-900 mb-4">Vehicle Intake Registration</h2>
@@ -86,57 +82,13 @@
                 <h2 class="text-lg font-bold text-blue-900 mb-2">Check Test Status & Defects</h2>
                 <div class="flex space-x-2">
                     <input type="text" id="trackInput" placeholder="Enter License Plate, VIN, or PIN" class="w-full border rounded-lg p-2.5 text-sm uppercase">
-                    <button onclick="trackVehicle()" class="bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">Search</button>
+                    <button onclick="trackVehicle()" class="bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">Search Vehicle Status</button>
                 </div>
                 <div id="trackResult" class="mt-4 hidden p-4 bg-slate-50 rounded-lg border text-sm space-y-2"></div>
             </div>
         </section>
 
-        <!-- TAB 2: BAY AUDIT -->
-        <section id="tab-audit" class="space-y-6 hidden">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg font-bold text-blue-900 mb-4">SANS 10047 Technical Audit Bay</h2>
-                <div class="mb-4">
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Select Vehicle from Yard</label>
-                    <select id="auditVehicleSelect" onchange="loadAuditDetails()" class="w-full border rounded-lg p-2.5 text-sm bg-white">
-                        <option value="">-- Choose Active Vehicle --</option>
-                    </select>
-                </div>
-
-                <div id="auditFormContainer" class="hidden space-y-4 border-t pt-4">
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3 rounded-lg text-xs font-medium">
-                        <div>Plate: <span id="auditDispPlate" class="font-bold"></span></div>
-                        <div>Model: <span id="auditDispModel" class="font-bold"></span></div>
-                        <div>Ref: <span id="auditDispRef" class="font-bold"></span></div>
-                        <div>PIN: <span id="auditDispPin" class="font-bold"></span></div>
-                    </div>
-
-                    <div class="space-y-3">
-                        <h3 class="font-semibold text-sm text-slate-700">Inspection Checkpoints</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                            <label class="flex items-center space-x-2 p-2 bg-slate-50 rounded border"><input type="checkbox" class="audit-check" value="Brakes & Suspension"> Brakes & Suspension</label>
-                            <label class="flex items-center space-x-2 p-2 bg-slate-50 rounded border"><input type="checkbox" class="audit-check" value="Steering Alignment"> Steering Alignment</label>
-                            <label class="flex items-center space-x-2 p-2 bg-slate-50 rounded border"><input type="checkbox" class="audit-check" value="Tyres & Tread Depth"> Tyres & Tread Depth</label>
-                            <label class="flex items-center space-x-2 p-2 bg-slate-50 rounded border"><input type="checkbox" class="audit-check" value="Lights & Electrical"> Lights & Electrical</label>
-                            <label class="flex items-center space-x-2 p-2 bg-slate-50 rounded border"><input type="checkbox" class="audit-check" value="Chassis & Body Structure"> Chassis & Body Structure</label>
-                            <label class="flex items-center space-x-2 p-2 bg-slate-50 rounded border"><input type="checkbox" class="audit-check" value="Wipers & Glass"> Wipers & Glass</label>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Logged Defects / Notes</label>
-                        <textarea id="auditDefects" rows="3" placeholder="Enter notes or failed inspection items..." class="w-full border rounded-lg p-2.5 text-sm"></textarea>
-                    </div>
-
-                    <div class="flex space-x-3">
-                        <button onclick="submitAudit('Pass')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-lg transition text-sm">Pass Inspection</button>
-                        <button onclick="submitAudit('Fail')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-lg transition text-sm">Fail / Log Defects</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 3: CHECKOUT / RELEASE -->
+        <!-- TAB 2: CHECKOUT / RELEASE -->
         <section id="tab-checkout" class="space-y-6 hidden">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <h2 class="text-lg font-bold text-blue-900 mb-4">Gate Release & Settlement</h2>
@@ -176,7 +128,7 @@
             </div>
         </section>
 
-        <!-- TAB 4: ACTIVE YARD -->
+        <!-- TAB 3: ACTIVE YARD -->
         <section id="tab-yard" class="space-y-6 hidden">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <h2 class="text-lg font-bold text-blue-900 mb-4">Active Yard Registry</h2>
@@ -200,7 +152,7 @@
             </div>
         </section>
 
-        <!-- TAB 5: DASHBOARD -->
+        <!-- TAB 4: DASHBOARD -->
         <section id="tab-dashboard" class="space-y-6 hidden">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-6">
                 <h2 class="text-lg font-bold text-blue-900">Executive Dashboard Analytics</h2>
@@ -234,7 +186,7 @@
             </div>
         </section>
 
-        <!-- TAB 6: HISTORY -->
+        <!-- TAB 5: HISTORY -->
         <section id="tab-history" class="space-y-6 hidden">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <h2 class="text-lg font-bold text-blue-900 mb-4">Payment & Release History</h2>
@@ -261,7 +213,6 @@
 
     <!-- Application Script Logic -->
     <script>
-        // Initialize Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDummyKeyForVeloVaultFirestore",
             authDomain: "velovault-b9bff.firebaseapp.com",
@@ -276,10 +227,8 @@
 
         let vehiclesData = [];
         let isAdminLoggedIn = false;
-        let selectedAuditId = null;
         let selectedCheckoutId = null;
 
-        // Real-time synchronization listener with Cloud Firestore
         db.collection("vehicles").onSnapshot((snapshot) => {
             vehiclesData = [];
             snapshot.forEach((doc) => {
@@ -289,7 +238,7 @@
         });
 
         function switchTab(tabName) {
-            if (['audit', 'checkout', 'dashboard'].includes(tabName) && !isAdminLoggedIn) {
+            if (['checkout', 'dashboard'].includes(tabName) && !isAdminLoggedIn) {
                 openLoginModal();
                 return;
             }
@@ -308,7 +257,7 @@
                 isAdminLoggedIn = false;
                 document.getElementById('roleBadge').innerText = "CUSTOMER PORTAL";
                 document.getElementById('roleBadge').className = "bg-amber-500 text-xs font-semibold px-2.5 py-1 rounded text-white";
-                document.getElementById('toggleAuthBtn').innerText = "Station Admin";
+                document.getElementById('toggleAuthBtn').innerText = "STATION ADMIN";
                 document.querySelectorAll('.admin-restricted').forEach(el => el.classList.add('hidden'));
                 switchTab('customer');
                 return;
@@ -328,7 +277,7 @@
                 closeLoginModal();
                 document.getElementById('roleBadge').innerText = "STATION ADMIN";
                 document.getElementById('roleBadge').className = "bg-emerald-600 text-xs font-semibold px-2.5 py-1 rounded text-white";
-                document.getElementById('toggleAuthBtn').innerText = "Exit Admin";
+                document.getElementById('toggleAuthBtn').innerText = "EXIT ADMIN";
                 document.querySelectorAll('.admin-restricted').forEach(el => el.classList.remove('hidden'));
                 alert("Station Admin unlocked successfully!");
             } else {
@@ -353,7 +302,6 @@
                 pin: pinCode.toString(),
                 status: "In Yard",
                 defects: "",
-                checks: [],
                 testingFee: 0,
                 storageFee: 0,
                 totalPaid: 0,
@@ -399,55 +347,11 @@
         }
 
         function renderDropdowns() {
-            const auditSelect = document.getElementById('auditVehicleSelect');
             const checkoutSelect = document.getElementById('checkoutVehicleSelect');
-
-            const yardList = vehiclesData.filter(v => v.status === "In Yard");
-            const readyList = vehiclesData.filter(v => v.status === "eNaTiS Cleared" || v.status === "Inspection Failed");
-
-            auditSelect.innerHTML = `<option value="">-- Choose Active Vehicle --</option>` + 
-                yardList.map(v => `<option value="${v.id}">${v.plate} - ${v.model} (${v.ref})</option>`).join('');
+            const readyList = vehiclesData.filter(v => v.status === "In Yard" || v.status === "eNaTiS Cleared" || v.status === "Inspection Failed");
 
             checkoutSelect.innerHTML = `<option value="">-- Choose Ready Vehicle --</option>` + 
-                readyList.map(v => `<option value="${v.id}">${v.plate} - ${v.model} [${v.status}]</option>`).join('');
-        }
-
-        function loadAuditDetails() {
-            selectedAuditId = document.getElementById('auditVehicleSelect').value;
-            const container = document.getElementById('auditFormContainer');
-            if (!selectedAuditId) {
-                container.classList.add('hidden');
-                return;
-            }
-            const v = vehiclesData.find(item => item.id === selectedAuditId);
-            if (v) {
-                document.getElementById('auditDispPlate').innerText = v.plate;
-                document.getElementById('auditDispModel').innerText = v.model;
-                document.getElementById('auditDispRef').innerText = v.ref;
-                document.getElementById('auditDispPin').innerText = v.pin;
-                container.classList.remove('hidden');
-            }
-        }
-
-        async function submitAudit(resultStatus) {
-            if (!selectedAuditId) return;
-            const checks = Array.from(document.querySelectorAll('.audit-check:checked')).map(cb => cb.value);
-            const defects = document.getElementById('auditDefects').value;
-            const finalStatus = resultStatus === 'Pass' ? 'eNaTiS Cleared' : 'Inspection Failed';
-
-            try {
-                await db.collection("vehicles").doc(selectedAuditId).update({
-                    status: finalStatus,
-                    checks,
-                    defects
-                });
-                alert(`Audit completed: ${finalStatus}`);
-                document.getElementById('auditFormContainer').classList.add('hidden');
-                document.getElementById('auditVehicleSelect').value = '';
-            } catch (err) {
-                console.error(err);
-                alert("Failed to submit audit update.");
-            }
+                readyList.map(v => `<option value="${v.id}">${v.plate} - ${v.model} (${v.ref})</option>`).join('');
         }
 
         function loadCheckoutDetails() {
