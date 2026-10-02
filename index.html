@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VeloVault - Roadworthy & Testing Portal</title>
+    <title>VeloVault - VTS Grade A Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 </head>
 <body class="bg-slate-100 min-h-screen font-sans text-slate-800">
 
@@ -16,10 +15,10 @@
         <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <h1 class="text-xl font-bold tracking-wider">VeloVault</h1>
-                <span id="roleBadge" class="bg-amber-500 text-xs font-semibold px-2.5 py-1 rounded text-white">CUSTOMER PORTAL</span>
+                <span class="bg-amber-500 text-xs font-semibold px-2.5 py-1 rounded text-white">SANS 10047 / eNaTiS</span>
             </div>
             <div>
-                <button id="toggleAuthBtn" onclick="openLoginModal()" class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded text-sm font-medium transition">STATION ADMIN</button>
+                <button onclick="openLoginModal()" class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded text-sm font-medium transition">Station Login</button>
             </div>
         </div>
     </header>
@@ -27,11 +26,11 @@
     <!-- Main Navigation Tabs -->
     <nav class="bg-white shadow-sm border-b overflow-x-auto">
         <div class="max-w-7xl mx-auto px-4 flex space-x-6">
-            <button onclick="switchTab('customer')" class="tab-btn py-3 px-2 border-b-2 border-blue-600 font-semibold text-blue-600 text-sm whitespace-nowrap">1. Customer Portal</button>
-            <button onclick="switchTab('audit')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap admin-restricted hidden">2. Audit</button>
-            <button onclick="switchTab('checkout')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap admin-restricted hidden">3. Checkout</button>
+            <button onclick="switchTab('intake')" class="tab-btn py-3 px-2 border-b-2 border-blue-600 font-semibold text-blue-600 text-sm whitespace-nowrap">1. Intake</button>
+            <button onclick="switchTab('audit')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">2. Audit</button>
+            <button onclick="switchTab('checkout')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">3. Checkout</button>
             <button onclick="switchTab('yard')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">4. Yard</button>
-            <button onclick="switchTab('dashboard')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap admin-restricted hidden">5. Dashboard</button>
+            <button onclick="switchTab('dashboard')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">5. Dashboard</button>
             <button onclick="switchTab('history')" class="tab-btn py-3 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 text-sm whitespace-nowrap">6. History</button>
         </div>
     </nav>
@@ -39,158 +38,149 @@
     <!-- App Container -->
     <main class="max-w-4xl mx-auto p-4 sm:p-6">
 
-        <!-- TAB 1: CUSTOMER PORTAL -->
-        <section id="tab-customer" class="space-y-6">
+        <!-- TAB 1: INTAKE -->
+        <section id="tab-intake" class="space-y-6">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg font-bold text-blue-900 mb-4">Vehicle Intake Registration</h2>
+                <h2 class="text-lg font-bold text-blue-900 mb-4">Registration</h2>
                 <form id="registrationForm" onsubmit="handleRegistration(event)" class="space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">License Plate</label>
-                            <input type="text" id="regPlate" required placeholder="e.g. CA 123-456" class="w-full border rounded-lg p-2.5 text-sm uppercase">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">17-Digit VIN</label>
-                            <div class="flex space-x-2">
-                                <input type="text" id="regVin" required maxlength="17" placeholder="17-Digit VIN Number" class="w-full border rounded-lg p-2.5 text-sm uppercase">
-                                <button type="button" onclick="startScanner()" class="bg-slate-800 text-white px-3 py-2 rounded-lg text-xs font-medium hover:bg-slate-700">Scan</button>
-                            </div>
-                        </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">License Plate Number</label>
+                        <input type="text" id="regPlate" required placeholder="ND 456-789" class="w-full border rounded-lg p-2.5 text-sm uppercase">
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Vehicle Make/Model</label>
-                            <input type="text" id="regModel" required placeholder="e.g. Toyota Hilux" class="w-full border rounded-lg p-2.5 text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Owner Full Name</label>
-                            <input type="text" id="regOwner" required placeholder="e.g. John Doe" class="w-full border rounded-lg p-2.5 text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Phone Number</label>
-                            <input type="tel" id="regPhone" required placeholder="e.g. 0821234567" class="w-full border rounded-lg p-2.5 text-sm">
-                        </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">VIN (Chassis Number)</label>
+                        <input type="text" id="regVin" required maxlength="17" placeholder="AHT35NPR001234567" class="w-full border rounded-lg p-2.5 text-sm uppercase">
                     </div>
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Register & Generate PIN</button>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Make & Model</label>
+                        <input type="text" id="regModel" required placeholder="Isuzu NPR 400" class="w-full border rounded-lg p-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Engine Number</label>
+                        <input type="text" id="regEngine" required placeholder="4HF1-889922" class="w-full border rounded-lg p-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Owner's Name and Surname</label>
+                        <input type="text" id="regOwner" required placeholder="Sipho Dlamini" class="w-full border rounded-lg p-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Owner Phone (SMS/WhatsApp)</label>
+                        <input type="tel" id="regPhone" required placeholder="0823456789" class="w-full border rounded-lg p-2.5 text-sm">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Register Impound Intake & Generate PIN</button>
                 </form>
-
-                <!-- Scanner Modal Area -->
-                <div id="interactive" class="viewport mt-4 hidden relative border rounded-lg overflow-hidden h-48 bg-black"></div>
-            </div>
-
-            <!-- Customer Status Tracker -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg font-bold text-blue-900 mb-2">Check Test Status & Defects</h2>
-                <div class="flex space-x-2">
-                    <input type="text" id="trackInput" placeholder="Enter License Plate, VIN, or PIN" class="w-full border rounded-lg p-2.5 text-sm uppercase">
-                    <button onclick="trackVehicle()" class="bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">Search Vehicle Status</button>
-                </div>
-                <div id="trackResult" class="mt-4 hidden p-4 bg-slate-50 rounded-lg border text-sm space-y-2"></div>
             </div>
         </section>
 
-        <!-- TAB 2: BAY AUDIT -->
+        <!-- TAB 2: AUDIT -->
         <section id="tab-audit" class="space-y-6 hidden">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg font-bold text-blue-900 mb-4">SANS 10047 Technical Audit Bay</h2>
+                <h2 class="text-lg font-bold text-blue-900 mb-4">Grade A Technical Inspection (SANS 10047)</h2>
                 <div class="mb-4">
                     <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Select Vehicle from Yard</label>
                     <select id="auditVehicleSelect" onchange="loadAuditDetails()" class="w-full border rounded-lg p-2.5 text-sm bg-white">
-                        <option value="">-- Choose Active Vehicle --</option>
+                        <option value="">-- Choose Dispatched Vehicle --</option>
                     </select>
                 </div>
 
                 <div id="auditFormContainer" class="hidden space-y-4 border-t pt-4">
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3 rounded-lg text-xs font-medium">
-                        <div>Plate: <span id="auditDispPlate" class="font-bold"></span></div>
-                        <div>Model: <span id="auditDispModel" class="font-bold"></span></div>
-                        <div>Ref: <span id="auditDispRef" class="font-bold"></span></div>
-                        <div>PIN: <span id="auditDispPin" class="font-bold"></span></div>
-                    </div>
-
                     <div class="space-y-3">
-                        <h3 class="font-semibold text-sm text-slate-700">Inspection Checkpoints</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                            <label class="flex items-center space-x-2 p-2 bg-slate-50 rounded border"><input type="checkbox" class="audit-check" value="Brakes & Suspension"> Brakes & Suspension</label>
-                            <label class="flex items-center space-x-2 p-2 bg-slate-50 rounded border"><input type="checkbox" class="audit-check" value="Steering Alignment"> Steering Alignment</label>
-                            <label class="flex items-center space-x-2 p-2 bg-slate-50 rounded border"><input type="checkbox" class="audit-check" value="Tyres & Tread Depth"> Tyres & Tread Depth</label>
-                            <label class="flex items-center space-x-2 p-2 bg-slate-50 rounded border"><input type="checkbox" class="audit-check" value="Lights & Electrical"> Lights & Electrical</label>
-                            <label class="flex items-center space-x-2 p-2 bg-slate-50 rounded border"><input type="checkbox" class="audit-check" value="Chassis & Body Structure"> Chassis & Body Structure</label>
-                            <label class="flex items-center space-x-2 p-2 bg-slate-50 rounded border"><input type="checkbox" class="audit-check" value="Wipers & Glass"> Wipers & Glass</label>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">1. Heavy Roller Brake Tester Efficiency (&ge; 55%)</label>
+                            <select class="audit-dropdown w-full border rounded-lg p-2.5 text-sm bg-white">
+                                <option value="PASS">PASS</option>
+                                <option value="FAIL">FAIL</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">2. Steering Linkage & Joint Play (Pit Inspection)</label>
+                            <select class="audit-dropdown w-full border rounded-lg p-2.5 text-sm bg-white">
+                                <option value="PASS">PASS</option>
+                                <option value="FAIL">FAIL</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">3. Tyre Tread Depth (&ge; 1.6mm across all axles)</label>
+                            <select class="audit-dropdown w-full border rounded-lg p-2.5 text-sm bg-white">
+                                <option value="PASS">PASS</option>
+                                <option value="FAIL">FAIL</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">4. Headlamp Alignment & Light Voltage</label>
+                            <select class="audit-dropdown w-full border rounded-lg p-2.5 text-sm bg-white">
+                                <option value="PASS">PASS</option>
+                                <option value="FAIL">FAIL</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">5. Exhaust Emissions & Diesel Smoke Opacity</label>
+                            <select class="audit-dropdown w-full border rounded-lg p-2.5 text-sm bg-white">
+                                <option value="PASS">PASS</option>
+                                <option value="FAIL">FAIL</option>
+                            </select>
                         </div>
                     </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Logged Defects / Notes</label>
-                        <textarea id="auditDefects" rows="3" placeholder="Enter notes or failed inspection items..." class="w-full border rounded-lg p-2.5 text-sm"></textarea>
-                    </div>
-
-                    <div class="flex space-x-3">
-                        <button onclick="submitAudit('Pass')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-lg transition text-sm">Pass Inspection</button>
-                        <button onclick="submitAudit('Fail')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-lg transition text-sm">Fail / Log Defects</button>
-                    </div>
+                    <button onclick="submitAudit()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Submit Inspection to eNaTiS Terminal</button>
                 </div>
             </div>
         </section>
 
-        <!-- TAB 3: CHECKOUT / RELEASE -->
+        <!-- TAB 3: CHECKOUT -->
         <section id="tab-checkout" class="space-y-6 hidden">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg font-bold text-blue-900 mb-4">Gate Release & Settlement</h2>
+                <h2 class="text-lg font-bold text-blue-900 mb-4">Impound Settlement & Gate Release</h2>
                 <div class="mb-4">
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Select Inspected Vehicle</label>
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Select Cleared Vehicle for Release</label>
                     <select id="checkoutVehicleSelect" onchange="loadCheckoutDetails()" class="w-full border rounded-lg p-2.5 text-sm bg-white">
-                        <option value="">-- Choose Ready Vehicle --</option>
+                        <option value="">-- Select Cleared Vehicle --</option>
                     </select>
                 </div>
 
                 <div id="checkoutFormContainer" class="hidden space-y-4 border-t pt-4">
-                    <div class="bg-slate-50 p-4 rounded-lg space-y-2 text-sm">
-                        <div class="flex justify-between"><span>Vehicle:</span> <span id="checkDispModel" class="font-semibold"></span></div>
-                        <div class="flex justify-between"><span>Owner:</span> <span id="checkDispOwner" class="font-semibold"></span></div>
-                        <div class="flex justify-between"><span>Status:</span> <span id="checkDispStatus" class="font-semibold text-blue-600"></span></div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Testing Fee (ZAR)</label>
+                        <input type="number" id="feeTesting" value="850" oninput="calculateTotal()" class="w-full border rounded-lg p-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Impound Storage Days</label>
+                        <input type="number" id="feeDays" value="4" oninput="calculateTotal()" class="w-full border rounded-lg p-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Daily Storage Rate (ZAR)</label>
+                        <input type="number" id="feeDailyRate" value="164" oninput="calculateTotal()" class="w-full border rounded-lg p-2.5 text-sm">
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Testing Fee (ZAR)</label>
-                            <input type="number" id="feeTesting" value="850" oninput="calculateTotal()" class="w-full border rounded-lg p-2.5 text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Storage Fee (ZAR)</label>
-                            <input type="number" id="feeStorage" value="0" oninput="calculateTotal()" class="w-full border rounded-lg p-2.5 text-sm">
-                        </div>
+                    <!-- Calculation Block (VAT line removed) -->
+                    <div class="bg-slate-50 border p-4 rounded-lg space-y-2 text-sm text-slate-800">
+                        <div class="flex justify-between"><span>Test Fee:</span> <span id="calcTestFee">R850.00</span></div>
+                        <div class="flex justify-between"><span>Yard Storage:</span> <span id="calcStorage">R656.00</span></div>
+                        <div class="border-t pt-2 flex justify-between font-bold text-base text-blue-900"><span>Total Payable:</span> <span id="calcTotalPayable">R1506.00</span></div>
                     </div>
 
-                    <div class="bg-blue-50 border border-blue-100 p-4 rounded-lg space-y-1 text-sm text-blue-900">
-                        <div class="flex justify-between"><span>Testing Subtotal:</span> <span id="calcSubTesting">R850.00</span></div>
-                        <div class="flex justify-between"><span>Storage Subtotal:</span> <span id="calcSubStorage">R0.00</span></div>
-                        <div class="border-t border-blue-200 pt-2 flex justify-between font-bold text-base"><span>Grand Total Collection:</span> <span id="calcGrandTotal">R850.00</span></div>
-                    </div>
-
-                    <button onclick="processCheckout()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Confirm Payment & Release Vehicle</button>
+                    <button onclick="processCheckout()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-lg transition text-sm shadow">Process Payment & Authorize Gate Release</button>
                 </div>
             </div>
         </section>
 
-        <!-- TAB 4: ACTIVE YARD -->
+        <!-- TAB 4: YARD -->
         <section id="tab-yard" class="space-y-6 hidden">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg font-bold text-blue-900 mb-4">Active Yard Registry</h2>
+                <h2 class="text-lg font-bold text-blue-900 mb-4">Active Impound Yard Registry</h2>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-sm">
                         <thead>
                             <tr class="border-b bg-slate-50 text-slate-600">
-                                <th class="p-3">Plate / VIN</th>
+                                <th class="p-3">Plate</th>
                                 <th class="p-3">Model</th>
                                 <th class="p-3">Status</th>
-                                <th class="p-3">Ref</th>
-                                <th class="p-3">PIN</th>
-                                <th class="p-3">Action</th>
+                                <th class="p-3">Ref Code</th>
+                                <th class="p-3">Owner PIN</th>
+                                <th class="p-3">Notify</th>
                             </tr>
                         </thead>
                         <tbody id="yardTableBody">
-                            <tr><td colspan="6" class="p-4 text-center text-slate-400">No active vehicles in cloud registry</td></tr>
+                            <tr><td colspan="6" class="p-4 text-center text-slate-400">No active vehicles in registry</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -199,33 +189,24 @@
 
         <!-- TAB 5: DASHBOARD -->
         <section id="tab-dashboard" class="space-y-6 hidden">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-6">
-                <h2 class="text-lg font-bold text-blue-900">Executive Dashboard Analytics</h2>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                <h2 class="text-lg font-bold text-blue-900">Station Dashboard</h2>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div class="bg-slate-50 border p-4 rounded-xl text-center">
                         <div class="text-xs uppercase font-semibold text-slate-500">Total Intake</div>
                         <div id="dashIntake" class="text-2xl font-bold text-slate-800 mt-1">0</div>
                     </div>
                     <div class="bg-slate-50 border p-4 rounded-xl text-center">
-                        <div class="text-xs uppercase font-semibold text-slate-500">Currently in Yard</div>
+                        <div class="text-xs uppercase font-semibold text-slate-500">In Yard</div>
                         <div id="dashInYard" class="text-2xl font-bold text-amber-600 mt-1">0</div>
                     </div>
                     <div class="bg-slate-50 border p-4 rounded-xl text-center">
-                        <div class="text-xs uppercase font-semibold text-slate-500">eNaTiS Cleared</div>
+                        <div class="text-xs uppercase font-semibold text-slate-500">Cleared</div>
                         <div id="dashCleared" class="text-2xl font-bold text-emerald-600 mt-1">0</div>
                     </div>
                     <div class="bg-slate-50 border p-4 rounded-xl text-center">
-                        <div class="text-xs uppercase font-semibold text-slate-500">Gate Released</div>
+                        <div class="text-xs uppercase font-semibold text-slate-500">Released</div>
                         <div id="dashReleased" class="text-2xl font-bold text-blue-600 mt-1">0</div>
-                    </div>
-                </div>
-
-                <div class="border-t pt-4">
-                    <h3 class="font-semibold text-sm text-slate-700 mb-3">Financial Revenue Collection</h3>
-                    <div class="bg-slate-50 border p-4 rounded-lg space-y-2 text-sm">
-                        <div class="flex justify-between"><span>Total Testing Fees:</span> <span id="revTesting" class="font-medium">R0.00</span></div>
-                        <div class="flex justify-between"><span>Total Storage Revenue:</span> <span id="revStorage" class="font-medium">R0.00</span></div>
-                        <div class="border-t pt-2 flex justify-between font-bold text-base text-blue-900"><span>Grand Total Revenue:</span> <span id="revGrandTotal">R0.00</span></div>
                     </div>
                 </div>
             </div>
@@ -235,28 +216,27 @@
         <section id="tab-history" class="space-y-6 hidden">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <h2 class="text-lg font-bold text-blue-900 mb-4">Payment & Release History</h2>
-                <div id="historyList" class="space-y-3">
-                    <div class="p-4 text-center text-slate-400 text-sm">No release history logged yet.</div>
+                <div id="historyList">
+                    <div class="p-4 text-center text-slate-400 text-sm">No completed payment history found.</div>
                 </div>
             </div>
         </section>
 
     </main>
 
-    <!-- Admin Login Modal -->
+    <!-- Login Modal -->
     <div id="loginModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50 p-4">
         <div class="bg-white rounded-xl max-w-sm w-full p-6 shadow-xl space-y-4">
-            <h3 class="text-lg font-bold text-blue-900">Station Administrator Login</h3>
-            <p class="text-xs text-slate-500">Enter secure password to unlock administrative audit and checkout bays.</p>
-            <input type="password" id="adminPasswordInput" placeholder="Enter admin password" class="w-full border rounded-lg p-2.5 text-sm">
+            <h3 class="text-lg font-bold text-blue-900">Station Login</h3>
+            <input type="password" id="adminPasswordInput" placeholder="Enter password (admin123)" class="w-full border rounded-lg p-2.5 text-sm">
             <div class="flex space-x-3 pt-2">
-                <button onclick="closeLoginModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-2.5 rounded-lg text-sm font-medium transition">Cancel</button>
-                <button onclick="verifyAdminLogin()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-sm font-medium transition">Login</button>
+                <button onclick="closeLoginModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-2.5 rounded-lg text-sm font-medium">Cancel</button>
+                <button onclick="verifyLogin()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-sm font-medium">Login</button>
             </div>
         </div>
     </div>
 
-    <!-- Application Script Logic -->
+    <!-- Script Logic -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDummyKeyForVeloVaultFirestore",
@@ -271,7 +251,6 @@
         const db = firebase.firestore();
 
         let vehiclesData = [];
-        let isAdminLoggedIn = false;
         let selectedAuditId = null;
         let selectedCheckoutId = null;
 
@@ -284,10 +263,6 @@
         });
 
         function switchTab(tabName) {
-            if (['audit', 'checkout', 'dashboard'].includes(tabName) && !isAdminLoggedIn) {
-                openLoginModal();
-                return;
-            }
             document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
             document.getElementById(`tab-${tabName}`).classList.remove('hidden');
             
@@ -298,36 +273,14 @@
             event.currentTarget.classList.add('border-blue-600', 'text-blue-600', 'font-semibold');
         }
 
-        function openLoginModal() {
-            if (isAdminLoggedIn) {
-                isAdminLoggedIn = false;
-                document.getElementById('roleBadge').innerText = "CUSTOMER PORTAL";
-                document.getElementById('roleBadge').className = "bg-amber-500 text-xs font-semibold px-2.5 py-1 rounded text-white";
-                document.getElementById('toggleAuthBtn').innerText = "STATION ADMIN";
-                document.querySelectorAll('.admin-restricted').forEach(el => el.classList.add('hidden'));
-                switchTab('customer');
-                return;
-            }
-            document.getElementById('adminPasswordInput').value = '';
-            document.getElementById('loginModal').classList.remove('hidden');
-        }
-
-        function closeLoginModal() {
-            document.getElementById('loginModal').classList.add('hidden');
-        }
-
-        function verifyAdminLogin() {
-            const pwd = document.getElementById('adminPasswordInput').value;
-            if (pwd === "admin123") {
-                isAdminLoggedIn = true;
+        function openLoginModal() { document.getElementById('loginModal').classList.remove('hidden'); }
+        function closeLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
+        function verifyLogin() {
+            if (document.getElementById('adminPasswordInput').value === "admin123") {
                 closeLoginModal();
-                document.getElementById('roleBadge').innerText = "STATION ADMIN";
-                document.getElementById('roleBadge').className = "bg-emerald-600 text-xs font-semibold px-2.5 py-1 rounded text-white";
-                document.getElementById('toggleAuthBtn').innerText = "EXIT ADMIN";
-                document.querySelectorAll('.admin-restricted').forEach(el => el.classList.remove('hidden'));
-                alert("Station Admin unlocked successfully!");
+                alert("Logged in successfully!");
             } else {
-                alert("Incorrect password! Try 'admin123'");
+                alert("Incorrect password!");
             }
         }
 
@@ -336,32 +289,26 @@
             const plate = document.getElementById('regPlate').value.trim().toUpperCase();
             const vin = document.getElementById('regVin').value.trim().toUpperCase();
             const model = document.getElementById('regModel').value.trim();
+            const engine = document.getElementById('regEngine').value.trim();
             const owner = document.getElementById('regOwner').value.trim();
             const phone = document.getElementById('regPhone').value.trim();
 
             const refCode = "REF-" + Math.floor(1000 + Math.random() * 9000);
             const pinCode = Math.floor(100 + Math.random() * 900);
 
-            const newRecord = {
-                plate, vin, model, owner, phone,
-                ref: refCode,
-                pin: pinCode.toString(),
-                status: "In Yard",
-                defects: "",
-                checks: [],
-                testingFee: 0,
-                storageFee: 0,
-                totalPaid: 0,
-                timestamp: new Date().toISOString()
-            };
-
             try {
-                await db.collection("vehicles").add(newRecord);
-                alert(`Cloud Registration Successful!\nRef: ${refCode} | PIN: ${pinCode}`);
+                await db.collection("vehicles").add({
+                    plate, vin, model, engine, owner, phone,
+                    ref: refCode,
+                    pin: pinCode.toString(),
+                    status: "In Yard",
+                    timestamp: new Date().toISOString()
+                });
+                alert(`Vehicle Registered Successfully!\nRef Code: ${refCode} | PIN: ${pinCode}`);
                 document.getElementById('registrationForm').reset();
             } catch (err) {
-                console.error("Cloud Error:", err);
-                alert("Error saving record to cloud.");
+                console.error(err);
+                alert("Error saving record.");
             }
         }
 
@@ -374,23 +321,27 @@
 
         function renderYard() {
             const tbody = document.getElementById('yardTableBody');
-            const activeVehicles = vehiclesData.filter(v => v.status !== "Gate Released");
+            const active = vehiclesData.filter(v => v.status !== "Gate Released");
             
-            if (activeVehicles.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No active vehicles in cloud registry</td></tr>`;
+            if (active.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No active vehicles in registry</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = activeVehicles.map(v => `
+            tbody.innerHTML = active.map(v => `
                 <tr class="border-b hover:bg-slate-50">
-                    <td class="p-3 font-medium">${v.plate}<br><span class="text-xs text-slate-400">${v.vin}</span></td>
+                    <td class="p-3 font-medium">${v.plate}</td>
                     <td class="p-3">${v.model}</td>
-                    <td class="p-3"><span class="px-2 py-1 rounded text-xs font-semibold ${v.status === 'In Yard' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}">${v.status}</span></td>
+                    <td class="p-3"><span class="px-2 py-1 rounded text-xs font-semibold bg-amber-100 text-amber-800">${v.status}</span></td>
                     <td class="p-3 text-xs">${v.ref}</td>
                     <td class="p-3 font-mono font-bold text-blue-600">${v.pin}</td>
-                    <td class="p-3"><button onclick="quickDelete('${v.id}')" class="text-rose-600 hover:underline text-xs font-medium">Remove</button></td>
+                    <td class="p-3"><button onclick="notifyOwner('${v.phone}', '${v.pin}')" class="text-blue-600 hover:underline text-xs font-medium">Send PIN</button></td>
                 </tr>
             `).join('');
+        }
+
+        function notifyOwner(phone, pin) {
+            alert(`SMS sent to ${phone}: Your vehicle PIN is ${pin}`);
         }
 
         function renderDropdowns() {
@@ -398,207 +349,97 @@
             const checkoutSelect = document.getElementById('checkoutVehicleSelect');
 
             const yardList = vehiclesData.filter(v => v.status === "In Yard");
-            const readyList = vehiclesData.filter(v => v.status === "eNaTiS Cleared" || v.status === "Inspection Failed");
+            const readyList = vehiclesData.filter(v => v.status === "eNaTiS Cleared");
 
-            auditSelect.innerHTML = `<option value="">-- Choose Active Vehicle --</option>` + 
-                yardList.map(v => `<option value="${v.id}">${v.plate} - ${v.model} (${v.ref})</option>`).join('');
+            auditSelect.innerHTML = `<option value="">-- Choose Dispatched Vehicle --</option>` + 
+                yardList.map(v => `<option value="${v.id}">${v.plate} - ${v.model}</option>`).join('');
 
-            checkoutSelect.innerHTML = `<option value="">-- Choose Ready Vehicle --</option>` + 
-                readyList.map(v => `<option value="${v.id}">${v.plate} - ${v.model} [${v.status}]</option>`).join('');
+            checkoutSelect.innerHTML = `<option value="">-- Select Cleared Vehicle --</option>` + 
+                readyList.map(v => `<option value="${v.id}">${v.plate} - ${v.model}</option>`).join('');
         }
 
         function loadAuditDetails() {
             selectedAuditId = document.getElementById('auditVehicleSelect').value;
-            const container = document.getElementById('auditFormContainer');
-            if (!selectedAuditId) {
-                container.classList.add('hidden');
-                return;
-            }
-            const v = vehiclesData.find(item => item.id === selectedAuditId);
-            if (v) {
-                document.getElementById('auditDispPlate').innerText = v.plate;
-                document.getElementById('auditDispModel').innerText = v.model;
-                document.getElementById('auditDispRef').innerText = v.ref;
-                document.getElementById('auditDispPin').innerText = v.pin;
-                container.classList.remove('hidden');
-            }
+            document.getElementById('auditFormContainer').classList.toggle('hidden', !selectedAuditId);
         }
 
-        async function submitAudit(resultStatus) {
+        async function submitAudit() {
             if (!selectedAuditId) return;
-            const checks = Array.from(document.querySelectorAll('.audit-check:checked')).map(cb => cb.value);
-            const defects = document.getElementById('auditDefects').value;
-            const finalStatus = resultStatus === 'Pass' ? 'eNaTiS Cleared' : 'Inspection Failed';
-
             try {
-                await db.collection("vehicles").doc(selectedAuditId).update({
-                    status: finalStatus,
-                    checks,
-                    defects
-                });
-                alert(`Audit completed: ${finalStatus}`);
+                await db.collection("vehicles").doc(selectedAuditId).update({ status: "eNaTiS Cleared" });
+                alert("Inspection submitted to eNaTiS Terminal successfully!");
                 document.getElementById('auditFormContainer').classList.add('hidden');
                 document.getElementById('auditVehicleSelect').value = '';
             } catch (err) {
                 console.error(err);
-                alert("Failed to submit audit update.");
+                alert("Error updating audit.");
             }
         }
 
         function loadCheckoutDetails() {
             selectedCheckoutId = document.getElementById('checkoutVehicleSelect').value;
-            const container = document.getElementById('checkoutFormContainer');
-            if (!selectedCheckoutId) {
-                container.classList.add('hidden');
-                return;
-            }
-            const v = vehiclesData.find(item => item.id === selectedCheckoutId);
-            if (v) {
-                document.getElementById('checkDispModel').innerText = `${v.model} (${v.plate})`;
-                document.getElementById('checkDispOwner').innerText = v.owner;
-                document.getElementById('checkDispStatus').innerText = v.status;
-                calculateTotal();
-                container.classList.remove('hidden');
-            }
+            document.getElementById('checkoutFormContainer').classList.toggle('hidden', !selectedCheckoutId);
+            if (selectedCheckoutId) calculateTotal();
         }
 
         function calculateTotal() {
-            const testing = parseFloat(document.getElementById('feeTesting').value) || 0;
-            const storage = parseFloat(document.getElementById('feeStorage').value) || 0;
-            const grandTotal = testing + storage;
+            const testFee = parseFloat(document.getElementById('feeTesting').value) || 0;
+            const days = parseFloat(document.getElementById('feeDays').value) || 0;
+            const dailyRate = parseFloat(document.getElementById('feeDailyRate').value) || 0;
+            const storageTotal = days * dailyRate;
+            const totalPayable = testFee + storageTotal;
 
-            document.getElementById('calcSubTesting').innerText = `R${testing.toFixed(2)}`;
-            document.getElementById('calcSubStorage').innerText = `R${storage.toFixed(2)}`;
-            document.getElementById('calcGrandTotal').innerText = `R${grandTotal.toFixed(2)}`;
+            document.getElementById('calcTestFee').innerText = `R${testFee.toFixed(2)}`;
+            document.getElementById('calcStorage').innerText = `R${storageTotal.toFixed(2)}`;
+            document.getElementById('calcTotalPayable').innerText = `R${totalPayable.toFixed(2)}`;
         }
 
         async function processCheckout() {
             if (!selectedCheckoutId) return;
-            const testing = parseFloat(document.getElementById('feeTesting').value) || 0;
-            const storage = parseFloat(document.getElementById('feeStorage').value) || 0;
-            const grandTotal = testing + storage;
+            const testFee = parseFloat(document.getElementById('feeTesting').value) || 0;
+            const days = parseFloat(document.getElementById('feeDays').value) || 0;
+            const dailyRate = parseFloat(document.getElementById('feeDailyRate').value) || 0;
+            const totalPayable = testFee + (days * dailyRate);
 
             try {
                 await db.collection("vehicles").doc(selectedCheckoutId).update({
                     status: "Gate Released",
-                    testingFee: testing,
-                    storageFee: storage,
-                    totalPaid: grandTotal,
+                    totalPaid: totalPayable,
                     releasedAt: new Date().toISOString()
                 });
-                alert("Payment processed successfully! Vehicle gate released.");
+                alert("Payment processed and gate release authorized!");
                 document.getElementById('checkoutFormContainer').classList.add('hidden');
                 document.getElementById('checkoutVehicleSelect').value = '';
             } catch (err) {
                 console.error(err);
-                alert("Error processing checkout.");
+                alert("Checkout error.");
             }
         }
 
         function renderDashboard() {
-            const intake = vehiclesData.length;
-            const inYard = vehiclesData.filter(v => v.status === "In Yard").length;
-            const cleared = vehiclesData.filter(v => v.status === "eNaTiS Cleared").length;
-            const released = vehiclesData.filter(v => v.status === "Gate Released").length;
-
-            document.getElementById('dashIntake').innerText = intake;
-            document.getElementById('dashInYard').innerText = inYard;
-            document.getElementById('dashCleared').innerText = cleared;
-            document.getElementById('dashReleased').innerText = released;
-
-            let totalTesting = 0;
-            let totalStorage = 0;
-
-            vehiclesData.forEach(v => {
-                if (v.status === "Gate Released") {
-                    totalTesting += (v.testingFee || 0);
-                    totalStorage += (v.storageFee || 0);
-                }
-            });
-
-            const grandRevenue = totalTesting + totalStorage;
-
-            document.getElementById('revTesting').innerText = `R${totalTesting.toFixed(2)}`;
-            document.getElementById('revStorage').innerText = `R${totalStorage.toFixed(2)}`;
-            document.getElementById('revGrandTotal').innerText = `R${grandRevenue.toFixed(2)}`;
+            document.getElementById('dashIntake').innerText = vehiclesData.length;
+            document.getElementById('dashInYard').innerText = vehiclesData.filter(v => v.status === "In Yard").length;
+            document.getElementById('dashCleared').innerText = vehiclesData.filter(v => v.status === "eNaTiS Cleared").length;
+            document.getElementById('dashReleased').innerText = vehiclesData.filter(v => v.status === "Gate Released").length;
         }
 
         function renderHistory() {
             const historyList = document.getElementById('historyList');
-            const releasedVehicles = vehiclesData.filter(v => v.status === "Gate Released");
+            const released = vehiclesData.filter(v => v.status === "Gate Released");
 
-            if (releasedVehicles.length === 0) {
-                historyList.innerHTML = `<div class="p-4 text-center text-slate-400 text-sm">No release history logged yet.</div>`;
+            if (released.length === 0) {
+                historyList.innerHTML = `<div class="p-4 text-center text-slate-400 text-sm">No completed payment history found.</div>`;
                 return;
             }
 
-            historyList.innerHTML = releasedVehicles.map(v => `
-                <div class="p-4 bg-slate-50 border rounded-lg text-sm space-y-1 border-l-4 border-l-emerald-500">
+            historyList.innerHTML = released.map(v => `
+                <div class="p-4 bg-slate-50 border rounded-lg text-sm space-y-1 mb-2 border-l-4 border-l-emerald-500">
                     <div class="font-bold text-slate-800">Vehicle: ${v.plate} (${v.model})</div>
-                    <div class="text-xs text-slate-500">VIN: ${v.vin} | Owner: ${v.owner}</div>
-                    <div class="text-xs text-slate-600 font-medium">Test Fee: R${(v.testingFee || 0).toFixed(2)} | Storage: R${(v.storageFee || 0).toFixed(2)}</div>
+                    <div class="text-xs text-slate-500">Owner: ${v.owner} | PIN: ${v.pin}</div>
                     <div class="font-bold text-blue-900">Total Paid: R${(v.totalPaid || 0).toFixed(2)}</div>
-                    <div class="text-xs text-slate-400">Released on: ${v.releasedAt ? new Date(v.releasedAt).toLocaleString() : 'N/A'}</div>
+                    <div class="text-xs text-slate-400">Released: ${new Date(v.releasedAt).toLocaleString()}</div>
                 </div>
             `).join('');
-        }
-
-        function trackVehicle() {
-            const query = document.getElementById('trackInput').value.trim().toUpperCase();
-            const resultBox = document.getElementById('trackResult');
-            if (!query) return;
-
-            const found = vehiclesData.find(v => v.plate === query || v.vin === query || v.pin === query || v.ref === query);
-            resultBox.classList.remove('hidden');
-
-            if (found) {
-                resultBox.innerHTML = `
-                    <div class="font-bold text-slate-800">Vehicle: ${found.plate} (${found.model})</div>
-                    <div class="text-xs text-slate-500">VIN: ${found.vin}</div>
-                    <div class="text-xs text-slate-500">Owner: ${found.owner}</div>
-                    <div class="font-semibold text-blue-600">Status: ${found.status}</div>
-                    <div class="text-xs text-slate-600">Reference Code: ${found.ref} | PIN: <span class="font-mono font-bold">${found.pin}</span></div>
-                    ${found.defects ? `<div class="text-xs text-rose-600 mt-1">Defects Logged: ${found.defects}</div>` : ''}
-                `;
-            } else {
-                resultBox.innerHTML = `<span class="text-rose-600 font-medium">No vehicle record found matching "${query}".</span>`;
-            }
-        }
-
-        async function quickDelete(id) {
-            if (confirm("Are you sure you want to remove this record from the cloud?")) {
-                try {
-                    await db.collection("vehicles").doc(id).delete();
-                } catch (err) {
-                    console.error(err);
-                    alert("Failed to delete record.");
-                }
-            }
-        }
-
-        function startScanner() {
-            const viewport = document.getElementById('interactive');
-            viewport.classList.remove('hidden');
-            Quagga.init({
-                inputStream: {
-                    name: "Live",
-                    type: "LiveStream",
-                    target: viewport
-                },
-                decoder: { readers: ["code_128_reader", "ean_reader", "vin_reader"] }
-            }, function(err) {
-                if (err) { console.error(err); return; }
-                Quagga.start();
-            });
-
-            Quagga.onDetected(function(result) {
-                const code = result.codeResult.code;
-                if (code.length >= 10) {
-                    document.getElementById('regVin').value = code.toUpperCase();
-                    Quagga.stop();
-                    viewport.classList.add('hidden');
-                }
-            });
         }
     </script>
 </body>
