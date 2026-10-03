@@ -95,7 +95,8 @@
             <h2>Station Admin Login</h2>
             <div class="form-group">
                 <label>Manager Password</label>
-                <input type="password" id="admin-pass" placeholder="Enter password (admin123)">
+                <!-- FIXED: Removed exposed password from placeholder -->
+                <input type="password" id="admin-pass" placeholder="Enter manager password">
             </div>
             <button class="btn btn-success" id="btn-admin-login">Login to Management Dashboard</button>
         </div>
@@ -400,7 +401,7 @@
                 switchTab('audit', document.querySelector('nav button'));
                 window.scrollTo(0, 0);
             } else {
-                alert('Invalid Manager Password! (Use: admin123)');
+                alert('Invalid Manager Password!');
             }
         }
 
@@ -828,4 +829,4 @@
         });
     </script>
 </body>
-                                                                      </html>
+</html>
