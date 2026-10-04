@@ -95,7 +95,6 @@
             <h2>Station Admin Login</h2>
             <div class="form-group">
                 <label>Manager Password</label>
-                <!-- FIXED: Removed exposed password from placeholder -->
                 <input type="password" id="admin-pass" placeholder="Enter manager password">
             </div>
             <button class="btn btn-success" id="btn-admin-login">Login to Management Dashboard</button>
@@ -212,7 +211,7 @@
                 <select id="insp-5"><option>PASS</option><option>FAIL</option></select>
             </div>
             <button type="button" class="btn btn-success" id="btn-inspect-pass">Pass & Certify Vehicle</button>
-            <button type="button" class="btn btn-danger" id="btn-inspect-fail">Fail, Log Defects & Send SMS</button>
+            <button type="button" class="btn btn-danger" id="btn-inspect-fail">Fail & Log Defects</button>
         </div>
     </div>
 
@@ -264,7 +263,7 @@
                             <th>Status</th>
                             <th>Ref</th>
                             <th>PIN</th>
-                            <th>Action</th>
+                            <th>Customer No.</th>
                         </tr>
                     </thead>
                     <tbody id="yard-table-body">
@@ -485,7 +484,7 @@
                         <td><span style="color:${statusColor}; font-weight:bold;">${v.status || 'In Yard'}</span></td>
                         <td>${v.refCode || 'N/A'}</td>
                         <td>${v.pin || 'N/A'}</td>
-                        <td><button class="btn" style="padding: 6px 10px; font-size: 0.8rem; margin-bottom: 0;" onclick="alert('SMS notification sent to ${v.phone || 'N/A'}')">SMS</button></td>
+                        <td style="font-family:monospace; font-weight:bold; font-size:0.8rem; color:var(--primary);">${v.phone || 'N/A'}</td>
                     </tr>
                 `;
             }).join('');
@@ -776,7 +775,7 @@
                 });
                 document.getElementById('audit-select').value = '';
                 populateAuditDropdown();
-                alert(`📱 [SMS Gateway simulated to ${vehicle.phone}]\n\n"VeloVault Notice: Dear ${vehicle.owner}, vehicle VIN ${vehicle.vin || vehicle.plate} has FAILED roadworthy testing. Defects: ${defectsArr.join(', ')}."`);
+                alert(`Inspection marked as FAILED for ${vehicle.plate}. Customer phone number (${vehicle.phone}) is now visible in the Yard registry for direct contact.`);
             } catch(e) {
                 console.error("Error failing inspection:", e);
                 alert("Failed to update defect status in cloud.");
