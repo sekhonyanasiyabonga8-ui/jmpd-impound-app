@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VeloVault Manager</title>
-    <!-- Include HTML5 QR & Barcode Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
@@ -17,8 +16,6 @@
             --border: #cbd5e1;
             --success: #22c55e;
             --danger: #ef4444;
-            --whatsapp-green: #dcf8c6;
-            --whatsapp-blue: #1e3a8a;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--background); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
@@ -27,7 +24,6 @@
         header h1 { font-size: 1.2rem; font-weight: bold; }
         .badge-top { background: var(--accent); color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
 
-        /* NAVIGATION BAR FOR ADMIN */
         nav { display: none; background: var(--surface); border-bottom: 1px solid var(--border); width: 100%; overflow-x: auto; flex-shrink: 0; position: sticky; top: 51px; z-index: 99; }
         nav::-webkit-scrollbar { display: none; }
         nav { -ms-overflow-style: none; scrollbar-width: none; }
@@ -55,18 +51,17 @@
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
         .history-item { border-left: 4px solid var(--success); padding: 12px; background: #f8fafc; margin-bottom: 10px; border-radius: 6px; font-size: 0.9rem; }
 
-        /* WhatsApp Style Chat Bubbles */
+        /* Chat Bubbles with Delivery Status */
         .chat-container { height: 260px; overflow-y: auto; background: #e5ddd5; border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
         .chat-bubble { max-width: 80%; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; position: relative; word-break: break-word; line-height: 1.3; }
-        /* Customer message bubble: Dark Blue, Left aligned */
         .chat-bubble.customer { background: #1e3a8a; color: white; align-self: flex-start; border-top-left-radius: 2px; }
-        /* Admin message bubble: Green, Right aligned */
         .chat-bubble.admin { background: #25d366; color: #000; align-self: flex-end; border-top-right-radius: 2px; font-weight: 500; }
-        .chat-time { font-size: 0.65rem; display: block; margin-top: 4px; text-align: right; opacity: 0.7; }
-        .chat-bubble.customer .chat-time { color: #cbd5e1; }
-        .chat-bubble.admin .chat-time { color: #333; }
+        
+        .chat-meta { display: flex; justify-content: flex-end; align-items: center; gap: 4px; margin-top: 4px; }
+        .chat-time { font-size: 0.65rem; opacity: 0.7; }
+        .delivery-status { font-size: 0.65rem; font-weight: bold; color: #02551e; }
+        .chat-bubble.customer .delivery-status { color: #93c5fd; }
 
-        /* Tables & Dashboard grids */
         table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.85rem; }
         th, td { border: 1px solid var(--border); padding: 10px 6px; text-align: center; vertical-align: middle; }
         th { background: #f1f5f9; color: var(--primary); font-weight: bold; }
@@ -90,7 +85,6 @@
 </head>
 <body>
 
-    <!-- AUTHENTICATION / PORTAL SELECTOR SCREEN -->
     <div id="auth-overlay">
         <div style="text-align: center; margin-bottom: 24px;">
             <h1 style="color: var(--primary); font-size: 2.2rem; margin-bottom: 6px;">VeloVault</h1>
@@ -118,7 +112,6 @@
         </div>
     </header>
 
-    <!-- NAVIGATION BAR FOR ADMIN (Tabs 1 to 6) -->
     <nav id="admin-nav">
         <button data-tab="audit">1. Audit</button>
         <button data-tab="checkout">2. Checkout</button>
@@ -128,14 +121,11 @@
         <button data-tab="chat">6. Chat Log</button>
     </nav>
 
-    <!-- PUBLIC / WALK-IN CUSTOMER PORTAL VIEW -->
     <div id="public-view" class="tab-content">
         <h2>Customer Self-Service Portal</h2>
         
         <div class="card">
             <h2>Quick Walk-In Registration</h2>
-            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">Type your 17-digit VIN, simulate a barcode scan instantly, or use your live camera.</p>
-            
             <div id="scanner-container">
                 <div id="reader"></div>
                 <button type="button" class="btn btn-danger" id="btn-stop-scan" style="margin-top: 10px; margin-bottom:0; padding:8px;">Close Camera Scanner</button>
@@ -143,9 +133,7 @@
 
             <div class="form-group">
                 <label>17-Digit VIN (Vehicle Identification Number)</label>
-                <div style="display: flex; gap: 6px; margin-bottom: 4px;">
-                    <input type="text" id="pub-vin" placeholder="e.g. AAV1234567890ABCD" maxlength="17" style="text-transform: uppercase; font-family: monospace; letter-spacing: 1px;">
-                </div>
+                <input type="text" id="pub-vin" placeholder="e.g. AAV1234567890ABCD" maxlength="17" style="text-transform: uppercase; font-family: monospace; letter-spacing: 1px;">
                 <div style="display: flex; gap: 6px; margin-top: 6px;">
                     <button type="button" class="btn btn-accent" id="btn-sim-scan" style="flex:1; margin-bottom:0; font-size: 0.8rem; padding: 10px;">⚡ Simulate Barcode Scan</button>
                     <button type="button" class="btn" id="btn-start-scan" style="flex:1; margin-bottom:0; font-size: 0.8rem; padding: 10px; background: #475569;">📷 Live Camera</button>
@@ -153,27 +141,14 @@
                 <small style="color: #64748b; font-size: 0.75rem; display: block; margin-top: 4px;" id="vin-counter">0 / 17 characters entered</small>
             </div>
 
-            <div class="form-group">
-                <label>Owner Name & Surname</label>
-                <input type="text" id="pub-owner" placeholder="e.g. Sipho Dlamini">
-            </div>
-            <div class="form-group">
-                <label>License Plate Number</label>
-                <input type="text" id="pub-plate" placeholder="e.g. ND 456-789">
-            </div>
-            <div class="form-group">
-                <label>Vehicle Make & Model</label>
-                <input type="text" id="pub-model" placeholder="e.g. Isuzu NPR 400">
-            </div>
-            <div class="form-group">
-                <label>Phone Number (WhatsApp / SMS)</label>
-                <input type="tel" id="pub-phone" placeholder="0823456789">
-            </div>
+            <div class="form-group"><label>Owner Name & Surname</label><input type="text" id="pub-owner" placeholder="e.g. Sipho Dlamini"></div>
+            <div class="form-group"><label>License Plate Number</label><input type="text" id="pub-plate" placeholder="e.g. ND 456-789"></div>
+            <div class="form-group"><label>Vehicle Make & Model</label><input type="text" id="pub-model" placeholder="e.g. Isuzu NPR 400"></div>
+            <div class="form-group"><label>Phone Number</label><input type="tel" id="pub-phone" placeholder="0823456789"></div>
             <button class="btn btn-success" id="btn-pub-register">Register & Generate PIN</button>
             <div id="self-reg-result" style="margin-top: 10px;"></div>
         </div>
 
-        <!-- Check Existing Status & Live WhatsApp Chat Box -->
         <div class="card" style="margin-top: 15px;">
             <h2>Check Test Status & Message Station Admin</h2>
             <div class="form-group">
@@ -185,67 +160,31 @@
         </div>
     </div>
 
-    <!-- ADMIN TAB 1: BAY AUDIT -->
     <div id="tab-audit" class="tab-content">
         <h2>Technical Inspection (Audit)</h2>
         <div class="card">
             <div class="form-group">
                 <label>Select Walk-In Vehicle from Yard</label>
-                <select id="audit-select">
-                    <option value="">-- Choose Registered Vehicle --</option>
-                </select>
+                <select id="audit-select"><option value="">-- Choose Registered Vehicle --</option></select>
             </div>
-            <div class="form-group" id="audit-vin-display" style="font-size: 0.85rem; color: #64748b; background: #f1f5f9; padding: 8px; border-radius: 6px; margin-bottom: 12px;">
-                VIN: Not selected
-            </div>
-            <div class="form-group">
-                <label>1. Heavy Roller Brake Tester Efficiency (≥ 55%)</label>
-                <select id="insp-1"><option>PASS</option><option>FAIL</option></select>
-            </div>
-            <div class="form-group">
-                <label>2. Steering Linkage & Joint Play (Pit Inspection)</label>
-                <select id="insp-2"><option>PASS</option><option>FAIL</option></select>
-            </div>
-            <div class="form-group">
-                <label>3. Tyre Tread Depth (≥ 1.6mm across all axles)</label>
-                <select id="insp-3"><option>PASS</option><option>FAIL</option></select>
-            </div>
-            <div class="form-group">
-                <label>4. Headlamp Alignment & Light Voltage</label>
-                <select id="insp-4"><option>PASS</option><option>FAIL</option></select>
-            </div>
-            <div class="form-group">
-                <label>5. Exhaust Emissions & Diesel Smoke Opacity</label>
-                <select id="insp-5"><option>PASS</option><option>FAIL</option></select>
-            </div>
+            <div class="form-group" id="audit-vin-display" style="font-size: 0.85rem; color: #64748b; background: #f1f5f9; padding: 8px; border-radius: 6px; margin-bottom: 12px;">VIN: Not selected</div>
+            <div class="form-group"><label>1. Heavy Roller Brake Tester Efficiency</label><select id="insp-1"><option>PASS</option><option>FAIL</option></select></div>
+            <div class="form-group"><label>2. Steering Linkage & Joint Play</label><select id="insp-2"><option>PASS</option><option>FAIL</option></select></div>
+            <div class="form-group"><label>3. Tyre Tread Depth</label><select id="insp-3"><option>PASS</option><option>FAIL</option></select></div>
+            <div class="form-group"><label>4. Headlamp Alignment</label><select id="insp-4"><option>PASS</option><option>FAIL</option></select></div>
+            <div class="form-group"><label>5. Exhaust Emissions</label><select id="insp-5"><option>PASS</option><option>FAIL</option></select></div>
             <button type="button" class="btn btn-success" id="btn-inspect-pass">Pass & Certify Vehicle</button>
             <button type="button" class="btn btn-danger" id="btn-inspect-fail">Fail & Log Defects</button>
         </div>
     </div>
 
-    <!-- ADMIN TAB 2: CHECKOUT / SETTLEMENT -->
     <div id="tab-checkout" class="tab-content">
         <h2>Gate Release & Settlement</h2>
         <div class="card">
-            <div class="form-group">
-                <label>Select Cleared Vehicle for Release</label>
-                <select id="checkout-select">
-                    <option value="">-- Select Cleared Vehicle --</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Testing Fee (ZAR)</label>
-                <input type="number" id="fee-test" value="850">
-            </div>
-            <div class="form-group">
-                <label>Storage / Parking Days</label>
-                <input type="number" id="fee-days" value="1">
-            </div>
-            <div class="form-group">
-                <label>Daily Rate (ZAR)</label>
-                <input type="number" id="fee-rate" value="164">
-            </div>
-
+            <div class="form-group"><label>Select Cleared Vehicle for Release</label><select id="checkout-select"><option value="">-- Select Cleared Vehicle --</option></select></div>
+            <div class="form-group"><label>Testing Fee (ZAR)</label><input type="number" id="fee-test" value="850"></div>
+            <div class="form-group"><label>Storage / Parking Days</label><input type="number" id="fee-days" value="1"></div>
+            <div class="form-group"><label>Daily Rate (ZAR)</label><input type="number" id="fee-rate" value="164"></div>
             <div class="summary-box" id="calc-summary">
                 <div class="summary-row"><span>Test Fee (Excl. VAT):</span><span id="lbl-test">R850.00</span></div>
                 <div class="summary-row"><span>Storage (Excl. VAT):</span><span id="lbl-storage">R164.00</span></div>
@@ -258,57 +197,27 @@
         </div>
     </div>
 
-    <!-- ADMIN TAB 3: YARD REGISTRY -->
     <div id="tab-yard" class="tab-content">
         <h2>Active Yard Registry</h2>
         <div class="card">
             <div style="overflow-x: auto;">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Plate / VIN</th>
-                            <th>Model</th>
-                            <th>Status</th>
-                            <th>Ref</th>
-                            <th>PIN</th>
-                            <th>Customer No.</th>
-                        </tr>
-                    </thead>
-                    <tbody id="yard-table-body">
-                        <tr>
-                            <td colspan="6" style="padding: 16px; color: #64748b;">Loading cloud registry...</td>
-                        </tr>
-                    </tbody>
+                    <thead><tr><th>Plate / VIN</th><th>Model</th><th>Status</th><th>Ref</th><th>PIN</th><th>Customer No.</th></tr></thead>
+                    <tbody id="yard-table-body"><tr><td colspan="6" style="padding: 16px; color: #64748b;">Loading cloud registry...</td></tr></tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- ADMIN TAB 4: EXECUTIVE DASHBOARD -->
     <div id="tab-dashboard" class="tab-content">
         <h2>Executive Dashboard Analytics</h2>
         <div class="card">
-            <h3 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--primary);">Yard Overview</h3>
             <div class="dash-grid">
-                <div class="dash-card">
-                    <h4>TOTAL INTAKE</h4>
-                    <div class="val" id="dash-total-intake">0</div>
-                </div>
-                <div class="dash-card">
-                    <h4>CURRENTLY IN YARD</h4>
-                    <div class="val" id="dash-impounded" style="color: var(--accent);">0</div>
-                </div>
-                <div class="dash-card">
-                    <h4>ENATIS CLEARED</h4>
-                    <div class="val" id="dash-cleared" style="color: var(--success);">0</div>
-                </div>
-                <div class="dash-card">
-                    <h4>GATE RELEASED</h4>
-                    <div class="val" id="dash-released" style="color: var(--secondary);">0</div>
-                </div>
+                <div class="dash-card"><h4>TOTAL INTAKE</h4><div class="val" id="dash-total-intake">0</div></div>
+                <div class="dash-card"><h4>CURRENTLY IN YARD</h4><div class="val" id="dash-impounded" style="color: var(--accent);">0</div></div>
+                <div class="dash-card"><h4>ENATIS CLEARED</h4><div class="val" id="dash-cleared" style="color: var(--success);">0</div></div>
+                <div class="dash-card"><h4>GATE RELEASED</h4><div class="val" id="dash-released" style="color: var(--secondary);">0</div></div>
             </div>
-
-            <h3 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--primary);">Financial Revenue Collection</h3>
             <div class="summary-box">
                 <div class="summary-row"><span>Total Testing Fees:</span><span id="dash-rev-test">R0.00</span></div>
                 <div class="summary-row"><span>Total Storage Revenue:</span><span id="dash-rev-storage">R0.00</span></div>
@@ -319,30 +228,21 @@
         </div>
     </div>
 
-    <!-- ADMIN TAB 5: HISTORY & SETTLEMENT LOGS -->
     <div id="tab-history" class="tab-content">
         <h2>Payment & Release History</h2>
-        <div class="card">
-            <div id="history-list-container">
-                <p style="color: #64748b;">Loading cloud history logs...</p>
-            </div>
-        </div>
+        <div class="card"><div id="history-list-container"><p style="color: #64748b;">Loading cloud history logs...</p></div></div>
     </div>
 
-    <!-- ADMIN TAB 6: CHAT LOG / FAULT NOTES -->
     <div id="tab-chat" class="tab-content">
         <h2>Vehicle Chat & Fault Logs</h2>
         <div class="card">
             <div class="form-group">
                 <label>Select Vehicle Thread</label>
-                <select id="chat-vehicle-select">
-                    <option value="">-- Choose Vehicle for Chat --</option>
-                </select>
+                <select id="chat-vehicle-select"><option value="">-- Choose Vehicle for Chat --</option></select>
             </div>
             
-            <!-- WhatsApp Style Chat Flow Container -->
             <div id="chat-messages-container" class="chat-container">
-                <p style="color: #555; font-style: italic; font-size: 0.85rem; text-align: center; margin-top: auto; margin-bottom: auto;">Select a vehicle above to view or write fault logs...</p>
+                <p style="color: #555; font-style: italic; font-size: 0.85rem; text-align: center; margin: auto;">Select a vehicle above to view or write fault logs...</p>
             </div>
 
             <div class="form-group" style="margin-bottom: 0;">
@@ -352,7 +252,6 @@
         </div>
     </div>
 
-    <!-- Firebase & Firestore Cloud Integration -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
@@ -377,9 +276,7 @@
 
         onSnapshot(collection(db, "registrations"), (snapshot) => {
             yardVehicles = [];
-            snapshot.forEach((docSnap) => {
-                yardVehicles.push({ id: docSnap.id, ...docSnap.data() });
-            });
+            snapshot.forEach((docSnap) => { yardVehicles.push({ id: docSnap.id, ...docSnap.data() }); });
             const activeTab = document.querySelector('nav button.active');
             if (activeTab) {
                 const tabName = activeTab.getAttribute('data-tab');
@@ -389,16 +286,12 @@
                 if(tabName === 'dashboard') renderDashboard();
                 if(tabName === 'chat') populateChatDropdown();
             }
-            if(activeSearchedVehicleId) {
-                updateCustomerSearchDisplay(activeSearchedVehicleId);
-            }
+            if(activeSearchedVehicleId) updateCustomerSearchDisplay(activeSearchedVehicleId);
         });
 
         onSnapshot(collection(db, "history"), (snapshot) => {
             historyLogs = [];
-            snapshot.forEach((docSnap) => {
-                historyLogs.push({ id: docSnap.id, ...docSnap.data() });
-            });
+            snapshot.forEach((docSnap) => { historyLogs.push({ id: docSnap.id, ...docSnap.data() }); });
             const activeTab = document.querySelector('nav button.active');
             if (activeTab && activeTab.getAttribute('data-tab') === 'history') renderHistory();
             if (activeTab && activeTab.getAttribute('data-tab') === 'dashboard') renderDashboard();
@@ -406,16 +299,10 @@
 
         onSnapshot(collection(db, "chats"), (snapshot) => {
             chatMessages = [];
-            snapshot.forEach((docSnap) => {
-                chatMessages.push({ id: docSnap.id, ...docSnap.data() });
-            });
+            snapshot.forEach((docSnap) => { chatMessages.push({ id: docSnap.id, ...docSnap.data() }); });
             const activeTab = document.querySelector('nav button.active');
-            if (activeTab && activeTab.getAttribute('data-tab') === 'chat') {
-                renderChatMessages();
-            }
-            if(activeSearchedVehicleId) {
-                updateCustomerSearchDisplay(activeSearchedVehicleId);
-            }
+            if (activeTab && activeTab.getAttribute('data-tab') === 'chat') renderChatMessages();
+            if(activeSearchedVehicleId) updateCustomerSearchDisplay(activeSearchedVehicleId);
         });
 
         window.openPublicPortal = function() {
@@ -434,9 +321,7 @@
                 document.getElementById('role-badge').innerText = 'STATION ADMIN';
                 switchTab('audit', document.querySelector('nav button'));
                 window.scrollTo(0, 0);
-            } else {
-                alert('Invalid Manager Password!');
-            }
+            } else { alert('Invalid Manager Password!'); }
         }
 
         window.logoutToPortal = function() {
@@ -501,13 +386,13 @@
             const container = document.getElementById('chat-messages-container');
             
             if(!selectId) {
-                container.innerHTML = '<p style="color: #555; font-style: italic; font-size: 0.85rem; text-align: center; margin-top: auto; margin-bottom: auto;">Select a vehicle above to view or write fault logs...</p>';
+                container.innerHTML = '<p style="color: #555; font-style: italic; font-size: 0.85rem; text-align: center; margin: auto;">Select a vehicle above to view or write fault logs...</p>';
                 return;
             }
 
             const filteredMsgs = chatMessages.filter(m => m.vehicleId === selectId);
             if(filteredMsgs.length === 0) {
-                container.innerHTML = '<p style="color: #555; font-style: italic; font-size: 0.85rem; text-align: center; margin-top: auto; margin-bottom: auto;">No messages or fault logs for this vehicle yet.</p>';
+                container.innerHTML = '<p style="color: #555; font-style: italic; font-size: 0.85rem; text-align: center; margin: auto;">No messages or fault logs for this vehicle yet.</p>';
                 return;
             }
 
@@ -518,7 +403,10 @@
                     <div class="chat-bubble ${bubbleClass}">
                         ${!isAdmin ? `<strong style="font-size:0.75rem; display:block; color:#93c5fd; margin-bottom:2px;">${m.sender}</strong>` : ''}
                         ${m.text}
-                        <span class="chat-time">${m.date || ''}</span>
+                        <div class="chat-meta">
+                            <span class="chat-time">${m.date || ''}</span>
+                            <span class="delivery-status">✔ Sent</span>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -537,7 +425,6 @@
 
             const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString();
 
-            // Optimistically push locally so admin sees it sent immediately
             chatMessages.push({
                 vehicleId: selectId,
                 sender: 'Station Admin',
@@ -575,7 +462,6 @@
             document.getElementById('lbl-storage').innerText = `R${storageExcl.toFixed(2)}`;
             document.getElementById('lbl-vat').innerText = `R${vat.toFixed(2)}`;
             document.getElementById('lbl-total').innerText = `R${total.toFixed(2)}`;
-
             return total;
         }
 
@@ -659,22 +545,19 @@
         document.getElementById('btn-start-scan').addEventListener('click', function() {
             const container = document.getElementById('scanner-container');
             container.style.display = 'block';
-            if(!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-            }
+            if(!html5QrCode) html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start(
                 { facingMode: "environment" },
                 { fps: 10, qrbox: { width: 250, height: 100 } },
                 (decodedText) => {
-                    let cleanVin = decodedText.trim().toUpperCase();
-                    document.getElementById('pub-vin').value = cleanVin.substring(0, 17);
+                    document.getElementById('pub-vin').value = decodedText.trim().toUpperCase().substring(0, 17);
                     updateVinCounter();
                     stopScanner();
                     alert('Successfully scanned barcode!');
                 },
                 () => {}
             ).catch(() => {
-                alert('Unable to access camera. Please check camera permissions.');
+                alert('Unable to access camera.');
                 container.style.display = 'none';
             });
         });
@@ -697,11 +580,7 @@
         function updateVinCounter() {
             const len = vinInput.value.length;
             document.getElementById('vin-counter').innerText = `${len} / 17 characters entered`;
-            if(len === 17) {
-                document.getElementById('vin-counter').style.color = 'var(--success)';
-            } else {
-                document.getElementById('vin-counter').style.color = '#64748b';
-            }
+            document.getElementById('vin-counter').style.color = (len === 17) ? 'var(--success)' : '#64748b';
         }
         vinInput.addEventListener('input', function() {
             this.value = this.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, ''); 
@@ -713,9 +592,7 @@
         document.getElementById('btn-logout').addEventListener('click', logoutToPortal);
 
         document.querySelectorAll('nav button').forEach(btn => {
-            btn.addEventListener('click', function() {
-                switchTab(this.getAttribute('data-tab'), this);
-            });
+            btn.addEventListener('click', function() { switchTab(this.getAttribute('data-tab'), this); });
         });
 
         document.getElementById('btn-pub-register').addEventListener('click', async function() {
@@ -727,14 +604,8 @@
             const resultBox = document.getElementById('self-reg-result');
             const submitBtn = this;
 
-            if(!vin || vin.length < 17) {
-                resultBox.innerHTML = '<p style="color:red; font-size:0.9rem;">Please provide a valid 17-digit VIN number.</p>';
-                return;
-            }
-            if(!owner || !plate || !model) {
-                resultBox.innerHTML = '<p style="color:red; font-size:0.9rem;">Please fill in owner name, plate, and model.</p>';
-                return;
-            }
+            if(!vin || vin.length < 17) { resultBox.innerHTML = '<p style="color:red; font-size:0.9rem;">Please provide a valid 17-digit VIN number.</p>'; return; }
+            if(!owner || !plate || !model) { resultBox.innerHTML = '<p style="color:red; font-size:0.9rem;">Please fill in owner name, plate, and model.</p>'; return; }
 
             const refCode = 'REF-' + Math.floor(1000 + Math.random() * 9000);
             const pin = Math.floor(100 + Math.random() * 900);
@@ -742,28 +613,15 @@
             try {
                 submitBtn.disabled = true;
                 submitBtn.innerText = "Syncing to Cloud...";
-
                 await addDoc(collection(db, "registrations"), {
-                    vin: vin,
-                    plate: plate,
-                    model: model,
-                    owner: owner,
-                    phone: phone || "N/A",
-                    status: 'In Yard',
-                    defects: [],
-                    refCode: refCode,
-                    pin: pin.toString(),
-                    timestamp: serverTimestamp(),
-                    date: new Date().toLocaleString()
+                    vin, plate, model, owner, phone: phone || "N/A",
+                    status: 'In Yard', defects: [], refCode, pin: pin.toString(),
+                    timestamp: serverTimestamp(), date: new Date().toLocaleString()
                 });
-
                 resultBox.innerHTML = `
                     <div style="background: #e2f8ed; padding: 12px; border-radius: 8px; border-left: 4px solid var(--success); margin-top:10px;">
-                        <strong style="color:var(--success);">Cloud Registration Successful!</strong><br>
-                        <strong>VIN:</strong> ${vin}<br>
-                        <strong>Reference Code:</strong> ${refCode}<br>
-                        <strong>Your PIN:</strong> ${pin}<br>
-                        <small style="color: #64748b; display:block; margin-top:6px;">Show this PIN or Reference to station staff.</small>
+                        <strong style="color:var(--success);">Registration Successful!</strong><br>
+                        <strong>Reference Code:</strong> ${refCode} | <strong>PIN:</strong> ${pin}
                     </div>
                 `;
                 document.getElementById('pub-vin').value = '';
@@ -773,8 +631,7 @@
                 document.getElementById('pub-phone').value = '';
                 updateVinCounter();
             } catch (error) {
-                console.error("Error writing document: ", error);
-                alert("Failed to save to cloud database. Check console.");
+                alert("Failed to save to cloud database.");
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Register & Generate PIN";
@@ -790,42 +647,33 @@
             if(found.status === 'Cleared/Passed') statusColor = 'var(--success)';
             if(found.status === 'Failed / Defective') statusColor = 'var(--danger)';
 
-            let defectHtml = '';
-            if(found.defects && found.defects.length > 0) {
-                defectHtml = `<br><strong>Failed Items:</strong> <span style="color:var(--danger);">${found.defects.join(', ')}</span>`;
-            }
+            let defectHtml = found.defects && found.defects.length > 0 ? `<br><strong>Failed Items:</strong> <span style="color:var(--danger);">${found.defects.join(', ')}</span>` : '';
 
             const filteredMsgs = chatMessages.filter(m => m.vehicleId === found.id);
-            let chatHtml = filteredMsgs.map(m => {
+            let chatHtml = filteredMsgs.length > 0 ? filteredMsgs.map(m => {
                 const isAdmin = m.sender === 'Station Admin';
-                const bubbleClass = isAdmin ? 'admin' : 'customer';
                 return `
-                    <div class="chat-bubble ${bubbleClass}">
+                    <div class="chat-bubble ${isAdmin ? 'admin' : 'customer'}">
                         ${!isAdmin ? `<strong style="font-size:0.75rem; display:block; color:#93c5fd; margin-bottom:2px;">${m.sender}</strong>` : ''}
                         ${m.text}
-                        <span class="chat-time">${m.date || ''}</span>
+                        <div class="chat-meta">
+                            <span class="chat-time">${m.date || ''}</span>
+                            <span class="delivery-status">✔ Sent</span>
+                        </div>
                     </div>
                 `;
-            }).join('');
-
-            if(filteredMsgs.length === 0) {
-                chatHtml = '<p style="color: #555; font-style: italic; font-size: 0.8rem; text-align: center; margin-top: auto; margin-bottom: auto;">No messages yet. Send a message to the station admin below.</p>';
-            }
+            }).join('') : '<p style="color: #555; font-style: italic; font-size: 0.8rem; text-align: center; margin: auto;">No messages yet. Send a message to station admin below.</p>';
 
             resultBox.innerHTML = `
                 <div style="background: #f1f5f9; padding: 12px; border-radius: 8px; border-left: 4px solid ${statusColor}; margin-top:10px;">
                     <strong>Vehicle:</strong> ${found.plate} (${found.model})<br>
                     <small style="font-family:monospace; color:#64748b;">VIN: ${found.vin || 'N/A'}</small><br>
-                    <strong>Owner:</strong> ${found.owner}<br>
-                    <strong>Status:</strong> <span style="color:${statusColor}; font-weight:bold;">${found.status || 'In Yard'}</span>
-                    ${defectHtml}<br>
+                    <strong>Status:</strong> <span style="color:${statusColor}; font-weight:bold;">${found.status || 'In Yard'}</span>${defectHtml}<br>
                     <strong>Reference:</strong> ${found.refCode} | <strong>PIN:</strong> ${found.pin}
                     
                     <div style="margin-top: 12px; border-top: 1px solid #cbd5e1; padding-top: 10px;">
                         <strong style="font-size: 0.9rem; color: var(--primary);">Live Station Chat & Fault Notes:</strong>
-                        <div id="cust-chat-scroll" class="chat-container" style="height: 180px; margin-top: 6px;">
-                            ${chatHtml}
-                        </div>
+                        <div id="cust-chat-scroll" class="chat-container" style="height: 180px; margin-top: 6px;">${chatHtml}</div>
                         <div style="display: flex; gap: 6px;">
                             <input type="text" id="cust-msg-input" placeholder="Ask admin a question..." style="font-size: 0.9rem; padding: 8px;">
                             <button type="button" class="btn btn-success" id="btn-cust-send" style="width: auto; padding: 8px 14px; margin-bottom: 0; font-size: 0.85rem; background: #25d366; color: #000; font-weight: bold;">Send</button>
@@ -864,7 +712,6 @@
                             date: timeStr
                         });
                     } catch(e) {
-                        console.error("Error sending customer chat:", e);
                         alert("Failed to send message.");
                     }
                 };
@@ -874,7 +721,7 @@
         document.getElementById('btn-search-status').addEventListener('click', function() {
             const query = document.getElementById('search-query').value.trim().toUpperCase();
             const resultBox = document.getElementById('search-result');
-            if(!query) { resultBox.innerHTML = '<p style="color:red;">Please enter a plate, 17-digit VIN, or PIN.</p>'; return; }
+            if(!query) { resultBox.innerHTML = '<p style="color:red;">Please enter a plate, VIN, or PIN.</p>'; return; }
 
             const found = yardVehicles.find(v => (v.vin && v.vin.toUpperCase().includes(query)) || (v.plate && v.plate.toUpperCase().includes(query)) || v.pin == query || (v.refCode && v.refCode.toUpperCase() === query));
             
@@ -888,13 +735,11 @@
                     resultBox.innerHTML = `
                         <div style="background: #f1f5f9; padding: 12px; border-radius: 8px; border-left: 4px solid var(--success); margin-top:10px;">
                             <strong>Vehicle:</strong> ${histFound.plate} (${histFound.model})<br>
-                            <small style="font-family:monospace; color:#64748b;">VIN: ${histFound.vin || 'N/A'}</small><br>
-                            <strong>Status:</strong> <span style="color:var(--success); font-weight:bold;">Gate Released / Completed</span><br>
-                            <small style="color: #64748b; display:block; margin-top:6px;">Released on: ${histFound.date}</small>
+                            <strong>Status:</strong> <span style="color:var(--success); font-weight:bold;">Gate Released / Completed</span>
                         </div>
                     `;
                 } else {
-                    resultBox.innerHTML = '<p style="color:red; margin-top:8px;">No matching vehicle found with that VIN, plate, or PIN in cloud.</p>';
+                    resultBox.innerHTML = '<p style="color:red; margin-top:8px;">No matching vehicle found in cloud.</p>';
                 }
             }
         });
@@ -904,26 +749,18 @@
             const vinDisplay = document.getElementById('audit-vin-display');
             if(!id) { vinDisplay.innerText = 'VIN: Not selected'; return; }
             const vehicle = yardVehicles.find(v => v.id == id);
-            if(vehicle) { vinDisplay.innerText = `VIN: ${vehicle.vin || 'Not provided'}`; }
+            if(vehicle) vinDisplay.innerText = `VIN: ${vehicle.vin || 'Not provided'}`;
         });
 
         document.getElementById('btn-inspect-pass').addEventListener('click', async function() {
             const id = document.getElementById('audit-select').value;
             if(!id) { alert('Please select a vehicle from the yard first.'); return; }
-            
             try {
-                const vehicleRef = doc(db, "registrations", id);
-                await updateDoc(vehicleRef, {
-                    status: 'Cleared/Passed',
-                    defects: []
-                });
+                await updateDoc(doc(db, "registrations", id), { status: 'Cleared/Passed', defects: [] });
                 document.getElementById('audit-select').value = '';
                 populateAuditDropdown();
                 alert('Inspection passed and updated in cloud database!');
-            } catch(e) {
-                console.error("Error updating inspection:", e);
-                alert("Failed to update status in cloud.");
-            }
+            } catch(e) { alert("Failed to update status."); }
         });
 
         document.getElementById('btn-inspect-fail').addEventListener('click', async function() {
@@ -933,8 +770,7 @@
             
             let failedItems = [];
             for(let i=1; i<=5; i++) {
-                let val = document.getElementById('insp-'+i).value;
-                if(val === 'FAIL') {
+                if(document.getElementById('insp-'+i).value === 'FAIL') {
                     if(i===1) failedItems.push('Brake Efficiency');
                     if(i===2) failedItems.push('Steering Linkage');
                     if(i===3) failedItems.push('Tyre Tread Depth');
@@ -945,18 +781,11 @@
             const defectsArr = failedItems.length > 0 ? failedItems : ['General Roadworthy Defect'];
 
             try {
-                const vehicleRef = doc(db, "registrations", id);
-                await updateDoc(vehicleRef, {
-                    status: 'Failed / Defective',
-                    defects: defectsArr
-                });
+                await updateDoc(doc(db, "registrations", id), { status: 'Failed / Defective', defects: defectsArr });
                 document.getElementById('audit-select').value = '';
                 populateAuditDropdown();
-                alert(`Inspection marked as FAILED for ${vehicle.plate}. Customer phone number (${vehicle.phone}) is now visible in the Yard registry for direct contact.`);
-            } catch(e) {
-                console.error("Error failing inspection:", e);
-                alert("Failed to update defect status in cloud.");
-            }
+                alert(`Inspection failed for ${vehicle.plate}.`);
+            } catch(e) { alert("Failed to update defect status."); }
         });
 
         ['fee-test', 'fee-days', 'fee-rate'].forEach(id => {
@@ -966,9 +795,8 @@
         document.getElementById('btn-process-payment').addEventListener('click', async function() {
             const id = document.getElementById('checkout-select').value;
             if(!id) { alert('Please select a cleared vehicle for release.'); return; }
-
             const vehicle = yardVehicles.find(v => v.id == id);
-            if(!vehicle) { alert('Vehicle not found.'); return; }
+            if(!vehicle) return;
 
             const testFee = parseFloat(document.getElementById('fee-test').value) || 0;
             const days = parseInt(document.getElementById('fee-days').value) || 0;
@@ -978,27 +806,15 @@
 
             try {
                 await addDoc(collection(db, "history"), {
-                    vin: vehicle.vin || "",
-                    plate: vehicle.plate || "",
-                    model: vehicle.model || "",
-                    owner: vehicle.owner || "",
-                    testFee: testFee,
-                    storageExcl: storageExcl,
-                    vat: (testFee + storageExcl) * 0.15,
-                    totalPaid: totalPaid.toFixed(2),
-                    timestamp: serverTimestamp(),
-                    date: new Date().toLocaleString()
+                    vin: vehicle.vin || "", plate: vehicle.plate || "", model: vehicle.model || "", owner: vehicle.owner || "",
+                    testFee, storageExcl, vat: (testFee + storageExcl) * 0.15, totalPaid: totalPaid.toFixed(2),
+                    timestamp: serverTimestamp(), date: new Date().toLocaleString()
                 });
-
                 await deleteDoc(doc(db, "registrations", id));
-
-                alert('Payment processed successfully! Gate authorization released and synced across cloud.');
+                alert('Payment processed successfully and gate released.');
                 document.getElementById('checkout-select').value = '';
                 populateCheckoutDropdown();
-            } catch(e) {
-                console.error("Error processing checkout:", e);
-                alert("Error completing checkout transaction.");
-            }
+            } catch(e) { alert("Error completing checkout."); }
         });
     </script>
 </body>
