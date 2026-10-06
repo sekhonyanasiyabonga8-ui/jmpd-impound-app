@@ -66,7 +66,6 @@
         #scanner-container { display: none; margin-bottom: 14px; border: 2px dashed var(--secondary); border-radius: 8px; padding: 10px; background: #000; text-align: center; }
         #reader { width: 100%; max-height: 300px; border-radius: 6px; overflow: hidden; }
 
-        /* Scanning Laser Animation Effect */
         @keyframes scanLaser {
             0% { background-color: rgba(59, 130, 246, 0.1); border-color: var(--secondary); }
             50% { background-color: rgba(34, 197, 94, 0.25); border-color: var(--success); box-shadow: 0 0 15px var(--success); }
@@ -74,7 +73,6 @@
         }
         .scanning-active { animation: scanLaser 0.6s ease-in-out infinite; }
 
-        /* Role Switch Overlay */
         #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--background); z-index: 999; display: flex; flex-direction: column; justify-content: center; padding: 16px; overflow-y: auto; }
     </style>
 </head>
@@ -127,7 +125,6 @@
             <h2>Quick Walk-In Registration</h2>
             <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">Type your 17-digit VIN, simulate a barcode scan instantly, or use your live camera.</p>
             
-            <!-- Camera Scanner Box -->
             <div id="scanner-container">
                 <div id="reader"></div>
                 <button type="button" class="btn btn-danger" id="btn-stop-scan" style="margin-top: 10px; margin-bottom:0; padding:8px;">Close Camera Scanner</button>
@@ -165,9 +162,9 @@
             <div id="self-reg-result" style="margin-top: 10px;"></div>
         </div>
 
-        <!-- Check Existing Status -->
+        <!-- Check Existing Status & Live Chat Box -->
         <div class="card" style="margin-top: 15px;">
-            <h2>Check Test Status & Defects</h2>
+            <h2>Check Test Status & Message Station Admin</h2>
             <div class="form-group">
                 <label>Enter License Plate, 17-Digit VIN, or PIN</label>
                 <input type="text" id="search-query" placeholder="e.g. Plate, VIN, or PIN 739">
@@ -362,6 +359,7 @@
         let historyLogs = [];
         let chatMessages = [];
         let html5QrCode = null;
+        let activeSearchedVehicleId = null;
 
         // Real-time Cloud Sync for Active Yard Vehicles
         onSnapshot(collection(db, "registrations"), (snapshot) => {
@@ -381,6 +379,10 @@
                 if(tabName === 'dashboard') renderDashboard();
                 if(tabName === 'chat') populateChatDropdown();
             }
+            // If customer is currently viewing a search result, update it live
+            if(activeSearchedVehicleId) {
+                updateCustomerSearchDisplay(activeSearchedVehicleId);
+            }
         }, (error) => {
             console.error("Firestore error (registrations):", error);
         });
@@ -395,12 +397,8 @@
                 });
             });
             const activeTab = document.querySelector('nav button.active');
-            if (activeTab && activeTab.getAttribute('data-tab') === 'history') {
-                renderHistory();
-            }
-            if (activeTab && activeTab.getAttribute('data-tab') === 'dashboard') {
-                renderDashboard();
-            }
+            if (activeTab && activeTab.getAttribute('data-tab') === 'history') renderHistory();
+            if (activeTab && activeTab.getAttribute('data-tab') === 'dashboard') renderDashboard();
         }, (error) => {
             console.error("Firestore error (history):", error);
         });
@@ -417,6 +415,9 @@
             const activeTab = document.querySelector('nav button.active');
             if (activeTab && activeTab.getAttribute('data-tab') === 'chat') {
                 renderChatMessages();
+            }
+            if(activeSearchedVehicleId) {
+                updateCustomerSearchDisplay(activeSearchedVehicleId);
             }
         }, (error) => {
             console.error("Firestore error (chats):", error);
@@ -451,6 +452,7 @@
             document.getElementById('auth-overlay').style.display = 'flex';
             document.getElementById('role-badge').innerText = 'LOCKED';
             document.getElementById('admin-pass').value = '';
+            activeSearchedVehicleId = null;
             window.scrollTo(0, 0);
         }
 
@@ -633,11 +635,9 @@
             `).join('');
         }
 
-        // Simulated Barcode Scan Button Action
         document.getElementById('btn-sim-scan').addEventListener('click', function() {
             const vinInputEl = document.getElementById('pub-vin');
             vinInputEl.classList.add('scanning-active');
-            
             setTimeout(() => {
                 vinInputEl.value = "1HGCR2F83HA999999";
                 vinInputEl.classList.remove('scanning-active');
@@ -645,28 +645,25 @@
             }, 500);
         });
 
-        // Camera Barcode Scanner Controls
         document.getElementById('btn-start-scan').addEventListener('click', function() {
             const container = document.getElementById('scanner-container');
             container.style.display = 'block';
-
             if(!html5QrCode) {
                 html5QrCode = new Html5Qrcode("reader");
             }
-
             html5QrCode.start(
                 { facingMode: "environment" },
                 { fps: 10, qrbox: { width: 250, height: 100 } },
-                (decodedText, decodedResult) => {
+                (decodedText) => {
                     let cleanVin = decodedText.trim().toUpperCase();
                     document.getElementById('pub-vin').value = cleanVin.substring(0, 17);
                     updateVinCounter();
                     stopScanner();
                     alert('Successfully scanned barcode!');
                 },
-                (errorMessage) => {}
-            ).catch(err => {
-                alert('Unable to access camera. Please check camera permissions in your browser settings.');
+                () => {}
+            ).catch(() => {
+                alert('Unable to access camera. Please check camera permissions.');
                 container.style.display = 'none';
             });
         });
@@ -675,7 +672,7 @@
             if(html5QrCode) {
                 html5QrCode.stop().then(() => {
                     document.getElementById('scanner-container').style.display = 'none';
-                }).catch(err => {
+                }).catch(() => {
                     document.getElementById('scanner-container').style.display = 'none';
                 });
             } else {
@@ -685,7 +682,6 @@
 
         document.getElementById('btn-stop-scan').addEventListener('click', stopScanner);
 
-        // VIN Character Counter and Auto-Format
         const vinInput = document.getElementById('pub-vin');
         function updateVinCounter() {
             const len = vinInput.value.length;
@@ -701,7 +697,6 @@
             updateVinCounter();
         });
 
-        // Event Listeners for Buttons & Tabs
         document.getElementById('btn-open-portal').addEventListener('click', openPublicPortal);
         document.getElementById('btn-admin-login').addEventListener('click', openAdminPortal);
         document.getElementById('btn-logout').addEventListener('click', logoutToPortal);
@@ -712,7 +707,6 @@
             });
         });
 
-        // Customer Portal Registrations -> Saved directly to Firebase Firestore
         document.getElementById('btn-pub-register').addEventListener('click', async function() {
             const vin = document.getElementById('pub-vin').value.trim();
             const owner = document.getElementById('pub-owner').value.trim();
@@ -776,34 +770,94 @@
             }
         });
 
-        // Search Status across Cloud records
+        // Search Status function and dynamic render for customer messaging view
+        function updateCustomerSearchDisplay(vehicleId) {
+            const found = yardVehicles.find(v => v.id === vehicleId);
+            const resultBox = document.getElementById('search-result');
+            if(!found) return;
+
+            let statusColor = 'var(--accent)';
+            if(found.status === 'Cleared/Passed') statusColor = 'var(--success)';
+            if(found.status === 'Failed / Defective') statusColor = 'var(--danger)';
+
+            let defectHtml = '';
+            if(found.defects && found.defects.length > 0) {
+                defectHtml = `<br><strong>Failed Items:</strong> <span style="color:var(--danger);">${found.defects.join(', ')}</span>`;
+            }
+
+            const filteredMsgs = chatMessages.filter(m => m.vehicleId === found.id);
+            let chatHtml = filteredMsgs.map(m => `
+                <div style="background: white; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; margin-bottom: 6px; font-size: 0.8rem;">
+                    <strong>${m.sender}:</strong> ${m.text}<br>
+                    <small style="color: #64748b; font-size: 0.65rem;">${m.date || ''}</small>
+                </div>
+            `).join('');
+
+            if(filteredMsgs.length === 0) {
+                chatHtml = '<p style="color: #64748b; font-style: italic; font-size: 0.8rem;">No messages yet. Send a message to the station admin below.</p>';
+            }
+
+            resultBox.innerHTML = `
+                <div style="background: #f1f5f9; padding: 12px; border-radius: 8px; border-left: 4px solid ${statusColor}; margin-top:10px;">
+                    <strong>Vehicle:</strong> ${found.plate} (${found.model})<br>
+                    <small style="font-family:monospace; color:#64748b;">VIN: ${found.vin || 'N/A'}</small><br>
+                    <strong>Owner:</strong> ${found.owner}<br>
+                    <strong>Status:</strong> <span style="color:${statusColor}; font-weight:bold;">${found.status || 'In Yard'}</span>
+                    ${defectHtml}<br>
+                    <strong>Reference:</strong> ${found.refCode} | <strong>PIN:</strong> ${found.pin}
+                    
+                    <div style="margin-top: 12px; border-top: 1px solid #cbd5e1; padding-top: 10px;">
+                        <strong style="font-size: 0.9rem; color: var(--primary);">Live Station Chat & Fault Notes:</strong>
+                        <div id="cust-chat-scroll" style="height: 140px; overflow-y: auto; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin-top: 6px; margin-bottom: 8px;">
+                            ${chatHtml}
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <input type="text" id="cust-msg-input" placeholder="Ask admin a question..." style="font-size: 0.9rem; padding: 8px;">
+                            <button type="button" class="btn" id="btn-cust-send" style="width: auto; padding: 8px 14px; margin-bottom: 0; font-size: 0.85rem;">Send</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const scrollDiv = document.getElementById('cust-chat-scroll');
+            if(scrollDiv) scrollDiv.scrollTop = scrollDiv.scrollHeight;
+
+            const sendBtn = document.getElementById('btn-cust-send');
+            if(sendBtn) {
+                sendBtn.onclick = async function() {
+                    const inputEl = document.getElementById('cust-msg-input');
+                    const text = inputEl.value.trim();
+                    if(!text) return;
+
+                    try {
+                        await addDoc(collection(db, "chats"), {
+                            vehicleId: found.id,
+                            sender: found.owner || 'Customer',
+                            text: text,
+                            timestamp: serverTimestamp(),
+                            date: new Date().toLocaleString()
+                        });
+                        inputEl.value = '';
+                    } catch(e) {
+                        console.error("Error sending customer chat:", e);
+                        alert("Failed to send message.");
+                    }
+                };
+            }
+        }
+
         document.getElementById('btn-search-status').addEventListener('click', function() {
             const query = document.getElementById('search-query').value.trim().toUpperCase();
             const resultBox = document.getElementById('search-result');
             if(!query) { resultBox.innerHTML = '<p style="color:red;">Please enter a plate, 17-digit VIN, or PIN.</p>'; return; }
 
             const found = yardVehicles.find(v => (v.vin && v.vin.toUpperCase().includes(query)) || (v.plate && v.plate.toUpperCase().includes(query)) || v.pin == query || (v.refCode && v.refCode.toUpperCase() === query));
+            
             if(found) {
-                let statusColor = 'var(--accent)';
-                if(found.status === 'Cleared/Passed') statusColor = 'var(--success)';
-                if(found.status === 'Failed / Defective') statusColor = 'var(--danger)';
-
-                let defectHtml = '';
-                if(found.defects && found.defects.length > 0) {
-                    defectHtml = `<br><strong>Failed Items:</strong> <span style="color:var(--danger);">${found.defects.join(', ')}</span>`;
-                }
-
-                resultBox.innerHTML = `
-                    <div style="background: #f1f5f9; padding: 12px; border-radius: 8px; border-left: 4px solid ${statusColor}; margin-top:10px;">
-                        <strong>Vehicle:</strong> ${found.plate} (${found.model})<br>
-                        <small style="font-family:monospace; color:#64748b;">VIN: ${found.vin || 'N/A'}</small><br>
-                        <strong>Owner:</strong> ${found.owner}<br>
-                        <strong>Status:</strong> <span style="color:${statusColor}; font-weight:bold;">${found.status || 'In Yard'}</span>
-                        ${defectHtml}<br>
-                        <strong>Reference Code:</strong> ${found.refCode} | <strong>PIN:</strong> ${found.pin}
-                    </div>
-                `;
+                activeSearchedVehicleId = found.id;
+                updateCustomerSearchDisplay(found.id);
             } else {
+                activeSearchedVehicleId = null;
                 const histFound = historyLogs.find(h => (h.vin && h.vin.toUpperCase().includes(query)) || (h.plate && h.plate.toUpperCase().includes(query)));
                 if(histFound) {
                     resultBox.innerHTML = `
@@ -828,7 +882,6 @@
             if(vehicle) { vinDisplay.innerText = `VIN: ${vehicle.vin || 'Not provided'}`; }
         });
 
-        // Pass Inspection -> Updates Firebase Firestore
         document.getElementById('btn-inspect-pass').addEventListener('click', async function() {
             const id = document.getElementById('audit-select').value;
             if(!id) { alert('Please select a vehicle from the yard first.'); return; }
@@ -848,7 +901,6 @@
             }
         });
 
-        // Fail Inspection -> Updates Firebase Firestore
         document.getElementById('btn-inspect-fail').addEventListener('click', async function() {
             const id = document.getElementById('audit-select').value;
             if(!id) { alert('Please select a vehicle from the yard first.'); return; }
@@ -886,7 +938,6 @@
             document.getElementById(id).addEventListener('input', calculateTotal);
         });
 
-        // Checkout & Gate Release -> Moves record from registrations to history in Firestore
         document.getElementById('btn-process-payment').addEventListener('click', async function() {
             const id = document.getElementById('checkout-select').value;
             if(!id) { alert('Please select a cleared vehicle for release.'); return; }
@@ -901,7 +952,6 @@
             const totalPaid = calculateTotal();
 
             try {
-                // 1. Add to history collection
                 await addDoc(collection(db, "history"), {
                     vin: vehicle.vin || "",
                     plate: vehicle.plate || "",
@@ -915,7 +965,6 @@
                     date: new Date().toLocaleString()
                 });
 
-                // 2. Delete from active registrations collection
                 await deleteDoc(doc(db, "registrations", id));
 
                 alert('Payment processed successfully! Gate authorization released and synced across cloud.');
