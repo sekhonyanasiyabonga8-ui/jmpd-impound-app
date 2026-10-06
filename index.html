@@ -17,6 +17,8 @@
             --border: #cbd5e1;
             --success: #22c55e;
             --danger: #ef4444;
+            --whatsapp-green: #dcf8c6;
+            --whatsapp-blue: #1e3a8a;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--background); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
@@ -53,6 +55,17 @@
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
         .history-item { border-left: 4px solid var(--success); padding: 12px; background: #f8fafc; margin-bottom: 10px; border-radius: 6px; font-size: 0.9rem; }
 
+        /* WhatsApp Style Chat Bubbles */
+        .chat-container { height: 260px; overflow-y: auto; background: #e5ddd5; border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+        .chat-bubble { max-width: 80%; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; position: relative; word-break: break-word; line-height: 1.3; }
+        /* Customer message bubble: Dark Blue, Left aligned */
+        .chat-bubble.customer { background: #1e3a8a; color: white; align-self: flex-start; border-top-left-radius: 2px; }
+        /* Admin message bubble: Green, Right aligned */
+        .chat-bubble.admin { background: #25d366; color: #000; align-self: flex-end; border-top-right-radius: 2px; font-weight: 500; }
+        .chat-time { font-size: 0.65rem; display: block; margin-top: 4px; text-align: right; opacity: 0.7; }
+        .chat-bubble.customer .chat-time { color: #cbd5e1; }
+        .chat-bubble.admin .chat-time { color: #333; }
+
         /* Tables & Dashboard grids */
         table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.85rem; }
         th, td { border: 1px solid var(--border); padding: 10px 6px; text-align: center; vertical-align: middle; }
@@ -62,7 +75,6 @@
         .dash-card h4 { font-size: 0.75rem; color: #64748b; margin-bottom: 4px; }
         .dash-card .val { font-size: 1.4rem; font-weight: bold; color: var(--primary); }
 
-        /* Scanner Modal / Box Styling */
         #scanner-container { display: none; margin-bottom: 14px; border: 2px dashed var(--secondary); border-radius: 8px; padding: 10px; background: #000; text-align: center; }
         #reader { width: 100%; max-height: 300px; border-radius: 6px; overflow: hidden; }
 
@@ -120,7 +132,6 @@
     <div id="public-view" class="tab-content">
         <h2>Customer Self-Service Portal</h2>
         
-        <!-- Quick Walk-In Registration -->
         <div class="card">
             <h2>Quick Walk-In Registration</h2>
             <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">Type your 17-digit VIN, simulate a barcode scan instantly, or use your live camera.</p>
@@ -162,12 +173,12 @@
             <div id="self-reg-result" style="margin-top: 10px;"></div>
         </div>
 
-        <!-- Check Existing Status & Live Chat Box -->
+        <!-- Check Existing Status & Live WhatsApp Chat Box -->
         <div class="card" style="margin-top: 15px;">
             <h2>Check Test Status & Message Station Admin</h2>
             <div class="form-group">
                 <label>Enter License Plate, 17-Digit VIN, or PIN</label>
-                <input type="text" id="search-query" placeholder="e.g. Plate, VIN, or PIN 739">
+                <input type="text" id="search-query" placeholder="e.g. Plate, VIN, or PIN">
             </div>
             <button class="btn" id="btn-search-status">Search Vehicle Status</button>
             <div id="search-result" style="margin-top: 12px;"></div>
@@ -328,13 +339,16 @@
                     <option value="">-- Choose Vehicle for Chat --</option>
                 </select>
             </div>
-            <div id="chat-messages-container" style="height: 220px; overflow-y: auto; background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 12px;">
-                <p style="color: #64748b; font-style: italic; font-size: 0.85rem;">Select a vehicle above to view or write fault logs...</p>
+            
+            <!-- WhatsApp Style Chat Flow Container -->
+            <div id="chat-messages-container" class="chat-container">
+                <p style="color: #555; font-style: italic; font-size: 0.85rem; text-align: center; margin-top: auto; margin-bottom: auto;">Select a vehicle above to view or write fault logs...</p>
             </div>
+
             <div class="form-group" style="margin-bottom: 0;">
                 <input type="text" id="chat-input-msg" placeholder="Type a message or defect note...">
             </div>
-            <button type="button" class="btn" id="btn-send-chat" style="margin-top: 10px; margin-bottom: 0;">Send Note to Thread</button>
+            <button type="button" class="btn btn-success" id="btn-send-chat" style="margin-top: 10px; margin-bottom: 0; background: #25d366; color: #000; font-weight: bold;">Send Note to Thread</button>
         </div>
     </div>
 
@@ -361,14 +375,10 @@
         let html5QrCode = null;
         let activeSearchedVehicleId = null;
 
-        // Real-time Cloud Sync for Active Yard Vehicles
         onSnapshot(collection(db, "registrations"), (snapshot) => {
             yardVehicles = [];
             snapshot.forEach((docSnap) => {
-                yardVehicles.push({
-                    id: docSnap.id,
-                    ...docSnap.data()
-                });
+                yardVehicles.push({ id: docSnap.id, ...docSnap.data() });
             });
             const activeTab = document.querySelector('nav button.active');
             if (activeTab) {
@@ -379,38 +389,25 @@
                 if(tabName === 'dashboard') renderDashboard();
                 if(tabName === 'chat') populateChatDropdown();
             }
-            // If customer is currently viewing a search result, update it live
             if(activeSearchedVehicleId) {
                 updateCustomerSearchDisplay(activeSearchedVehicleId);
             }
-        }, (error) => {
-            console.error("Firestore error (registrations):", error);
         });
 
-        // Real-time Cloud Sync for Completed History Logs
         onSnapshot(collection(db, "history"), (snapshot) => {
             historyLogs = [];
             snapshot.forEach((docSnap) => {
-                historyLogs.push({
-                    id: docSnap.id,
-                    ...docSnap.data()
-                });
+                historyLogs.push({ id: docSnap.id, ...docSnap.data() });
             });
             const activeTab = document.querySelector('nav button.active');
             if (activeTab && activeTab.getAttribute('data-tab') === 'history') renderHistory();
             if (activeTab && activeTab.getAttribute('data-tab') === 'dashboard') renderDashboard();
-        }, (error) => {
-            console.error("Firestore error (history):", error);
         });
 
-        // Real-time Cloud Sync for Chat Logs
         onSnapshot(collection(db, "chats"), (snapshot) => {
             chatMessages = [];
             snapshot.forEach((docSnap) => {
-                chatMessages.push({
-                    id: docSnap.id,
-                    ...docSnap.data()
-                });
+                chatMessages.push({ id: docSnap.id, ...docSnap.data() });
             });
             const activeTab = document.querySelector('nav button.active');
             if (activeTab && activeTab.getAttribute('data-tab') === 'chat') {
@@ -419,8 +416,6 @@
             if(activeSearchedVehicleId) {
                 updateCustomerSearchDisplay(activeSearchedVehicleId);
             }
-        }, (error) => {
-            console.error("Firestore error (chats):", error);
         });
 
         window.openPublicPortal = function() {
@@ -506,22 +501,27 @@
             const container = document.getElementById('chat-messages-container');
             
             if(!selectId) {
-                container.innerHTML = '<p style="color: #64748b; font-style: italic; font-size: 0.85rem;">Select a vehicle above to view or write fault logs...</p>';
+                container.innerHTML = '<p style="color: #555; font-style: italic; font-size: 0.85rem; text-align: center; margin-top: auto; margin-bottom: auto;">Select a vehicle above to view or write fault logs...</p>';
                 return;
             }
 
             const filteredMsgs = chatMessages.filter(m => m.vehicleId === selectId);
             if(filteredMsgs.length === 0) {
-                container.innerHTML = '<p style="color: #64748b; font-style: italic; font-size: 0.85rem;">No messages or fault logs for this vehicle yet. Type below to start the thread.</p>';
+                container.innerHTML = '<p style="color: #555; font-style: italic; font-size: 0.85rem; text-align: center; margin-top: auto; margin-bottom: auto;">No messages or fault logs for this vehicle yet.</p>';
                 return;
             }
 
-            container.innerHTML = filteredMsgs.map(m => `
-                <div style="background: white; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; font-size: 0.85rem;">
-                    <strong>${m.sender || 'Admin'}:</strong> ${m.text}<br>
-                    <small style="color: #64748b; font-size: 0.7rem;">${m.date || ''}</small>
-                </div>
-            `).join('');
+            container.innerHTML = filteredMsgs.map(m => {
+                const isAdmin = m.sender === 'Station Admin';
+                const bubbleClass = isAdmin ? 'admin' : 'customer';
+                return `
+                    <div class="chat-bubble ${bubbleClass}">
+                        ${!isAdmin ? `<strong style="font-size:0.75rem; display:block; color:#93c5fd; margin-bottom:2px;">${m.sender}</strong>` : ''}
+                        ${m.text}
+                        <span class="chat-time">${m.date || ''}</span>
+                    </div>
+                `;
+            }).join('');
             container.scrollTop = container.scrollHeight;
         }
 
@@ -541,7 +541,7 @@
                     sender: 'Station Admin',
                     text: text,
                     timestamp: serverTimestamp(),
-                    date: new Date().toLocaleString()
+                    date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString()
                 });
                 inputField.value = '';
             } catch(e) {
@@ -770,7 +770,6 @@
             }
         });
 
-        // Search Status function and dynamic render for customer messaging view
         function updateCustomerSearchDisplay(vehicleId) {
             const found = yardVehicles.find(v => v.id === vehicleId);
             const resultBox = document.getElementById('search-result');
@@ -786,15 +785,20 @@
             }
 
             const filteredMsgs = chatMessages.filter(m => m.vehicleId === found.id);
-            let chatHtml = filteredMsgs.map(m => `
-                <div style="background: white; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; margin-bottom: 6px; font-size: 0.8rem;">
-                    <strong>${m.sender}:</strong> ${m.text}<br>
-                    <small style="color: #64748b; font-size: 0.65rem;">${m.date || ''}</small>
-                </div>
-            `).join('');
+            let chatHtml = filteredMsgs.map(m => {
+                const isAdmin = m.sender === 'Station Admin';
+                const bubbleClass = isAdmin ? 'admin' : 'customer';
+                return `
+                    <div class="chat-bubble ${bubbleClass}">
+                        ${!isAdmin ? `<strong style="font-size:0.75rem; display:block; color:#93c5fd; margin-bottom:2px;">${m.sender}</strong>` : ''}
+                        ${m.text}
+                        <span class="chat-time">${m.date || ''}</span>
+                    </div>
+                `;
+            }).join('');
 
             if(filteredMsgs.length === 0) {
-                chatHtml = '<p style="color: #64748b; font-style: italic; font-size: 0.8rem;">No messages yet. Send a message to the station admin below.</p>';
+                chatHtml = '<p style="color: #555; font-style: italic; font-size: 0.8rem; text-align: center; margin-top: auto; margin-bottom: auto;">No messages yet. Send a message to the station admin below.</p>';
             }
 
             resultBox.innerHTML = `
@@ -808,12 +812,12 @@
                     
                     <div style="margin-top: 12px; border-top: 1px solid #cbd5e1; padding-top: 10px;">
                         <strong style="font-size: 0.9rem; color: var(--primary);">Live Station Chat & Fault Notes:</strong>
-                        <div id="cust-chat-scroll" style="height: 140px; overflow-y: auto; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin-top: 6px; margin-bottom: 8px;">
+                        <div id="cust-chat-scroll" class="chat-container" style="height: 180px; margin-top: 6px;">
                             ${chatHtml}
                         </div>
                         <div style="display: flex; gap: 6px;">
                             <input type="text" id="cust-msg-input" placeholder="Ask admin a question..." style="font-size: 0.9rem; padding: 8px;">
-                            <button type="button" class="btn" id="btn-cust-send" style="width: auto; padding: 8px 14px; margin-bottom: 0; font-size: 0.85rem;">Send</button>
+                            <button type="button" class="btn btn-success" id="btn-cust-send" style="width: auto; padding: 8px 14px; margin-bottom: 0; font-size: 0.85rem; background: #25d366; color: #000; font-weight: bold;">Send</button>
                         </div>
                     </div>
                 </div>
@@ -835,7 +839,7 @@
                             sender: found.owner || 'Customer',
                             text: text,
                             timestamp: serverTimestamp(),
-                            date: new Date().toLocaleString()
+                            date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString()
                         });
                         inputEl.value = '';
                     } catch(e) {
@@ -978,3 +982,4 @@
     </script>
 </body>
 </html>
+=
