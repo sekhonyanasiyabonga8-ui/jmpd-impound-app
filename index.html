@@ -535,15 +535,26 @@
             if(!selectId) { alert('Please select a vehicle thread first.'); return; }
             if(!text) { alert('Please type a message or note.'); return; }
 
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString();
+
+            // Optimistically push locally so admin sees it sent immediately
+            chatMessages.push({
+                vehicleId: selectId,
+                sender: 'Station Admin',
+                text: text,
+                date: timeStr
+            });
+            renderChatMessages();
+            inputField.value = '';
+
             try {
                 await addDoc(collection(db, "chats"), {
                     vehicleId: selectId,
                     sender: 'Station Admin',
                     text: text,
                     timestamp: serverTimestamp(),
-                    date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString()
+                    date: timeStr
                 });
-                inputField.value = '';
             } catch(e) {
                 console.error("Error sending chat message:", e);
                 alert('Failed to send message to cloud.');
@@ -833,15 +844,25 @@
                     const text = inputEl.value.trim();
                     if(!text) return;
 
+                    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString();
+
+                    chatMessages.push({
+                        vehicleId: found.id,
+                        sender: found.owner || 'Customer',
+                        text: text,
+                        date: timeStr
+                    });
+                    updateCustomerSearchDisplay(found.id);
+                    inputEl.value = '';
+
                     try {
                         await addDoc(collection(db, "chats"), {
                             vehicleId: found.id,
                             sender: found.owner || 'Customer',
                             text: text,
                             timestamp: serverTimestamp(),
-                            date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString()
+                            date: timeStr
                         });
-                        inputEl.value = '';
                     } catch(e) {
                         console.error("Error sending customer chat:", e);
                         alert("Failed to send message.");
@@ -982,4 +1003,3 @@
     </script>
 </body>
 </html>
-=
