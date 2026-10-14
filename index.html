@@ -51,7 +51,6 @@
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
         .history-item { border-left: 4px solid var(--success); padding: 12px; background: #f8fafc; margin-bottom: 10px; border-radius: 6px; font-size: 0.9rem; }
 
-        /* Chat Bubbles with Delivery Status */
         .chat-container { height: 260px; overflow-y: auto; background: #e5ddd5; border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
         .chat-bubble { max-width: 80%; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; position: relative; word-break: break-word; line-height: 1.3; }
         .chat-bubble.customer { background: #1e3a8a; color: white; align-self: flex-start; border-top-left-radius: 2px; }
@@ -92,10 +91,18 @@
         <div class="card">
             <h2>Customer / Walk-In Registration Portal</h2>
             <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">Register your vehicle details using your 17-digit VIN or check your test status instantly.</p>
+            <div class="form-group">
+                <label>Target Station Code (Required for Walk-In)</label>
+                <input type="text" id="pub-station-code" placeholder="e.g. alberton-01" style="text-transform: lowercase;">
+            </div>
             <button class="btn" id="btn-open-portal">Open Customer Portal</button>
         </div>
         <div class="card" style="margin-top: 12px;">
             <h2>Station Admin Login</h2>
+            <div class="form-group">
+                <label>Station Code</label>
+                <input type="text" id="admin-station-code" placeholder="e.g. alberton-01" style="text-transform: lowercase;">
+            </div>
             <div class="form-group">
                 <label>Manager Password</label>
                 <input type="password" id="admin-pass" placeholder="Enter manager password">
@@ -122,7 +129,7 @@
     </nav>
 
     <div id="public-view" class="tab-content">
-        <h2>Customer Self-Service Portal</h2>
+        <h2>Customer Self-Service Portal <span id="pub-active-station-lbl" style="font-size:0.8rem; color:var(--secondary); display:block;"></span></h2>
         
         <div class="card">
             <h2>Quick Walk-In Registration</h2>
@@ -254,7 +261,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBfY4P-Gr7wXIzPg8mNq5EX_vEl0YTViQ8",
@@ -274,9 +281,40 @@
         let html5QrCode = null;
         let activeSearchedVehicleId = null;
 
-        onSnapshot(collection(db, "registrations"), (snapshot) => {
-            yardVehicles = [];
-            snapshot.forEach((docSnap) => { yardVehicles.push({ id: docSnap.id, ...docSnap.data() }); });
+        let activeUnsubscribeRegistrations = null;
+        let activeUnsubscribeHistory = null;
+        let activeUnsubscribeChats = null;
+
+        function setupRealtimeListeners(stationId) {
+            if(activeUnsubscribeRegistrations) activeUnsubscribeRegistrations();
+            if(activeUnsubscribeHistory) activeUnsubscribeHistory();
+            if(activeUnsubscribeChats) activeUnsubscribeChats();
+
+            const regQuery = query(collection(db, "registrations"), where("stationId", "==", stationId));
+            activeUnsubscribeRegistrations = onSnapshot(regQuery, (snapshot) => {
+                yardVehicles = [];
+                snapshot.forEach((docSnap) => { yardVehicles.push({ id: docSnap.id, ...docSnap.data() }); });
+                refreshActiveTab();
+                if(activeSearchedVehicleId) updateCustomerSearchDisplay(activeSearchedVehicleId);
+            });
+
+            const histQuery = query(collection(db, "history"), where("stationId", "==", stationId));
+            activeUnsubscribeHistory = onSnapshot(histQuery, (snapshot) => {
+                historyLogs = [];
+                snapshot.forEach((docSnap) => { historyLogs.push({ id: docSnap.id, ...docSnap.data() }); });
+                refreshActiveTab();
+            });
+
+            const chatQuery = query(collection(db, "chats"), where("stationId", "==", stationId));
+            activeUnsubscribeChats = onSnapshot(chatQuery, (snapshot) => {
+                chatMessages = [];
+                snapshot.forEach((docSnap) => { chatMessages.push({ id: docSnap.id, ...docSnap.data() }); });
+                refreshActiveTab();
+                if(activeSearchedVehicleId) updateCustomerSearchDisplay(activeSearchedVehicleId);
+            });
+        }
+
+        function refreshActiveTab() {
             const activeTab = document.querySelector('nav button.active');
             if (activeTab) {
                 const tabName = activeTab.getAttribute('data-tab');
@@ -284,41 +322,39 @@
                 if(tabName === 'audit') populateAuditDropdown();
                 if(tabName === 'checkout') populateCheckoutDropdown();
                 if(tabName === 'dashboard') renderDashboard();
+                if(tabName === 'history') renderHistory();
                 if(tabName === 'chat') populateChatDropdown();
             }
-            if(activeSearchedVehicleId) updateCustomerSearchDisplay(activeSearchedVehicleId);
-        });
-
-        onSnapshot(collection(db, "history"), (snapshot) => {
-            historyLogs = [];
-            snapshot.forEach((docSnap) => { historyLogs.push({ id: docSnap.id, ...docSnap.data() }); });
-            const activeTab = document.querySelector('nav button.active');
-            if (activeTab && activeTab.getAttribute('data-tab') === 'history') renderHistory();
-            if (activeTab && activeTab.getAttribute('data-tab') === 'dashboard') renderDashboard();
-        });
-
-        onSnapshot(collection(db, "chats"), (snapshot) => {
-            chatMessages = [];
-            snapshot.forEach((docSnap) => { chatMessages.push({ id: docSnap.id, ...docSnap.data() }); });
-            const activeTab = document.querySelector('nav button.active');
-            if (activeTab && activeTab.getAttribute('data-tab') === 'chat') renderChatMessages();
-            if(activeSearchedVehicleId) updateCustomerSearchDisplay(activeSearchedVehicleId);
-        });
+        }
 
         window.openPublicPortal = function() {
+            const stationCode = document.getElementById('pub-station-code').value.trim().toLowerCase();
+            if(!stationCode) { alert('Please enter a target Station Code to proceed!'); return; }
+            
+            localStorage.setItem("activeStationId", stationCode);
+            document.getElementById('pub-active-station-lbl').innerText = `Station: ${stationCode}`;
+            
             document.getElementById('auth-overlay').style.display = 'none';
             document.getElementById('public-view').style.display = 'block';
             document.getElementById('admin-nav').style.display = 'none';
-            document.getElementById('role-badge').innerText = 'CUSTOMER PORTAL';
+            document.getElementById('role-badge').innerText = `CUSTOMER (${stationCode})`;
+            
+            setupRealtimeListeners(stationCode);
             window.scrollTo(0, 0);
         }
 
         window.openAdminPortal = function() {
+            const stationCode = document.getElementById('admin-station-code').value.trim().toLowerCase();
             const pass = document.getElementById('admin-pass').value.trim();
+
+            if(!stationCode) { alert('Please enter your Station Code!'); return; }
             if(pass === 'admin123') {
+                localStorage.setItem("activeStationId", stationCode);
                 document.getElementById('auth-overlay').style.display = 'none';
                 document.getElementById('admin-nav').style.display = 'flex';
-                document.getElementById('role-badge').innerText = 'STATION ADMIN';
+                document.getElementById('role-badge').innerText = `ADMIN: ${stationCode}`;
+                
+                setupRealtimeListeners(stationCode);
                 switchTab('audit', document.querySelector('nav button'));
                 window.scrollTo(0, 0);
             } else { alert('Invalid Manager Password!'); }
@@ -326,12 +362,15 @@
 
         window.logoutToPortal = function() {
             stopScanner();
+            localStorage.removeItem("activeStationId");
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById('public-view').style.display = 'none';
             document.getElementById('admin-nav').style.display = 'none';
             document.getElementById('auth-overlay').style.display = 'flex';
             document.getElementById('role-badge').innerText = 'LOCKED';
             document.getElementById('admin-pass').value = '';
+            document.getElementById('admin-station-code').value = '';
+            document.getElementById('pub-station-code').value = '';
             activeSearchedVehicleId = null;
             window.scrollTo(0, 0);
         }
@@ -343,12 +382,7 @@
             document.getElementById('tab-' + tabName).classList.add('active');
             if(btnElement) btnElement.classList.add('active');
             
-            if(tabName === 'yard') renderYard();
-            if(tabName === 'audit') populateAuditDropdown();
-            if(tabName === 'checkout') populateCheckoutDropdown();
-            if(tabName === 'dashboard') renderDashboard();
-            if(tabName === 'history') renderHistory();
-            if(tabName === 'chat') populateChatDropdown();
+            refreshActiveTab();
             window.scrollTo(0, 0);
         }
 
@@ -419,23 +453,17 @@
             const selectId = document.getElementById('chat-vehicle-select').value;
             const inputField = document.getElementById('chat-input-msg');
             const text = inputField.value.trim();
+            const currentStation = localStorage.getItem("activeStationId");
 
             if(!selectId) { alert('Please select a vehicle thread first.'); return; }
             if(!text) { alert('Please type a message or note.'); return; }
 
             const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString();
-
-            chatMessages.push({
-                vehicleId: selectId,
-                sender: 'Station Admin',
-                text: text,
-                date: timeStr
-            });
-            renderChatMessages();
             inputField.value = '';
 
             try {
                 await addDoc(collection(db, "chats"), {
+                    stationId: currentStation,
                     vehicleId: selectId,
                     sender: 'Station Admin',
                     text: text,
@@ -468,7 +496,7 @@
         function renderYard() {
             const tbody = document.getElementById('yard-table-body');
             if(yardVehicles.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="padding: 16px; color: #64748b;">No active vehicles in cloud registry</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="padding: 16px; color: #64748b;">No active vehicles in cloud registry for this station</td></tr>';
                 return;
             }
             tbody.innerHTML = yardVehicles.map(v => {
@@ -517,7 +545,7 @@
         function renderHistory() {
             const container = document.getElementById('history-list-container');
             if(historyLogs.length === 0) {
-                container.innerHTML = '<p style="color: #64748b;">No completed payment history recorded in cloud yet.</p>';
+                container.innerHTML = '<p style="color: #64748b;">No completed payment history recorded in cloud for this station yet.</p>';
                 return;
             }
             container.innerHTML = historyLogs.map(h => `
@@ -603,6 +631,7 @@
             const phone = document.getElementById('pub-phone').value.trim();
             const resultBox = document.getElementById('self-reg-result');
             const submitBtn = this;
+            const currentStation = localStorage.getItem("activeStationId");
 
             if(!vin || vin.length < 17) { resultBox.innerHTML = '<p style="color:red; font-size:0.9rem;">Please provide a valid 17-digit VIN number.</p>'; return; }
             if(!owner || !plate || !model) { resultBox.innerHTML = '<p style="color:red; font-size:0.9rem;">Please fill in owner name, plate, and model.</p>'; return; }
@@ -614,6 +643,7 @@
                 submitBtn.disabled = true;
                 submitBtn.innerText = "Syncing to Cloud...";
                 await addDoc(collection(db, "registrations"), {
+                    stationId: currentStation,
                     vin, plate, model, owner, phone: phone || "N/A",
                     status: 'In Yard', defects: [], refCode, pin: pin.toString(),
                     timestamp: serverTimestamp(), date: new Date().toLocaleString()
@@ -690,21 +720,15 @@
                 sendBtn.onclick = async function() {
                     const inputEl = document.getElementById('cust-msg-input');
                     const text = inputEl.value.trim();
+                    const currentStation = localStorage.getItem("activeStationId");
                     if(!text) return;
 
                     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString();
-
-                    chatMessages.push({
-                        vehicleId: found.id,
-                        sender: found.owner || 'Customer',
-                        text: text,
-                        date: timeStr
-                    });
-                    updateCustomerSearchDisplay(found.id);
                     inputEl.value = '';
 
                     try {
                         await addDoc(collection(db, "chats"), {
+                            stationId: currentStation,
                             vehicleId: found.id,
                             sender: found.owner || 'Customer',
                             text: text,
@@ -719,18 +743,18 @@
         }
 
         document.getElementById('btn-search-status').addEventListener('click', function() {
-            const query = document.getElementById('search-query').value.trim().toUpperCase();
+            const queryVal = document.getElementById('search-query').value.trim().toUpperCase();
             const resultBox = document.getElementById('search-result');
-            if(!query) { resultBox.innerHTML = '<p style="color:red;">Please enter a plate, VIN, or PIN.</p>'; return; }
+            if(!queryVal) { resultBox.innerHTML = '<p style="color:red;">Please enter a plate, VIN, or PIN.</p>'; return; }
 
-            const found = yardVehicles.find(v => (v.vin && v.vin.toUpperCase().includes(query)) || (v.plate && v.plate.toUpperCase().includes(query)) || v.pin == query || (v.refCode && v.refCode.toUpperCase() === query));
+            const found = yardVehicles.find(v => (v.vin && v.vin.toUpperCase().includes(queryVal)) || (v.plate && v.plate.toUpperCase().includes(queryVal)) || v.pin == queryVal || (v.refCode && v.refCode.toUpperCase() === queryVal));
             
             if(found) {
                 activeSearchedVehicleId = found.id;
                 updateCustomerSearchDisplay(found.id);
             } else {
                 activeSearchedVehicleId = null;
-                const histFound = historyLogs.find(h => (h.vin && h.vin.toUpperCase().includes(query)) || (h.plate && h.plate.toUpperCase().includes(query)));
+                const histFound = historyLogs.find(h => (h.vin && h.vin.toUpperCase().includes(queryVal)) || (h.plate && h.plate.toUpperCase().includes(queryVal)));
                 if(histFound) {
                     resultBox.innerHTML = `
                         <div style="background: #f1f5f9; padding: 12px; border-radius: 8px; border-left: 4px solid var(--success); margin-top:10px;">
@@ -803,9 +827,11 @@
             const rate = parseFloat(document.getElementById('fee-rate').value) || 0;
             const storageExcl = days * rate;
             const totalPaid = calculateTotal();
+            const currentStation = localStorage.getItem("activeStationId");
 
             try {
                 await addDoc(collection(db, "history"), {
+                    stationId: currentStation,
                     vin: vehicle.vin || "", plate: vehicle.plate || "", model: vehicle.model || "", owner: vehicle.owner || "",
                     testFee, storageExcl, vat: (testFee + storageExcl) * 0.15, totalPaid: totalPaid.toFixed(2),
                     timestamp: serverTimestamp(), date: new Date().toLocaleString()
