@@ -74,8 +74,8 @@
 
         /* Searchable Audit Styles */
         .search-box { position: relative; margin-bottom: 15px; }
-        .suggestions { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-top: none; max-height: 150px; overflow-y: auto; z-index: 10; border-radius: 0 0 8px 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .suggestion-item { padding: 10px 12px; cursor: pointer; font-size: 0.9rem; }
+        .suggestions { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-top: none; max-height: 180px; overflow-y: auto; z-index: 10; border-radius: 0 0 8px 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .suggestion-item { padding: 10px 12px; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid #f1f5f9; }
         .suggestion-item:hover { background-color: #f1f5f9; }
         .audit-item-row { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
         .audit-item-row span { font-size: 0.9rem; font-weight: 600; }
@@ -186,11 +186,11 @@
             </div>
             <div class="form-group" id="audit-vin-display" style="font-size: 0.85rem; color: #64748b; background: #f1f5f9; padding: 8px; border-radius: 6px; margin-bottom: 12px;">VIN: Not selected</div>
             
-            <!-- Searchable Component / Part Selector (Includes Seat Bar, Missing Bolts, etc.) -->
+            <!-- Comprehensive Roadworthy Search Bar -->
             <div class="form-group">
-                <label>Search & Add Vehicle Part / Inspection Item</label>
+                <label>Search Roadworthy Parts & Defects Catalog</label>
                 <div class="search-box">
-                    <input type="text" id="part-search-input" placeholder="Search part (e.g. Seat Bar, Missing Bolts)..." autocomplete="off">
+                    <input type="text" id="part-search-input" placeholder="Search part (e.g. Brakes, Seat Bar, Tyres, Bolts)..." autocomplete="off">
                     <div id="part-suggestions" class="suggestions" style="display: none;"></div>
                 </div>
             </div>
@@ -304,32 +304,51 @@
         let activeUnsubscribeHistory = null;
         let activeUnsubscribeChats = null;
 
-        // Master Catalog of Vehicle Parts & Inspection Items (Includes Seat Bar, Missing Bolts, etc.)
+        // Comprehensive Master Catalog of Roadworthiness Parts & Defect Checks
         const masterVehicleParts = [
-            "Seat Bar / Seatbelt Safety",
-            "Missing Bolts / Fasteners",
+            // Braking & Wheels
             "Heavy Roller Brake Tester Efficiency",
-            "Steering Linkage & Joint Play",
-            "Tyre Tread Depth",
-            "Headlamp Alignment",
-            "Exhaust Emissions",
-            "Windshield Wipers & Washers",
-            "Suspension Shocks & Struts",
-            "Brake Pads, Rotors & Lines",
-            "Battery Mount & Terminals",
-            "Door Latches, Hinges & Locks",
-            "Horn & Warning Indicators",
-            "Chassis Rust & Structural Integrity"
+            "Parking / Handbrake Mechanism & Cables",
+            "Brake Lines, Hoses & Master Cylinder Leaks",
+            "Tyre Tread Depth & Sidewall Damage",
+            "Wheel Nuts, Studs, Rims & Hubs",
+            
+            // Steering & Suspension
+            "Steering Linkage, Joints & Play",
+            "Shock Absorbers, Struts & Mounts",
+            "Suspension Bushings, Control Arms & Ball Joints",
+            "Wheel Alignment & Steering Wheel Centering",
+
+            // Structural & Safety Fittings
+            "Seat Bar / Seatbelt Safety & Retractor Operation",
+            "Missing Bolts, Fasteners & Chassis Structural Integrity",
+            "Windscreen Cracks, Chips & Vision Obstructing Damage",
+            "Windscreen Wipers & Washers Operation",
+            "Rear-View & Side Mirrors Security & Cracks",
+            "Doors, Latches, Hinges & Cabin Security Locks",
+
+            // Electrical & Lighting System
+            "Headlamp Alignment, Dipped & Main Beams",
+            "Indicator, Hazard & Direction Lights",
+            "Brake, Reverse & Rear Tail Lights",
+            "Number Plate Illumination & Horn Function",
+            "Battery Mount, Terminals & Wiring Security",
+
+            // Engine, Exhaust & Undercarriage
+            "Exhaust Emissions, Silencer Box & Leaks",
+            "Excessive Fluid Leaks (Oil, Coolant, Gearbox, Power Steering)",
+            "Engine Mountings, Gearbox Mounts & Drivetrain",
+            "Fuel Tank Caps, Filler Neck & Fuel Lines Security"
         ];
 
         // Active audit inspection items list state
         let currentAuditItems = [
             { name: "Heavy Roller Brake Tester Efficiency", status: "PASS" },
             { name: "Steering Linkage & Joint Play", status: "PASS" },
-            { name: "Tyre Tread Depth", status: "PASS" },
-            { name: "Headlamp Alignment", status: "PASS" },
-            { name: "Exhaust Emissions", status: "PASS" },
-            { name: "Seat Bar / Seatbelt Safety", status: "PASS" }
+            { name: "Tyre Tread Depth & Sidewall Damage", status: "PASS" },
+            { name: "Headlamp Alignment, Dipped & Main Beams", status: "PASS" },
+            { name: "Exhaust Emissions, Silencer Box & Leaks", status: "PASS" },
+            { name: "Seat Bar / Seatbelt Safety & Retractor Operation", status: "PASS" }
         ];
 
         function setupRealtimeListeners(stationId) {
@@ -445,7 +464,6 @@
             document.getElementById('audit-vin-display').innerText = 'VIN: Not selected';
         }
 
-        // Render Dynamic Audit Inspection List with Search Functionality
         function renderAuditList() {
             const container = document.getElementById('dynamic-audit-list');
             if(!container) return;
@@ -473,7 +491,6 @@
             renderAuditList();
         }
 
-        // Search Bar Event Listener for Parts Catalog
         const partSearchInput = document.getElementById('part-search-input');
         const partSuggestions = document.getElementById('part-suggestions');
 
