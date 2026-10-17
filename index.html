@@ -115,7 +115,10 @@
             </div>
             <div class="form-group">
                 <label>Manager Password</label>
-                <input type="password" id="admin-pass" placeholder="Enter manager password">
+                <div style="position: relative;">
+                    <input type="password" id="admin-pass" placeholder="Enter manager password" style="padding-right: 45px;">
+                    <button type="button" id="btn-toggle-pass" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 8px; cursor: pointer; font-size: 1.1rem; width: auto; margin-bottom: 0; color: #64748b;">👁️</button>
+                </div>
             </div>
             <button class="btn btn-success" id="btn-admin-login">Login to Management Dashboard</button>
         </div>
@@ -454,6 +457,18 @@
             refreshActiveTab();
             window.scrollTo(0, 0);
         }
+
+        // Password Show/Hide Toggle Event Listener
+        document.getElementById('btn-toggle-pass').addEventListener('click', function() {
+            const passInput = document.getElementById('admin-pass');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                this.innerText = '🙈';
+            } else {
+                passInput.type = 'password';
+                this.innerText = '👁️';
+            }
+        });
 
         function populateAuditDropdown() {
             const select = document.getElementById('audit-select');
