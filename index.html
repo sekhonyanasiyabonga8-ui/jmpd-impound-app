@@ -3,1001 +3,1155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VeloVault Manager</title>
-    <link rel="icon" type="image/jpeg" href="https://raw.githubusercontent.com/sekhonyandiyabongadw/jmpd-impound-app/main/1792276551032.jpg">
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <title>AxisHaul Control System</title>
     <style>
-        :root {
-            --primary: #1e3a8a;
-            --secondary: #3b82f6;
-            --accent: #f97316;
-            --background: #f8fafc;
-            --surface: #ffffff;
-            --text: #1e293b;
-            --border: #cbd5e1;
-            --success: #22c55e;
-            --danger: #ef4444;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--background); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
-        
-        header { background-color: var(--primary); color: white; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: sticky; top: 0; z-index: 100; }
-        header h1 { font-size: 1.2rem; font-weight: bold; }
-        .badge-top { background: var(--accent); color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
 
-        nav { display: none; background: var(--surface); border-bottom: 1px solid var(--border); width: 100%; overflow-x: auto; flex-shrink: 0; position: sticky; top: 51px; z-index: 99; }
-        nav::-webkit-scrollbar { display: none; }
-        nav { -ms-overflow-style: none; scrollbar-width: none; }
-        nav button { flex: 1; min-width: 75px; padding: 12px 6px; background: none; border: none; font-size: 0.8rem; color: #64748b; text-align: center; cursor: pointer; white-space: nowrap; font-weight: 600; }
-        nav button.active { color: var(--primary); font-weight: bold; border-bottom: 3px solid var(--primary); background: #f1f5f9; }
-
-        .tab-content { padding: 16px; display: none; width: 100%; max-width: 600px; margin: 0 auto; }
-        .tab-content.active { display: block; }
-
-        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        h2 { font-size: 1.1rem; margin-bottom: 12px; color: var(--primary); font-weight: bold; }
-        
-        .form-group { margin-bottom: 14px; }
-        label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 6px; color: #475569; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: #fff; color: var(--text); }
-        input:focus, select:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
-        
-        button.btn { background: var(--secondary); color: white; border: none; padding: 14px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-bottom: 10px; }
-        button.btn-success { background: var(--success); }
-        button.btn-danger { background: var(--danger); }
-        button.btn-accent { background: var(--accent); }
-        button.btn:active { opacity: 0.8; transform: scale(0.98); }
-
-        .summary-box { background: #f1f5f9; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 0.95rem; }
-        .summary-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
-        .history-item { border-left: 4px solid var(--success); padding: 12px; background: #f8fafc; margin-bottom: 10px; border-radius: 6px; font-size: 0.9rem; }
-
-        .chat-container { height: 260px; overflow-y: auto; background: #e5ddd5; border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-        .chat-bubble { max-width: 80%; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; position: relative; word-break: break-word; line-height: 1.3; }
-        .chat-bubble.customer { background: #1e3a8a; color: white; align-self: flex-start; border-top-left-radius: 2px; }
-        .chat-bubble.admin { background: #25d366; color: #000; align-self: flex-end; border-top-right-radius: 2px; font-weight: 500; }
-        
-        .chat-meta { display: flex; justify-content: flex-end; align-items: center; gap: 4px; margin-top: 4px; }
-        .chat-time { font-size: 0.65rem; opacity: 0.7; }
-        .delivery-status { font-size: 0.65rem; font-weight: bold; color: #02551e; }
-        .chat-bubble.customer .delivery-status { color: #93c5fd; }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.85rem; }
-        th, td { border: 1px solid var(--border); padding: 10px 6px; text-align: center; vertical-align: middle; }
-        th { background: #f1f5f9; color: var(--primary); font-weight: bold; }
-        .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-        .dash-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
-        .dash-card h4 { font-size: 0.75rem; color: #64748b; margin-bottom: 4px; }
-        .dash-card .val { font-size: 1.4rem; font-weight: bold; color: var(--primary); }
-
-        #scanner-container { display: none; margin-bottom: 14px; border: 2px dashed var(--secondary); border-radius: 8px; padding: 10px; background: #000; text-align: center; }
-        #reader { width: 100%; max-height: 300px; border-radius: 6px; overflow: hidden; }
-
-        /* Searchable Audit Styles */
-        .search-box { position: relative; margin-bottom: 15px; }
-        .suggestions { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-top: none; max-height: 180px; overflow-y: auto; z-index: 10; border-radius: 0 0 8px 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .suggestion-item { padding: 10px 12px; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid #f1f5f9; }
-        .suggestion-item:hover { background-color: #f1f5f9; }
-        .audit-item-row { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
-        .audit-item-row span { font-size: 0.9rem; font-weight: 600; }
-        .audit-item-row select { width: auto; padding: 6px 10px; font-size: 0.85rem; font-weight: bold; }
-        .remove-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.2rem; margin-left: 8px; font-weight: bold; }
-
-        @keyframes scanLaser {
-            0% { background-color: rgba(59, 130, 246, 0.1); border-color: var(--secondary); }
-            50% { background-color: rgba(34, 197, 94, 0.25); border-color: var(--success); box-shadow: 0 0 15px var(--success); }
-            100% { background-color: rgba(59, 130, 246, 0.1); border-color: var(--secondary); }
+        body {
+            background-color: #030712;
+            color: #f3f4f6;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
         }
-        .scanning-active { animation: scanLaser 0.6s ease-in-out infinite; }
 
-        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--background); z-index: 999; display: flex; flex-direction: column; justify-content: center; padding: 16px; overflow-y: auto; }
+        .header {
+            background-color: #0b1329;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #1e293b;
+            gap: 8px;
+        }
+
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-badge {
+            background-color: #dc2626;
+            color: white;
+            font-weight: 900;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .brand-title {
+            font-weight: 900;
+            font-size: 15px;
+            letter-spacing: 0.8px;
+            color: #ffffff;
+            text-transform: uppercase;
+        }
+
+        .brand-sub {
+            font-size: 8px;
+            font-weight: 700;
+            color: #38bdf8;
+            letter-spacing: 1px;
+            display: block;
+        }
+
+        .status-pill {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid transparent;
+            text-align: center;
+            white-space: nowrap;
+            flex-shrink: 0;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .status-safe { background-color: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.3); }
+        .status-caution { background-color: rgba(245, 158, 11, 0.1); color: #f59e0b; border-color: rgba(245, 158, 11, 0.3); }
+        .status-danger { background-color: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+
+        .main-content {
+            flex: 1;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .view-page {
+            display: none;
+            padding: 12px;
+            height: 100%;
+        }
+
+        .view-page.active {
+            display: block;
+        }
+
+        .card {
+            background-color: #0b1329;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: #38bdf8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group { margin-bottom: 8px; }
+        .form-row { display: flex; gap: 8px; }
+        .form-row .form-group { flex: 1; }
+
+        label {
+            display: block;
+            font-size: 9px;
+            color: #94a3b8;
+            margin-bottom: 3px;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            background-color: #030712;
+            border: 1px solid #1e293b;
+            color: #f3f4f6;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            outline: none;
+        }
+
+        input:focus, select:focus { border-color: #0284c7; }
+
+        .btn {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 700;
+            font-size: 11px;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .btn-primary { background-color: #0284c7; color: white; }
+        .btn-secondary { background-color: #1e293b; color: #94a3b8; }
+        .btn-danger { background-color: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+        .sim-container {
+            height: 180px;
+            background-color: #020617;
+            border-radius: 6px;
+            border: 1px solid #1e293b;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .steer-btn {
+            background-color: #0b1329;
+            border: 1px solid #1e293b;
+            color: #38bdf8;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .zone-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .zone-box {
+            background-color: #020617;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            position: relative;
+            height: 95px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .zone-box canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .cam-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(2, 6, 23, 0.6) 0%, rgba(2, 6, 23, 0) 40%, rgba(2, 6, 23, 0.8) 100%);
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .zone-title {
+            font-size: 8px;
+            font-weight: 800;
+            color: #38bdf8;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .rec-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .cam-bottom-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .cam-time {
+            font-size: 7px;
+            font-family: monospace;
+            color: #cbd5e1;
+        }
+
+        .zone-badge {
+            font-size: 7px;
+            font-weight: 800;
+            padding: 2px 5px;
+            border-radius: 3px;
+            text-transform: uppercase;
+        }
+
+        .state-safe { border-color: rgba(16, 185, 129, 0.4); }
+        .state-safe .zone-badge { background-color: rgba(16, 185, 129, 0.3); color: #34d399; }
+
+        .state-caution { border-color: rgba(245, 158, 11, 0.5); }
+        .state-caution .zone-badge { background-color: rgba(245, 158, 11, 0.3); color: #fbbf24; }
+
+        .state-danger { border-color: rgba(239, 68, 68, 0.6); }
+        .state-danger .zone-badge { background-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
+
+        .terminal {
+            background-color: #020617;
+            border: 1px solid #1e293b;
+            border-radius: 4px;
+            padding: 8px;
+            font-family: monospace;
+            font-size: 9px;
+            height: 100px;
+            overflow-y: auto;
+            color: #34d399;
+        }
+
+        .terminal-log { margin-bottom: 2px; }
+        .terminal-log.warn { color: #fbbf24; }
+        .terminal-log.danger { color: #fca5a5; }
+
+        .incident-card {
+            background-color: #0b1329;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 12px;
+        }
+
+        .incident-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            font-weight: 700;
+            color: #f3f4f6;
+            margin-bottom: 6px;
+        }
+
+        .incident-time { color: #64748b; font-size: 9px; }
+
+        .replay-canvas-box {
+            width: 100%;
+            height: 120px;
+            background-color: #020617;
+            border: 1px solid #1e293b;
+            border-radius: 4px;
+            margin-top: 6px;
+            position: relative;
+        }
+
+        .replay-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+        }
+
+        .btn-play {
+            background-color: #38bdf8;
+            color: #020617;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .bottom-nav {
+            background-color: #0b1329;
+            border-top: 1px solid #1e293b;
+            display: flex;
+            height: 50px;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 9px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .nav-item.active { color: #38bdf8; }
+        .nav-icon { font-size: 14px; margin-bottom: 2px; }
     </style>
 </head>
 <body>
 
-    <div id="auth-overlay">
-        <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="color: var(--primary); font-size: 2.2rem; margin-bottom: 6px;">VeloVault</h1>
-        </div>
-        <div class="card">
-            <h2>Customer / Walk-In Registration Portal</h2>
-            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">Register your vehicle details using your 17-digit VIN or check your test status instantly.</p>
-            <div class="form-group">
-                <label>Target Station Code (Required for Walk-In)</label>
-                <input type="text" id="pub-station-code" placeholder="e.g. alberton-01" style="text-transform: lowercase;">
+    <div class="header">
+        <div class="logo-group">
+            <div class="logo-badge">AX</div>
+            <div>
+                <span class="brand-title">FLEET MANAGEMENT</span>
+                <span class="brand-sub">AXISHAUL CONTROL SYSTEM</span>
             </div>
-            <button class="btn" id="btn-open-portal">Open Customer Portal</button>
         </div>
-        <div class="card" style="margin-top: 12px;">
-            <h2>Station Admin Login</h2>
-            <div class="form-group">
-                <label>Station Code</label>
-                <input type="text" id="admin-station-code" placeholder="e.g. alberton-01" style="text-transform: lowercase;">
+        <div id="main-status" class="status-pill status-safe">NO DRIVER</div>
+    </div>
+
+    <div class="main-content">
+
+        <!-- PORTAL VIEW -->
+        <div id="page-auth" class="view-page active">
+            <h3 style="font-size: 14px; margin-bottom: 4px;">Driver Portal & Access</h3>
+            <p style="font-size: 10px; color: #64748b; margin-bottom: 12px;">Select an existing driver profile or register a new driver terminal.</p>
+
+            <div class="card">
+                <div class="card-title">Select Registered Driver</div>
+                <select id="profile-select" onchange="onProfileSelected()">
+                    <option value="">-- Create New Driver Below --</option>
+                </select>
             </div>
-            <div class="form-group">
-                <label>Manager Password</label>
-                <div style="position: relative;">
-                    <input type="password" id="admin-pass" placeholder="Enter manager password" style="padding-right: 45px;">
-                    <button type="button" id="btn-toggle-pass" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 8px; cursor: pointer; font-size: 1.1rem; width: auto; margin-bottom: 0; color: #64748b;">👁️</button>
+
+            <div class="card">
+                <div class="card-title">Or Register New Driver</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>DRIVER NAME</label>
+                        <input type="text" id="driver-name" placeholder="John">
+                    </div>
+                    <div class="form-group">
+                        <label>SURNAME</label>
+                        <input type="text" id="driver-surname" placeholder="Doe">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>COMPANY NAME</label>
+                    <input type="text" id="company-name" value="AxisHaul Logistics">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>EMPLOYEE ID</label>
+                        <input type="text" id="employee-id" placeholder="AX-8801">
+                    </div>
+                    <div class="form-group">
+                        <label>TRUCK MODEL</label>
+                        <input type="text" id="truck-model" placeholder="Volvo FH16">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ORIGIN</label>
+                        <input type="text" id="origin" placeholder="Johannesburg">
+                    </div>
+                    <div class="form-group">
+                        <label>DESTINATION</label>
+                        <input type="text" id="destination" placeholder="Durban">
+                    </div>
                 </div>
             </div>
-            <button class="btn btn-success" id="btn-admin-login">Login to Management Dashboard</button>
+
+            <button class="btn btn-primary" onclick="saveAndLoginDriver()">LOGIN / REGISTER & UNLOCK TERMINAL</button>
+            <button class="btn btn-secondary" onclick="logoutCurrentDriver()">LOGOUT CURRENT SESSION</button>
+        </div>
+
+        <!-- SURVEILLANCE VIEW -->
+        <div id="page-dashboard" class="view-page">
+
+            <div class="sim-container">
+                <canvas id="simCanvas"></canvas>
+            </div>
+
+            <div class="controls-grid">
+                <div class="steer-btn" id="btn-left">◀ STEER LEFT</div>
+                <div class="steer-btn" id="btn-right">STEER RIGHT ▶</div>
+            </div>
+
+            <div class="zone-grid">
+                <div id="box-zone-front" class="zone-box state-safe">
+                    <canvas id="cam1-canvas"></canvas>
+                    <div class="cam-overlay">
+                        <div class="zone-title"><span class="rec-dot"></span>CAM 1: FRONT</div>
+                        <div class="cam-bottom-row">
+                            <span id="time-cam-1" class="cam-time">LIVE</span>
+                            <span id="badge-zone-front" class="zone-badge">CLEAR</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="box-zone-rear" class="zone-box state-safe">
+                    <canvas id="cam2-canvas"></canvas>
+                    <div class="cam-overlay">
+                        <div class="zone-title"><span class="rec-dot"></span>CAM 2: REAR</div>
+                        <div class="cam-bottom-row">
+                            <span id="time-cam-2" class="cam-time">LIVE</span>
+                            <span id="badge-zone-rear" class="zone-badge">CLEAR</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="box-zone-left" class="zone-box state-safe">
+                    <canvas id="cam3-canvas"></canvas>
+                    <div class="cam-overlay">
+                        <div class="zone-title"><span class="rec-dot"></span>CAM 3: LEFT MIRROR</div>
+                        <div class="cam-bottom-row">
+                            <span id="time-cam-3" class="cam-time">LIVE</span>
+                            <span id="badge-zone-left" class="zone-badge">CLEAR</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="box-zone-right" class="zone-box state-safe">
+                    <canvas id="cam4-canvas"></canvas>
+                    <div class="cam-overlay">
+                        <div class="zone-title"><span class="rec-dot"></span>CAM 4: RIGHT MIRROR</div>
+                        <div class="cam-bottom-row">
+                            <span id="time-cam-4" class="cam-time">LIVE</span>
+                            <span id="badge-zone-right" class="zone-badge">CLEAR</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="terminal" class="terminal">
+                <div class="terminal-log">[SYSTEM] Driver terminal standby...</div>
+            </div>
+        </div>
+
+        <!-- ARCHIVE VIEW -->
+        <div id="page-archive" class="view-page">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div id="archive-header-title" class="card-title" style="margin: 0;">BLACK BOX REPLAY ARCHIVE</div>
+                <button class="btn btn-danger" style="width: auto; padding: 4px 8px; font-size: 8px; margin: 0;" onclick="clearCurrentDriverHistory()">CLEAR LOGS</button>
+            </div>
+
+            <div id="archive-list"></div>
+        </div>
+
+    </div>
+
+    <div class="bottom-nav">
+        <div id="nav-auth" class="nav-item active" onclick="switchTab('auth')">
+            <div class="nav-icon">👤</div>
+            <span>Portal</span>
+        </div>
+        <div id="nav-dash" class="nav-item" onclick="switchTab('dashboard')">
+            <div class="nav-icon">🚛</div>
+            <span>Surveillance</span>
+        </div>
+        <div id="nav-archive" class="nav-item" onclick="switchTab('archive')">
+            <div class="nav-icon">🕒</div>
+            <span>Archive</span>
         </div>
     </div>
 
-    <header>
-        <h1><b>VeloVault</b></h1>
-        <div style="display: flex; gap: 8px; align-items: center;">
-            <div class="badge-top" id="role-badge">LOCKED</div>
-            <button id="btn-logout" style="background:none; border:1px solid #fff; color:#fff; font-size:0.75rem; padding:5px 8px; border-radius:4px; cursor:pointer;">Exit</button>
-        </div>
-    </header>
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const logWindow = document.getElementById('terminal');
+        const mainStatus = document.getElementById('main-status');
 
-    <nav id="admin-nav">
-        <button data-tab="audit">1. Audit</button>
-        <button data-tab="checkout">2. Checkout</button>
-        <button data-tab="yard">3. Yard</button>
-        <button data-tab="dashboard">4. Dashboard</button>
-        <button data-tab="history">5. History</button>
-        <button data-tab="chat">6. Chat Log</button>
-    </nav>
+        const cam1Canvas = document.getElementById('cam1-canvas');
+        const cam2Canvas = document.getElementById('cam2-canvas');
+        const cam3Canvas = document.getElementById('cam3-canvas');
+        const cam4Canvas = document.getElementById('cam4-canvas');
 
-    <div id="public-view" class="tab-content">
-        <h2>Customer Self-Service Portal <span id="pub-active-station-lbl" style="font-size:0.8rem; color:var(--secondary); display:block;"></span></h2>
+        let audioCtx = null;
+        let lastBeep = 0;
+        let isSimRunning = false;
+        let simAnimationId = null;
+        let lastRecordedTime = 0;
+
+        let allProfiles = [];
+        let activeDriverId = null;
+        let allIncidents = [];
+        let telemetryBuffer = [];
+
+        let laneOffset = 0;
+        let currentLaneIndex = 1;
         
-        <div class="card">
-            <h2>Quick Walk-In Registration</h2>
-            <div id="scanner-container">
-                <div id="reader"></div>
-                <button type="button" class="btn btn-danger" id="btn-stop-scan" style="margin-top: 10px; margin-bottom:0; padding:8px;">Close Camera Scanner</button>
-            </div>
-
-            <div class="form-group">
-                <label>17-Digit VIN (Vehicle Identification Number)</label>
-                <input type="text" id="pub-vin" placeholder="e.g. AAV1234567890ABCD" maxlength="17" style="text-transform: uppercase; font-family: monospace; letter-spacing: 1px;">
-                <div style="display: flex; gap: 6px; margin-top: 6px;">
-                    <button type="button" class="btn btn-accent" id="btn-sim-scan" style="flex:1; margin-bottom:0; font-size: 0.8rem; padding: 10px;">⚡ Simulate Barcode Scan</button>
-                    <button type="button" class="btn" id="btn-start-scan" style="flex:1; margin-bottom:0; font-size: 0.8rem; padding: 10px; background: #475569;">📷 Live Camera</button>
-                </div>
-                <small style="color: #64748b; font-size: 0.75rem; display: block; margin-top: 4px;" id="vin-counter">0 / 17 characters entered</small>
-            </div>
-
-            <div class="form-group"><label>Owner Name & Surname</label><input type="text" id="pub-owner" placeholder="e.g. Sipho Dlamini"></div>
-            <div class="form-group"><label>License Plate Number</label><input type="text" id="pub-plate" placeholder="e.g. ND 456-789"></div>
-            <div class="form-group"><label>Vehicle Make & Model</label><input type="text" id="pub-model" placeholder="e.g. Isuzu NPR 400"></div>
-            <div class="form-group"><label>Phone Number</label><input type="tel" id="pub-phone" placeholder="0823456789"></div>
-            <button class="btn btn-success" id="btn-pub-register">Register & Generate PIN</button>
-            <div id="self-reg-result" style="margin-top: 10px;"></div>
-        </div>
-
-        <div class="card" style="margin-top: 15px;">
-            <h2>Check Test Status & Message Station Admin</h2>
-            <div class="form-group">
-                <label>Enter License Plate, 17-Digit VIN, or PIN</label>
-                <input type="text" id="search-query" placeholder="e.g. Plate, VIN, or PIN">
-            </div>
-            <button class="btn" id="btn-search-status">Search Vehicle Status</button>
-            <div id="search-result" style="margin-top: 12px;"></div>
-        </div>
-    </div>
-
-    <div id="tab-audit" class="tab-content">
-        <h2>Technical Inspection (Audit)</h2>
-        <div class="card">
-            <div class="form-group">
-                <label>Select Walk-In Vehicle from Yard</label>
-                <select id="audit-select"><option value="">-- Choose Registered Vehicle --</option></select>
-            </div>
-            <div class="form-group" id="audit-vin-display" style="font-size: 0.85rem; color: #64748b; background: #f1f5f9; padding: 8px; border-radius: 6px; margin-bottom: 12px;">VIN: Not selected</div>
-            
-            <!-- Comprehensive Roadworthy Search Bar -->
-            <div class="form-group">
-                <label>Search Roadworthy Parts & Defects Catalog</label>
-                <div class="search-box">
-                    <input type="text" id="part-search-input" placeholder="Search part (e.g. Brakes, Seat Bar, Tyres, Bolts)..." autocomplete="off">
-                    <div id="part-suggestions" class="suggestions" style="display: none;"></div>
-                </div>
-            </div>
-
-            <div id="dynamic-audit-list" class="form-group">
-                <!-- Dynamic inspection items render here -->
-            </div>
-
-            <button type="button" class="btn btn-success" id="btn-inspect-pass">Pass & Certify Vehicle</button>
-            <button type="button" class="btn btn-danger" id="btn-inspect-fail">Fail & Log Defects</button>
-        </div>
-    </div>
-
-    <div id="tab-checkout" class="tab-content">
-        <h2>Gate Release & Settlement</h2>
-        <div class="card">
-            <div class="form-group"><label>Select Cleared Vehicle for Release</label><select id="checkout-select"><option value="">-- Select Cleared Vehicle --</option></select></div>
-            <div class="form-group"><label>Testing Fee (ZAR)</label><input type="number" id="fee-test" value="850"></div>
-            <div class="form-group"><label>Storage / Parking Days</label><input type="number" id="fee-days" value="1"></div>
-            <div class="form-group"><label>Daily Rate (ZAR)</label><input type="number" id="fee-rate" value="164"></div>
-            <div class="summary-box" id="calc-summary">
-                <div class="summary-row"><span>Test Fee (Excl. VAT):</span><span id="lbl-test">R850.00</span></div>
-                <div class="summary-row"><span>Storage (Excl. VAT):</span><span id="lbl-storage">R164.00</span></div>
-                <div class="summary-row"><span>15% VAT:</span><span id="lbl-vat">R152.10</span></div>
-                <hr style="margin: 8px 0; border:0; border-top:1px solid #cbd5e1;">
-                <div class="summary-row" style="font-weight:bold; font-size:1.05rem; color:var(--primary);"><span>Total Payable:</span><span id="lbl-total">R1166.10</span></div>
-            </div>
-            <br>
-            <button type="button" class="btn btn-success" id="btn-process-payment">Process Payment & Authorize Gate Release</button>
-        </div>
-    </div>
-
-    <div id="tab-yard" class="tab-content">
-        <h2>Active Yard Registry</h2>
-        <div class="card">
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead><tr><th>Plate / VIN</th><th>Model</th><th>Status</th><th>Ref</th><th>PIN</th><th>Customer No.</th></tr></thead>
-                    <tbody id="yard-table-body"><tr><td colspan="6" style="padding: 16px; color: #64748b;">Loading cloud registry...</td></tr></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="tab-dashboard" class="tab-content">
-        <h2>Executive Dashboard Analytics</h2>
-        <div class="card">
-            <div class="dash-grid">
-                <div class="dash-card"><h4>TOTAL INTAKE</h4><div class="val" id="dash-total-intake">0</div></div>
-                <div class="dash-card"><h4>CURRENTLY IN YARD</h4><div class="val" id="dash-impounded" style="color: var(--accent);">0</div></div>
-                <div class="dash-card"><h4>ENATIS CLEARED</h4><div class="val" id="dash-cleared" style="color: var(--success);">0</div></div>
-                <div class="dash-card"><h4>GATE RELEASED</h4><div class="val" id="dash-released" style="color: var(--secondary);">0</div></div>
-            </div>
-            <div class="summary-box">
-                <div class="summary-row"><span>Total Testing Fees:</span><span id="dash-rev-test">R0.00</span></div>
-                <div class="summary-row"><span>Total Storage Revenue:</span><span id="dash-rev-storage">R0.00</span></div>
-                <div class="summary-row"><span>Total VAT Collected (15%):</span><span id="dash-rev-vat">R0.00</span></div>
-                <hr style="margin: 8px 0; border:0; border-top:1px solid #cbd5e1;">
-                <div class="summary-row" style="font-weight:bold; font-size:1.05rem; color:var(--primary);"><span>Grand Total Revenue:</span><span id="dash-rev-grand">R0.00</span></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="tab-history" class="tab-content">
-        <h2>Payment & Release History</h2>
-        <div class="card"><div id="history-list-container"><p style="color: #64748b;">Loading cloud history logs...</p></div></div>
-    </div>
-
-    <div id="tab-chat" class="tab-content">
-        <h2>Vehicle Chat & Fault Logs</h2>
-        <div class="card">
-            <div class="form-group">
-                <label>Select Vehicle Thread</label>
-                <select id="chat-vehicle-select"><option value="">-- Choose Vehicle for Chat --</option></select>
-            </div>
-            
-            <div id="chat-messages-container" class="chat-container">
-                <p style="color: #555; font-style: italic; font-size: 0.85rem; text-align: center; margin: auto;">Select a vehicle above to view or write fault logs...</p>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 0;">
-                <input type="text" id="chat-input-msg" placeholder="Type a message or defect note...">
-            </div>
-            <button type="button" class="btn btn-success" id="btn-send-chat" style="margin-top: 10px; margin-bottom: 0; background: #25d366; color: #000; font-weight: bold;">Send Note to Thread</button>
-        </div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBfY4P-Gr7wXIzPg8mNq5EX_vEl0YTViQ8",
-            authDomain: "velovault-b9bff.firebaseapp.com",
-            projectId: "velovault-b9bff",
-            storageBucket: "velovault-b9bff.firebasestorage.app",
-            messagingSenderId: "1097387850861",
-            appId: "1:1097387850861:web:3281370c6bba824ce15364"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        let yardVehicles = [];
-        let historyLogs = [];
-        let chatMessages = [];
-        let html5QrCode = null;
-        let activeSearchedVehicleId = null;
-
-        let activeUnsubscribeRegistrations = null;
-        let activeUnsubscribeHistory = null;
-        let activeUnsubscribeChats = null;
-
-        // Comprehensive Master Catalog of Roadworthiness Parts & Defect Checks
-        const masterVehicleParts = [
-            // Braking & Wheels
-            "Heavy Roller Brake Tester Efficiency",
-            "Parking / Handbrake Mechanism & Cables",
-            "Brake Lines, Hoses & Master Cylinder Leaks",
-            "Tyre Tread Depth & Sidewall Damage",
-            "Wheel Nuts, Studs, Rims & Hubs",
-            
-            // Steering & Suspension
-            "Steering Linkage, Joints & Play",
-            "Shock Absorbers, Struts & Mounts",
-            "Suspension Bushings, Control Arms & Ball Joints",
-            "Wheel Alignment & Steering Wheel Centering",
-
-            // Structural & Safety Fittings
-            "Seat Bar / Seatbelt Safety & Retractor Operation",
-            "Missing Bolts, Fasteners & Chassis Structural Integrity",
-            "Windscreen Cracks, Chips & Vision Obstructing Damage",
-            "Windscreen Wipers & Washers Operation",
-            "Rear-View & Side Mirrors Security & Cracks",
-            "Doors, Latches, Hinges & Cabin Security Locks",
-
-            // Electrical & Lighting System
-            "Headlamp Alignment, Dipped & Main Beams",
-            "Indicator, Hazard & Direction Lights",
-            "Brake, Reverse & Rear Tail Lights",
-            "Number Plate Illumination & Horn Function",
-            "Battery Mount, Terminals & Wiring Security",
-
-            // Engine, Exhaust & Undercarriage
-            "Exhaust Emissions, Silencer Box & Leaks",
-            "Excessive Fluid Leaks (Oil, Coolant, Gearbox, Power Steering)",
-            "Engine Mountings, Gearbox Mounts & Drivetrain",
-            "Fuel Tank Caps, Filler Neck & Fuel Lines Security"
+        const playerTruck = { x: 0, targetX: 0, y: 110, w: 26, h: 46 };
+        const traffic = [
+            { laneIndex: 0, x: 0, y: -60, speed: 1.2, color: '#ef4444' },
+            { laneIndex: 2, x: 0, y: -200, speed: 2.0, color: '#a855f7' },
+            { laneIndex: 1, x: 0, y: 250, speed: -0.8, color: '#38bdf8' }
         ];
 
-        // Active audit inspection items list state
-        let currentAuditItems = [
-            { name: "Heavy Roller Brake Tester Efficiency", status: "PASS" },
-            { name: "Steering Linkage & Joint Play", status: "PASS" },
-            { name: "Tyre Tread Depth & Sidewall Damage", status: "PASS" },
-            { name: "Headlamp Alignment, Dipped & Main Beams", status: "PASS" },
-            { name: "Exhaust Emissions, Silencer Box & Leaks", status: "PASS" },
-            { name: "Seat Bar / Seatbelt Safety & Retractor Operation", status: "PASS" }
-        ];
-
-        function setupRealtimeListeners(stationId) {
-            if(activeUnsubscribeRegistrations) activeUnsubscribeRegistrations();
-            if(activeUnsubscribeHistory) activeUnsubscribeHistory();
-            if(activeUnsubscribeChats) activeUnsubscribeChats();
-
-            const regQuery = query(collection(db, "registrations"), where("stationId", "==", stationId));
-            activeUnsubscribeRegistrations = onSnapshot(regQuery, (snapshot) => {
-                yardVehicles = [];
-                snapshot.forEach((docSnap) => { yardVehicles.push({ id: docSnap.id, ...docSnap.data() }); });
-                refreshActiveTab();
-                if(activeSearchedVehicleId) updateCustomerSearchDisplay(activeSearchedVehicleId);
-            });
-
-            const histQuery = query(collection(db, "history"), where("stationId", "==", stationId));
-            activeUnsubscribeHistory = onSnapshot(histQuery, (snapshot) => {
-                historyLogs = [];
-                snapshot.forEach((docSnap) => { historyLogs.push({ id: docSnap.id, ...docSnap.data() }); });
-                refreshActiveTab();
-            });
-
-            const chatQuery = query(collection(db, "chats"), where("stationId", "==", stationId));
-            activeUnsubscribeChats = onSnapshot(chatQuery, (snapshot) => {
-                chatMessages = [];
-                snapshot.forEach((docSnap) => { chatMessages.push({ id: docSnap.id, ...docSnap.data() }); });
-                refreshActiveTab();
-                if(activeSearchedVehicleId) updateCustomerSearchDisplay(activeSearchedVehicleId);
-            });
-        }
-
-        function refreshActiveTab() {
-            const activeTab = document.querySelector('nav button.active');
-            if (activeTab) {
-                const tabName = activeTab.getAttribute('data-tab');
-                if(tabName === 'yard') renderYard();
-                if(tabName === 'audit') {
-                    populateAuditDropdown();
-                    renderAuditList();
-                }
-                if(tabName === 'checkout') populateCheckoutDropdown();
-                if(tabName === 'dashboard') renderDashboard();
-                if(tabName === 'history') renderHistory();
-                if(tabName === 'chat') populateChatDropdown();
-            }
-        }
-
-        window.openPublicPortal = function() {
-            const stationCode = document.getElementById('pub-station-code').value.trim().toLowerCase();
-            if(!stationCode) { alert('Please enter a target Station Code to proceed!'); return; }
+        window.addEventListener('DOMContentLoaded', () => {
+            loadStorageData();
+            populateProfileDropdown();
+            checkActiveSession();
+            startTimeUpdater();
             
-            localStorage.setItem("activeStationId", stationCode);
-            document.getElementById('pub-active-station-lbl').innerText = `Station: ${stationCode}`;
-            
-            document.getElementById('auth-overlay').style.display = 'none';
-            document.getElementById('public-view').style.display = 'block';
-            document.getElementById('admin-nav').style.display = 'none';
-            document.getElementById('role-badge').innerText = `CUSTOMER (${stationCode})`;
-            
-            setupRealtimeListeners(stationCode);
-            window.scrollTo(0, 0);
-        }
+            const btnL = document.getElementById('btn-left');
+            const btnR = document.getElementById('btn-right');
 
-        window.openAdminPortal = function() {
-            const stationCode = document.getElementById('admin-station-code').value.trim().toLowerCase();
-            const pass = document.getElementById('admin-pass').value.trim();
-
-            if(!stationCode) { alert('Please enter your Station Code!'); return; }
-            if(pass === 'admin123') {
-                localStorage.setItem("activeStationId", stationCode);
-                document.getElementById('auth-overlay').style.display = 'none';
-                document.getElementById('admin-nav').style.display = 'flex';
-                document.getElementById('role-badge').innerText = `ADMIN: ${stationCode}`;
-                
-                setupRealtimeListeners(stationCode);
-                switchTab('audit', document.querySelector('nav button'));
-                window.scrollTo(0, 0);
-            } else { alert('Invalid Manager Password!'); }
-        }
-
-        window.logoutToPortal = function() {
-            stopScanner();
-            localStorage.removeItem("activeStationId");
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById('public-view').style.display = 'none';
-            document.getElementById('admin-nav').style.display = 'none';
-            document.getElementById('auth-overlay').style.display = 'flex';
-            document.getElementById('role-badge').innerText = 'LOCKED';
-            document.getElementById('admin-pass').value = '';
-            document.getElementById('admin-station-code').value = '';
-            document.getElementById('pub-station-code').value = '';
-            activeSearchedVehicleId = null;
-            window.scrollTo(0, 0);
-        }
-
-        window.switchTab = function(tabName, btnElement) {
-            stopScanner();
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('nav button').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + tabName).classList.add('active');
-            if(btnElement) btnElement.classList.add('active');
-            
-            refreshActiveTab();
-            window.scrollTo(0, 0);
-        }
-
-        // Password Show/Hide Toggle Event Listener
-        document.getElementById('btn-toggle-pass').addEventListener('click', function() {
-            const passInput = document.getElementById('admin-pass');
-            if (passInput.type === 'password') {
-                passInput.type = 'text';
-                this.innerText = '🙈';
-            } else {
-                passInput.type = 'password';
-                this.innerText = '👁️';
-            }
+            btnL.addEventListener('pointerdown', (e) => { e.preventDefault(); steer(-1); });
+            btnR.addEventListener('pointerdown', (e) => { e.preventDefault(); steer(1); });
         });
 
-        function populateAuditDropdown() {
-            const select = document.getElementById('audit-select');
-            select.innerHTML = '<option value="">-- Choose Registered Vehicle --</option>';
-            yardVehicles.filter(v => v.status === 'In Yard' || v.status === 'Failed / Defective').forEach(v => {
-                select.innerHTML += `<option value="${v.id}">${v.plate || 'NO PLATE'} - ${v.model} (${v.status})</option>`;
-            });
-            document.getElementById('audit-vin-display').innerText = 'VIN: Not selected';
+        function getLaneCenters() {
+            const roadWidth = Math.min(canvas.width * 0.8, 180);
+            const roadX = (canvas.width - roadWidth) / 2;
+            const laneWidth = roadWidth / 3;
+            return [
+                roadX + laneWidth * 0.5,
+                roadX + laneWidth * 1.5,
+                roadX + laneWidth * 2.5
+            ];
         }
 
-        function renderAuditList() {
-            const container = document.getElementById('dynamic-audit-list');
-            if(!container) return;
+        function steer(direction) {
+            currentLaneIndex += direction;
+            if (currentLaneIndex < 0) currentLaneIndex = 0;
+            if (currentLaneIndex > 2) currentLaneIndex = 2;
+
+            const lanes = getLaneCenters();
+            playerTruck.targetX = lanes[currentLaneIndex] - (playerTruck.w / 2);
+        }
+
+        function loadStorageData() {
+            const storedProfiles = localStorage.getItem('axisHaul_profiles');
+            if (storedProfiles) allProfiles = JSON.parse(storedProfiles);
+
+            const storedIncidents = localStorage.getItem('axisHaul_incidents');
+            if (storedIncidents) allIncidents = JSON.parse(storedIncidents);
+
+            activeDriverId = localStorage.getItem('axisHaul_active_driver_id');
+        }
+
+        function populateProfileDropdown() {
+            const select = document.getElementById('profile-select');
+            select.innerHTML = '<option value="">-- Create New Driver Below --</option>';
+            allProfiles.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.empId;
+                const companyName = p.company && p.company !== 'undefined' ? p.company : 'AxisHaul Logistics';
+                opt.innerText = p.name + ' ' + p.surname + ' (' + p.empId + ') - ' + companyName;
+                select.appendChild(opt);
+            });
+        }
+
+        function onProfileSelected() {
+            const empId = document.getElementById('profile-select').value;
+            if (!empId) { clearFormFields(); return; }
+            const profile = allProfiles.find(p => p.empId === empId);
+            if (profile) {
+                document.getElementById('driver-name').value = profile.name || '';
+                document.getElementById('driver-surname').value = profile.surname || '';
+                document.getElementById('company-name').value = (profile.company && profile.company !== 'undefined') ? profile.company : 'AxisHaul Logistics';
+                document.getElementById('employee-id').value = profile.empId || '';
+                document.getElementById('truck-model').value = profile.truck || '';
+                document.getElementById('origin').value = profile.origin || '';
+                document.getElementById('destination').value = profile.dest || '';
+            }
+        }
+
+        function clearFormFields() {
+            document.getElementById('driver-name').value = '';
+            document.getElementById('driver-surname').value = '';
+            document.getElementById('company-name').value = 'AxisHaul Logistics';
+            document.getElementById('employee-id').value = '';
+            document.getElementById('truck-model').value = '';
+            document.getElementById('origin').value = '';
+            document.getElementById('destination').value = '';
+        }
+
+        function saveAndLoginDriver() {
+            const empId = document.getElementById('employee-id').value.trim();
+            const name = document.getElementById('driver-name').value.trim();
+            const surname = document.getElementById('driver-surname').value.trim();
+            const company = document.getElementById('company-name').value.trim();
+            const truck = document.getElementById('truck-model').value.trim();
+            const origin = document.getElementById('origin').value.trim();
+            const dest = document.getElementById('destination').value.trim();
             
-            container.innerHTML = currentAuditItems.map((item, index) => `
-                <div class="audit-item-row">
-                    <span>${index + 1}. ${item.name}</span>
-                    <div style="display: flex; align-items: center;">
-                        <select onchange="updateAuditStatus(${index}, this.value)">
-                            <option value="PASS" ${item.status === 'PASS' ? 'selected' : ''}>PASS</option>
-                            <option value="FAIL" ${item.status === 'FAIL' ? 'selected' : ''}>FAIL</option>
-                        </select>
-                        <button type="button" class="remove-btn" onclick="removeAuditItem(${index})" title="Remove">×</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        window.updateAuditStatus = function(index, status) {
-            currentAuditItems[index].status = status;
-        }
-
-        window.removeAuditItem = function(index) {
-            currentAuditItems.splice(index, 1);
-            renderAuditList();
-        }
-
-        const partSearchInput = document.getElementById('part-search-input');
-        const partSuggestions = document.getElementById('part-suggestions');
-
-        if(partSearchInput && partSuggestions) {
-            partSearchInput.addEventListener('input', function() {
-                const queryVal = this.value.toLowerCase().trim();
-                partSuggestions.innerHTML = '';
-
-                if(queryVal === '') {
-                    partSuggestions.style.display = 'none';
-                    return;
-                }
-
-                const filtered = masterVehicleParts.filter(part => 
-                    part.toLowerCase().includes(queryVal) && 
-                    !currentAuditItems.some(existing => existing.name.toLowerCase() === part.toLowerCase())
-                );
-
-                if(filtered.length === 0) {
-                    partSuggestions.style.display = 'none';
-                    return;
-                }
-
-                partSuggestions.style.display = 'block';
-                filtered.forEach(part => {
-                    const div = document.createElement('div');
-                    div.classList.add('suggestion-item');
-                    div.textContent = part;
-                    div.onclick = function() {
-                        currentAuditItems.push({ name: part, status: 'PASS' });
-                        partSearchInput.value = '';
-                        partSuggestions.style.display = 'none';
-                        renderAuditList();
-                    };
-                    partSuggestions.appendChild(div);
-                });
-            });
-
-            document.addEventListener('click', function(e) {
-                if(!partSearchInput.contains(e.target) && !partSuggestions.contains(e.target)) {
-                    partSuggestions.style.display = 'none';
-                }
-            });
-        }
-
-        function populateCheckoutDropdown() {
-            const select = document.getElementById('checkout-select');
-            select.innerHTML = '<option value="">-- Select Cleared Vehicle --</option>';
-            yardVehicles.filter(v => v.status === 'Cleared/Passed').forEach(v => {
-                select.innerHTML += `<option value="${v.id}">${v.plate || 'NO PLATE'} - ${v.model} (${v.owner})</option>`;
-            });
-            calculateTotal();
-        }
-
-        function populateChatDropdown() {
-            const select = document.getElementById('chat-vehicle-select');
-            const currentVal = select.value;
-            select.innerHTML = '<option value="">-- Choose Vehicle for Chat --</option>';
-            yardVehicles.forEach(v => {
-                select.innerHTML += `<option value="${v.id}">${v.plate || 'NO PLATE'} - ${v.model} (${v.owner})</option>`;
-            });
-            select.value = currentVal;
-            renderChatMessages();
-        }
-
-        function renderChatMessages() {
-            const selectId = document.getElementById('chat-vehicle-select').value;
-            const container = document.getElementById('chat-messages-container');
-            
-            if(!selectId) {
-                container.innerHTML = '<p style="color: #555; font-style: italic; font-size: 0.85rem; text-align: center; margin: auto;">Select a vehicle above to view or write fault logs...</p>';
+            if (!empId || !name || !surname || !company || !truck || !origin || !dest) {
+                alert('ACCESS DENIED: Please complete all portal fields before continuing.');
                 return;
             }
 
-            const filteredMsgs = chatMessages.filter(m => m.vehicleId === selectId);
-            if(filteredMsgs.length === 0) {
-                container.innerHTML = '<p style="color: #555; font-style: italic; font-size: 0.85rem; text-align: center; margin: auto;">No messages or fault logs for this vehicle yet.</p>';
-                return;
+            const profileData = { empId, name, surname, company, truck, origin, dest };
+
+            const existingIndex = allProfiles.findIndex(p => p.empId === empId);
+            if (existingIndex >= 0) allProfiles[existingIndex] = profileData;
+            else allProfiles.push(profileData);
+
+            localStorage.setItem('axisHaul_profiles', JSON.stringify(allProfiles));
+            activeDriverId = empId;
+            localStorage.setItem('axisHaul_active_driver_id', activeDriverId);
+
+            populateProfileDropdown();
+            document.getElementById('profile-select').value = empId;
+
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
 
-            container.innerHTML = filteredMsgs.map(m => {
-                const isAdmin = m.sender === 'Station Admin';
-                const bubbleClass = isAdmin ? 'admin' : 'customer';
-                return `
-                    <div class="chat-bubble ${bubbleClass}">
-                        ${!isAdmin ? `<strong style="font-size:0.75rem; display:block; color:#93c5fd; margin-bottom:2px;">${m.sender}</strong>` : ''}
-                        ${m.text}
-                        <div class="chat-meta">
-                            <span class="chat-time">${m.date || ''}</span>
-                            <span class="delivery-status">✔ Sent</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            container.scrollTop = container.scrollHeight;
+            addLog('[LOGIN SUCCESS] Welcome back, ' + name + ' (' + empId + ')');
+            switchTab('dashboard');
         }
 
-        document.getElementById('chat-vehicle-select').addEventListener('change', renderChatMessages);
-
-        document.getElementById('btn-send-chat').addEventListener('click', async function() {
-            const selectId = document.getElementById('chat-vehicle-select').value;
-            const inputField = document.getElementById('chat-input-msg');
-            const text = inputField.value.trim();
-            const currentStation = localStorage.getItem("activeStationId");
-
-            if(!selectId) { alert('Please select a vehicle thread first.'); return; }
-            if(!text) { alert('Please type a message or note.'); return; }
-
-            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString();
-            inputField.value = '';
-
-            try {
-                await addDoc(collection(db, "chats"), {
-                    stationId: currentStation,
-                    vehicleId: selectId,
-                    sender: 'Station Admin',
-                    text: text,
-                    timestamp: serverTimestamp(),
-                    date: timeStr
-                });
-            } catch(e) {
-                console.error("Error sending chat message:", e);
-                alert('Failed to send message to cloud.');
+        function checkActiveSession() {
+            if (activeDriverId) {
+                const activeP = allProfiles.find(p => p.empId === activeDriverId);
+                if (activeP) {
+                    document.getElementById('profile-select').value = activeP.empId;
+                    onProfileSelected();
+                    mainStatus.innerText = 'ACTIVE: ' + activeP.name;
+                }
             }
-        });
+        }
 
-        function calculateTotal() {
-            const testFee = parseFloat(document.getElementById('fee-test').value) || 0;
-            const days = parseInt(document.getElementById('fee-days').value) || 0;
-            const rate = parseFloat(document.getElementById('fee-rate').value) || 0;
+        function logoutCurrentDriver() {
+            isSimRunning = false;
+            if (simAnimationId) {
+                cancelAnimationFrame(simAnimationId);
+                simAnimationId = null;
+            }
+
+            activeDriverId = null;
+            localStorage.removeItem('axisHaul_active_driver_id');
+            clearFormFields();
+            document.getElementById('profile-select').value = '';
             
-            const storageExcl = days * rate;
-            const subtotal = testFee + storageExcl;
-            const vat = subtotal * 0.15;
-            const total = subtotal + vat;
-
-            document.getElementById('lbl-test').innerText = `R${testFee.toFixed(2)}`;
-            document.getElementById('lbl-storage').innerText = `R${storageExcl.toFixed(2)}`;
-            document.getElementById('lbl-vat').innerText = `R${vat.toFixed(2)}`;
-            document.getElementById('lbl-total').innerText = `R${total.toFixed(2)}`;
-            return total;
+            mainStatus.className = 'status-pill status-safe';
+            mainStatus.innerText = 'NO DRIVER';
+            
+            addLog('[LOGOUT] Driver logged out. Engine standby.', 'warn');
+            switchTab('auth');
+            alert('Driver logged out successfully.');
         }
 
-        function renderYard() {
-            const tbody = document.getElementById('yard-table-body');
-            if(yardVehicles.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="padding: 16px; color: #64748b;">No active vehicles in cloud registry for this station</td></tr>';
-                return;
-            }
-            tbody.innerHTML = yardVehicles.map(v => {
-                let statusColor = 'var(--accent)';
-                if(v.status === 'Cleared/Passed') statusColor = 'var(--success)';
-                if(v.status === 'Failed / Defective') statusColor = 'var(--danger)';
-
-                return `
-                    <tr>
-                        <td><strong>${v.plate || 'N/A'}</strong><br><small style="font-family:monospace; font-size:0.75rem; color:#64748b;">${v.vin || 'No VIN'}</small></td>
-                        <td>${v.model || 'N/A'}</td>
-                        <td><span style="color:${statusColor}; font-weight:bold;">${v.status || 'In Yard'}</span></td>
-                        <td>${v.refCode || 'N/A'}</td>
-                        <td>${v.pin || 'N/A'}</td>
-                        <td style="font-family:monospace; font-weight:bold; font-size:0.8rem; color:var(--primary);">${v.phone || 'N/A'}</td>
-                    </tr>
-                `;
-            }).join('');
+        function startTimeUpdater() {
+            setInterval(() => {
+                const t = new Date().toLocaleTimeString();
+                for (let i = 1; i <= 4; i++) {
+                    const el = document.getElementById('time-cam-' + i);
+                    if (el) el.innerText = t;
+                }
+            }, 1000);
         }
 
-        function renderDashboard() {
-            const totalIntakeCount = yardVehicles.length + historyLogs.length;
-            const impoundedCount = yardVehicles.filter(v => v.status === 'In Yard' || v.status === 'Failed / Defective' || !v.status).length;
-            const clearedCount = yardVehicles.filter(v => v.status === 'Cleared/Passed').length;
-            const releasedCount = historyLogs.length;
+        function switchTab(tab) {
+            // Strict Security Lock: Validate session and complete profile registration
+            if (tab === 'dashboard' || tab === 'archive') {
+                const currentDriver = allProfiles.find(p => p.empId === activeDriverId);
+                const isProfileComplete = currentDriver && 
+                                          currentDriver.name && 
+                                          currentDriver.surname && 
+                                          currentDriver.company && 
+                                          currentDriver.empId && 
+                                          currentDriver.truck && 
+                                          currentDriver.origin && 
+                                          currentDriver.dest;
 
-            document.getElementById('dash-total-intake').innerText = totalIntakeCount;
-            document.getElementById('dash-impounded').innerText = impoundedCount;
-            document.getElementById('dash-cleared').innerText = clearedCount;
-            document.getElementById('dash-released').innerText = releasedCount;
-
-            let sumTest = 0, sumStorage = 0, sumVat = 0, sumGrand = 0;
-            historyLogs.forEach(h => {
-                sumTest += parseFloat(h.testFee) || 0;
-                sumStorage += parseFloat(h.storageExcl) || 0;
-                sumVat += parseFloat(h.vat) || 0;
-                sumGrand += parseFloat(h.totalPaid) || 0;
-            });
-
-            document.getElementById('dash-rev-test').innerText = `R${sumTest.toFixed(2)}`;
-            document.getElementById('dash-rev-storage').innerText = `R${sumStorage.toFixed(2)}`;
-            document.getElementById('dash-rev-vat').innerText = `R${sumVat.toFixed(2)}`;
-            document.getElementById('dash-rev-grand').innerText = `R${sumGrand.toFixed(2)}`;
-        }
-
-        function renderHistory() {
-            const container = document.getElementById('history-list-container');
-            if(historyLogs.length === 0) {
-                container.innerHTML = '<p style="color: #64748b;">No completed payment history recorded in cloud for this station yet.</p>';
-                return;
-            }
-            container.innerHTML = historyLogs.map(h => `
-                <div class="history-item">
-                    <strong>Vehicle:</strong> ${h.plate} (${h.model})<br>
-                    <small style="font-family:monospace; color:#64748b;">VIN: ${h.vin || 'N/A'}</small><br>
-                    <strong>Owner:</strong> ${h.owner}<br>
-                    <small>Test Fee: R${h.testFee} | Storage: R${h.storageExcl ? h.storageExcl.toFixed(2) : '0.00'} | VAT: R${h.vat ? h.vat.toFixed(2) : '0.00'}</small><br>
-                    <strong style="color: var(--primary);">Total Paid: R${h.totalPaid}</strong>
-                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Released on: ${h.date || 'Recent'}</div>
-                </div>
-            `).join('');
-        }
-
-        document.getElementById('btn-sim-scan').addEventListener('click', function() {
-            const vinInputEl = document.getElementById('pub-vin');
-            vinInputEl.classList.add('scanning-active');
-            setTimeout(() => {
-                vinInputEl.value = "1HGCR2F83HA999999";
-                vinInputEl.classList.remove('scanning-active');
-                updateVinCounter();
-            }, 500);
-        });
-
-        document.getElementById('btn-start-scan').addEventListener('click', function() {
-            const container = document.getElementById('scanner-container');
-            container.style.display = 'block';
-            if(!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-            html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 100 } },
-                (decodedText) => {
-                    document.getElementById('pub-vin').value = decodedText.trim().toUpperCase().substring(0, 17);
-                    updateVinCounter();
-                    stopScanner();
-                    alert('Successfully scanned barcode!');
-                },
-                () => {}
-            ).catch(() => {
-                alert('Unable to access camera.');
-                container.style.display = 'none';
-            });
-        });
-
-        function stopScanner() {
-            if(html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    document.getElementById('scanner-container').style.display = 'none';
-                }).catch(() => {
-                    document.getElementById('scanner-container').style.display = 'none';
-                });
-            } else {
-                document.getElementById('scanner-container').style.display = 'none';
-            }
-        }
-
-        document.getElementById('btn-stop-scan').addEventListener('click', stopScanner);
-
-        const vinInput = document.getElementById('pub-vin');
-        function updateVinCounter() {
-            const len = vinInput.value.length;
-            document.getElementById('vin-counter').innerText = `${len} / 17 characters entered`;
-            document.getElementById('vin-counter').style.color = (len === 17) ? 'var(--success)' : '#64748b';
-        }
-        vinInput.addEventListener('input', function() {
-            this.value = this.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, ''); 
-            updateVinCounter();
-        });
-
-        document.getElementById('btn-open-portal').addEventListener('click', openPublicPortal);
-        document.getElementById('btn-admin-login').addEventListener('click', openAdminPortal);
-        document.getElementById('btn-logout').addEventListener('click', logoutToPortal);
-
-        document.querySelectorAll('nav button').forEach(btn => {
-            btn.addEventListener('click', function() { switchTab(this.getAttribute('data-tab'), this); });
-        });
-
-        document.getElementById('btn-pub-register').addEventListener('click', async function() {
-            const vin = document.getElementById('pub-vin').value.trim();
-            const owner = document.getElementById('pub-owner').value.trim();
-            const plate = document.getElementById('pub-plate').value.trim().toUpperCase();
-            const model = document.getElementById('pub-model').value.trim();
-            const phone = document.getElementById('pub-phone').value.trim();
-            const resultBox = document.getElementById('self-reg-result');
-            const submitBtn = this;
-            const currentStation = localStorage.getItem("activeStationId");
-
-            if(!vin || vin.length < 17) { resultBox.innerHTML = '<p style="color:red; font-size:0.9rem;">Please provide a valid 17-digit VIN number.</p>'; return; }
-            if(!owner || !plate || !model) { resultBox.innerHTML = '<p style="color:red; font-size:0.9rem;">Please fill in owner name, plate, and model.</p>'; return; }
-
-            const refCode = 'REF-' + Math.floor(1000 + Math.random() * 9000);
-            const pin = Math.floor(100 + Math.random() * 900);
-
-            try {
-                submitBtn.disabled = true;
-                submitBtn.innerText = "Syncing to Cloud...";
-                await addDoc(collection(db, "registrations"), {
-                    stationId: currentStation,
-                    vin, plate, model, owner, phone: phone || "N/A",
-                    status: 'In Yard', defects: [], refCode, pin: pin.toString(),
-                    timestamp: serverTimestamp(), date: new Date().toLocaleString()
-                });
-                resultBox.innerHTML = `
-                    <div style="background: #e2f8ed; padding: 12px; border-radius: 8px; border-left: 4px solid var(--success); margin-top:10px;">
-                        <strong style="color:var(--success);">Registration Successful!</strong><br>
-                        <strong>Reference Code:</strong> ${refCode} | <strong>PIN:</strong> ${pin}
-                    </div>
-                `;
-                document.getElementById('pub-vin').value = '';
-                document.getElementById('pub-owner').value = '';
-                document.getElementById('pub-plate').value = '';
-                document.getElementById('pub-model').value = '';
-                document.getElementById('pub-phone').value = '';
-                updateVinCounter();
-            } catch (error) {
-                alert("Failed to save to cloud database.");
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Register & Generate PIN";
-            }
-        });
-
-        function updateCustomerSearchDisplay(vehicleId) {
-            const found = yardVehicles.find(v => v.id === vehicleId);
-            const resultBox = document.getElementById('search-result');
-            if(!found) return;
-
-            let statusColor = 'var(--accent)';
-            if(found.status === 'Cleared/Passed') statusColor = 'var(--success)';
-            if(found.status === 'Failed / Defective') statusColor = 'var(--danger)';
-
-            let defectHtml = found.defects && found.defects.length > 0 ? `<br><strong>Failed Items:</strong> <span style="color:var(--danger);">${found.defects.join(', ')}</span>` : '';
-
-            const filteredMsgs = chatMessages.filter(m => m.vehicleId === found.id);
-            let chatHtml = filteredMsgs.length > 0 ? filteredMsgs.map(m => {
-                const isAdmin = m.sender === 'Station Admin';
-                return `
-                    <div class="chat-bubble ${isAdmin ? 'admin' : 'customer'}">
-                        ${!isAdmin ? `<strong style="font-size:0.75rem; display:block; color:#93c5fd; margin-bottom:2px;">${m.sender}</strong>` : ''}
-                        ${m.text}
-                        <div class="chat-meta">
-                            <span class="chat-time">${m.date || ''}</span>
-                            <span class="delivery-status">✔ Sent</span>
-                        </div>
-                    </div>
-                `;
-            }).join('') : '<p style="color: #555; font-style: italic; font-size: 0.8rem; text-align: center; margin: auto;">No messages yet. Send a message to station admin below.</p>';
-
-            resultBox.innerHTML = `
-                <div style="background: #f1f5f9; padding: 12px; border-radius: 8px; border-left: 4px solid ${statusColor}; margin-top:10px;">
-                    <strong>Vehicle:</strong> ${found.plate} (${found.model})<br>
-                    <small style="font-family:monospace; color:#64748b;">VIN: ${found.vin || 'N/A'}</small><br>
-                    <strong>Status:</strong> <span style="color:${statusColor}; font-weight:bold;">${found.status || 'In Yard'}</span>${defectHtml}<br>
-                    <strong>Reference:</strong> ${found.refCode} | <strong>PIN:</strong> ${found.pin}
+                if (!activeDriverId || !isProfileComplete) {
+                    alert('ACCESS DENIED: You must fill out and submit all Portal profile information before accessing Surveillance or Archives.');
                     
-                    <div style="margin-top: 12px; border-top: 1px solid #cbd5e1; padding-top: 10px;">
-                        <strong style="font-size: 0.9rem; color: var(--primary);">Live Station Chat & Fault Notes:</strong>
-                        <div id="cust-chat-scroll" class="chat-container" style="height: 180px; margin-top: 6px;">${chatHtml}</div>
-                        <div style="display: flex; gap: 6px;">
-                            <input type="text" id="cust-msg-input" placeholder="Ask admin a question..." style="font-size: 0.9rem; padding: 8px;">
-                            <button type="button" class="btn btn-success" id="btn-cust-send" style="width: auto; padding: 8px 14px; margin-bottom: 0; font-size: 0.85rem; background: #25d366; color: #000; font-weight: bold;">Send</button>
-                        </div>
-                    </div>
-                </div>
-            `;
+                    // Force display back to Auth Portal
+                    document.querySelectorAll('.view-page').forEach(p => p.classList.remove('active'));
+                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                    document.getElementById('page-auth').classList.add('active');
+                    document.getElementById('nav-auth').classList.add('active');
+                    return;
+                }
+            }
 
-            const scrollDiv = document.getElementById('cust-chat-scroll');
-            if(scrollDiv) scrollDiv.scrollTop = scrollDiv.scrollHeight;
+            document.querySelectorAll('.view-page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            if (tab === 'auth') {
+                document.getElementById('page-auth').classList.add('active');
+                document.getElementById('nav-auth').classList.add('active');
+                
+                isSimRunning = false;
+                if (simAnimationId) {
+                    cancelAnimationFrame(simAnimationId);
+                    simAnimationId = null;
+                }
 
-            const sendBtn = document.getElementById('btn-cust-send');
-            if(sendBtn) {
-                sendBtn.onclick = async function() {
-                    const inputEl = document.getElementById('cust-msg-input');
-                    const text = inputEl.value.trim();
-                    const currentStation = localStorage.getItem("activeStationId");
-                    if(!text) return;
+                const currentDriver = allProfiles.find(p => p.empId === activeDriverId);
+                mainStatus.className = 'status-pill status-safe';
+                mainStatus.innerText = activeDriverId ? ('ACTIVE: ' + (currentDriver ? currentDriver.name : activeDriverId)) : 'NO DRIVER';
 
-                    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString();
-                    inputEl.value = '';
+            } else if (tab === 'dashboard') {
+                document.getElementById('page-dashboard').classList.add('active');
+                document.getElementById('nav-dash').classList.add('active');
+                resizeCanvas();
 
-                    try {
-                        await addDoc(collection(db, "chats"), {
-                            stationId: currentStation,
-                            vehicleId: found.id,
-                            sender: found.owner || 'Customer',
-                            text: text,
-                            timestamp: serverTimestamp(),
-                            date: timeStr
-                        });
-                    } catch(e) {
-                        alert("Failed to send message.");
-                    }
-                };
+                if (!isSimRunning) {
+                    isSimRunning = true;
+                    updateSimulation();
+                }
+            } else if (tab === 'archive') {
+                document.getElementById('page-archive').classList.add('active');
+                document.getElementById('nav-archive').classList.add('active');
+                
+                isSimRunning = false;
+                if (simAnimationId) {
+                    cancelAnimationFrame(simAnimationId);
+                    simAnimationId = null;
+                }
+
+                renderArchiveUI();
             }
         }
 
-        document.getElementById('btn-search-status').addEventListener('click', function() {
-            const queryVal = document.getElementById('search-query').value.trim().toUpperCase();
-            const resultBox = document.getElementById('search-result');
-            if(!queryVal) { resultBox.innerHTML = '<p style="color:red;">Please enter a plate, VIN, or PIN.</p>'; return; }
+        function logIncident(distance) {
+            if (!activeDriverId) return;
 
-            const found = yardVehicles.find(v => (v.vin && v.vin.toUpperCase().includes(queryVal)) || (v.plate && v.plate.toUpperCase().includes(queryVal)) || v.pin == queryVal || (v.refCode && v.refCode.toUpperCase() === queryVal));
-            
-            if(found) {
-                activeSearchedVehicleId = found.id;
-                updateCustomerSearchDisplay(found.id);
-            } else {
-                activeSearchedVehicleId = null;
-                const histFound = historyLogs.find(h => (h.vin && h.vin.toUpperCase().includes(queryVal)) || (h.plate && h.plate.toUpperCase().includes(queryVal)));
-                if(histFound) {
-                    resultBox.innerHTML = `
-                        <div style="background: #f1f5f9; padding: 12px; border-radius: 8px; border-left: 4px solid var(--success); margin-top:10px;">
-                            <strong>Vehicle:</strong> ${histFound.plate} (${histFound.model})<br>
-                            <strong>Status:</strong> <span style="color:var(--success); font-weight:bold;">Gate Released / Completed</span>
-                        </div>
-                    `;
-                } else {
-                    resultBox.innerHTML = '<p style="color:red; margin-top:8px;">No matching vehicle found in cloud.</p>';
-                }
+            const now = Date.now();
+            if (now - lastRecordedTime < 5000) return;
+            lastRecordedTime = now;
+
+            const driverProfile = allProfiles.find(p => p.empId === activeDriverId);
+            const driverFullName = driverProfile ? (driverProfile.name + ' ' + driverProfile.surname) : 'Unknown Driver';
+            const timeStr = new Date().toLocaleTimeString();
+
+            const newIncident = {
+                id: allIncidents.length + 1,
+                driverId: activeDriverId,
+                driverName: driverFullName,
+                time: timeStr,
+                distance: distance,
+                replayData: JSON.parse(JSON.stringify(telemetryBuffer))
+            };
+
+            allIncidents.unshift(newIncident);
+            localStorage.setItem('axisHaul_incidents', JSON.stringify(allIncidents));
+            addLog('[INCIDENT ARCHIVED] Saved to profile (' + activeDriverId + ') at ' + distance + 'm', 'danger');
+        }
+
+        function playReplay(incidentId) {
+            const incident = allIncidents.find(i => i.id === incidentId);
+            if (!incident || !incident.replayData) return;
+
+            const rCanvas = document.getElementById('replay-canvas-' + incidentId);
+            const rctx = rCanvas.getContext('2d');
+            rCanvas.width = rCanvas.parentElement.clientWidth;
+            rCanvas.height = rCanvas.parentElement.clientHeight;
+
+            let frameIndex = 0;
+            const data = incident.replayData;
+
+            function renderFrame() {
+                if (frameIndex >= data.length) return;
+                const snapshot = data[frameIndex];
+
+                rctx.fillStyle = '#020617';
+                rctx.fillRect(0, 0, rCanvas.width, rCanvas.height);
+
+                const rWidth = 120;
+                const rx = (rCanvas.width - rWidth) / 2;
+                rctx.strokeStyle = '#1e293b';
+                rctx.lineWidth = 2;
+                rctx.strokeRect(rx, 0, rWidth, rCanvas.height);
+
+                rctx.fillStyle = '#0284c7';
+                rctx.fillRect(rx + (snapshot.truck.x / canvas.width) * rWidth, snapshot.truck.y / 2, 20, 30);
+
+                snapshot.traffic.forEach(car => {
+                    rctx.fillStyle = car.color;
+                    rctx.fillRect(rx + (car.x / canvas.width) * rWidth, car.y / 2, 14, 20);
+                });
+
+                rctx.fillStyle = snapshot.dist < 40 ? '#ef4444' : (snapshot.dist <= 70 ? '#f59e0b' : '#10b981');
+                rctx.font = '8px monospace';
+                rctx.fillText('T-' + ((data.length - frameIndex) * 0.03).toFixed(1) + 's | Distance: ' + (snapshot.dist/10).toFixed(1) + 'm', 8, 14);
+
+                frameIndex++;
+                setTimeout(() => requestAnimationFrame(renderFrame), 30);
             }
-        });
 
-        document.getElementById('audit-select').addEventListener('change', function() {
-            const id = this.value;
-            const vinDisplay = document.getElementById('audit-vin-display');
-            if(!id) { vinDisplay.innerText = 'VIN: Not selected'; return; }
-            const vehicle = yardVehicles.find(v => v.id == id);
-            if(vehicle) vinDisplay.innerText = `VIN: ${vehicle.vin || 'Not provided'}`;
-        });
+            renderFrame();
+        }
 
-        document.getElementById('btn-inspect-pass').addEventListener('click', async function() {
-            const id = document.getElementById('audit-select').value;
-            if(!id) { alert('Please select a vehicle from the yard first.'); return; }
-            try {
-                await updateDoc(doc(db, "registrations", id), { status: 'Cleared/Passed', defects: [] });
-                document.getElementById('audit-select').value = '';
-                populateAuditDropdown();
-                alert('Inspection passed and updated in cloud database!');
-            } catch(e) { alert("Failed to update status."); }
-        });
+        function renderArchiveUI() {
+            const archiveList = document.getElementById('archive-list');
+            const headerTitle = document.getElementById('archive-header-title');
 
-        document.getElementById('btn-inspect-fail').addEventListener('click', async function() {
-            const id = document.getElementById('audit-select').value;
-            if(!id) { alert('Please select a vehicle from the yard first.'); return; }
-            const vehicle = yardVehicles.find(v => v.id == id);
-            
-            let failedItems = [];
-            currentAuditItems.forEach(item => {
-                if(item.status === 'FAIL') {
-                    failedItems.push(item.name);
+            if (!activeDriverId) {
+                headerTitle.innerHTML = '<span>⚠️</span> ARCHIVE (NO DRIVER LOGGED IN)';
+                archiveList.innerHTML = '<div style="font-size: 11px; color: #64748b; text-align: center; padding: 20px;">Please login or register a driver profile to view incident history.</div>';
+                return;
+            }
+
+            const currentDriver = allProfiles.find(p => p.empId === activeDriverId);
+            const driverName = currentDriver ? (currentDriver.name + ' ' + currentDriver.surname) : activeDriverId;
+            headerTitle.innerHTML = '<span>⚠️</span> REPLAY ARCHIVE: ' + driverName.toUpperCase();
+
+            const myIncidents = allIncidents.filter(i => i.driverId === activeDriverId);
+
+            if (myIncidents.length === 0) {
+                archiveList.innerHTML = '<div style="font-size: 11px; color: #64748b; text-align: center; padding: 20px;">No incidents recorded for ' + driverName + '. Clean driving record!</div>';
+                return;
+            }
+
+            archiveList.innerHTML = '';
+            myIncidents.forEach((item) => {
+                const card = document.createElement('div');
+                card.className = 'incident-card';
+                card.innerHTML = 
+                    '<div class="incident-header">' +
+                        '<span>🚨 Incident #' + item.id + ' - ' + item.driverName + '</span>' +
+                        '<span class="incident-time">' + item.time + '</span>' +
+                    '</div>' +
+                    '<div style="font-size: 10px; color: #fca5a5; margin-bottom: 4px;">Min Distance: ' + item.distance + ' meters</div>' +
+                    '<div class="replay-canvas-box">' +
+                        '<canvas id="replay-canvas-' + item.id + '"></canvas>' +
+                    '</div>' +
+                    '<div class="replay-controls">' +
+                        '<span style="font-size: 8px; color: #64748b;">5.0s Pre-Incident Telemetry</span>' +
+                        '<button class="btn-play" onclick="playReplay(' + item.id + ')">PLAY REPLAY ▶</button>' +
+                    '</div>';
+                archiveList.appendChild(card);
+            });
+        }
+
+        function clearCurrentDriverHistory() {
+            if (!activeDriverId) return;
+            allIncidents = allIncidents.filter(i => i.driverId !== activeDriverId);
+            localStorage.setItem('axisHaul_incidents', JSON.stringify(allIncidents));
+            renderArchiveUI();
+            addLog('[ARCHIVE] Personal logs cleared.', 'warn');
+        }
+
+        function playBeep(freq, duration) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            gain.gain.value = 0.08;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function addLog(text, type) {
+            const time = new Date().toLocaleTimeString();
+            const logRow = document.createElement('div');
+            logRow.className = type === 'warn' ? 'terminal-log warn' : (type === 'danger' ? 'terminal-log danger' : 'terminal-log');
+            logRow.innerText = '[' + time + '] ' + text;
+            logWindow.appendChild(logRow);
+            logWindow.scrollTop = logWindow.scrollHeight;
+        }
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            [cam1Canvas, cam2Canvas, cam3Canvas, cam4Canvas].forEach(c => {
+                if (c && c.parentElement) {
+                    c.width = c.parentElement.clientWidth;
+                    c.height = c.parentElement.clientHeight;
                 }
             });
-            const defectsArr = failedItems.length > 0 ? failedItems : ['General Roadworthy Defect'];
 
-            try {
-                await updateDoc(doc(db, "registrations", id), { status: 'Failed / Defective', defects: defectsArr });
-                document.getElementById('audit-select').value = '';
-                populateAuditDropdown();
-                alert(`Inspection failed for ${vehicle.plate}. Logged ${defectsArr.length} defect(s).`);
-            } catch(e) { alert("Failed to update defect status."); }
-        });
+            const lanes = getLaneCenters();
+            playerTruck.targetX = lanes[currentLaneIndex] - (playerTruck.w / 2);
+            playerTruck.x = playerTruck.targetX;
+        }
 
-        ['fee-test', 'fee-days', 'fee-rate'].forEach(id => {
-            document.getElementById(id).addEventListener('input', calculateTotal);
-        });
+        function updateZoneCard(zoneKey, dist) {
+            const box = document.getElementById('box-zone-' + zoneKey);
+            const badge = document.getElementById('badge-zone-' + zoneKey);
 
-        document.getElementById('btn-process-payment').addEventListener('click', async function() {
-            const id = document.getElementById('checkout-select').value;
-            if(!id) { alert('Please select a cleared vehicle for release.'); return; }
-            const vehicle = yardVehicles.find(v => v.id == id);
-            if(!vehicle) return;
+            if (dist < 40) {
+                box.className = 'zone-box state-danger';
+                badge.innerText = 'DANGER';
+            } else if (dist <= 70) {
+                box.className = 'zone-box state-caution';
+                badge.innerText = 'CAUTION';
+            } else {
+                box.className = 'zone-box state-safe';
+                badge.innerText = 'CLEAR';
+            }
+        }
 
-            const testFee = parseFloat(document.getElementById('fee-test').value) || 0;
-            const days = parseInt(document.getElementById('fee-days').value) || 0;
-            const rate = parseFloat(document.getElementById('fee-rate').value) || 0;
-            const storageExcl = days * rate;
-            const totalPaid = calculateTotal();
-            const currentStation = localStorage.getItem("activeStationId");
+        function renderCam1Front(c1) {
+            const w = cam1Canvas.width, h = cam1Canvas.height;
+            c1.fillStyle = '#0a0f1d'; c1.fillRect(0, 0, w, h);
 
-            try {
-                await addDoc(collection(db, "history"), {
-                    stationId: currentStation,
-                    vin: vehicle.vin || "", plate: vehicle.plate || "", model: vehicle.model || "", owner: vehicle.owner || "",
-                    testFee, storageExcl, vat: (testFee + storageExcl) * 0.15, totalPaid: totalPaid.toFixed(2),
-                    timestamp: serverTimestamp(), date: new Date().toLocaleString()
-                });
-                await deleteDoc(doc(db, "registrations", id));
-                alert('Payment processed successfully and gate released.');
-                document.getElementById('checkout-select').value = '';
-                populateCheckoutDropdown();
-            } catch(e) { alert("Error completing checkout."); }
-        });
+            c1.fillStyle = '#1e293b';
+            c1.fillRect(w * 0.2, 0, w * 0.6, h);
 
-        // Initial render trigger when script loads
-        renderAuditList();
+            c1.strokeStyle = '#38bdf8';
+            c1.lineWidth = 1;
+            c1.setLineDash([4, 4]);
+            c1.beginPath();
+            c1.moveTo(w * 0.5, 0); c1.lineTo(w * 0.5, h);
+            c1.stroke();
+            c1.setLineDash([]);
+
+            traffic.forEach(car => {
+                if (car.y < playerTruck.y && car.y > playerTruck.y - 180) {
+                    const relY = ((car.y - (playerTruck.y - 180)) / 180) * h;
+                    const laneX = (car.laneIndex === 0) ? w * 0.3 : (car.laneIndex === 1 ? w * 0.5 : w * 0.7);
+                    
+                    c1.fillStyle = car.color;
+                    c1.fillRect(laneX - 8, relY - 6, 16, 12);
+                }
+            });
+        }
+
+        function renderCam2Rear(c2) {
+            const w = cam2Canvas.width, h = cam2Canvas.height;
+            c2.fillStyle = '#0a0f1d'; c2.fillRect(0, 0, w, h);
+
+            c2.fillStyle = '#1e293b';
+            c2.fillRect(w * 0.2, 0, w * 0.6, h);
+
+            c2.strokeStyle = '#64748b';
+            c2.lineWidth = 1;
+            c2.setLineDash([4, 4]);
+            c2.beginPath();
+            c2.moveTo(w * 0.5, 0); c2.lineTo(w * 0.5, h);
+            c2.stroke();
+            c2.setLineDash([]);
+
+            traffic.forEach(car => {
+                if (car.y > playerTruck.y && car.y < playerTruck.y + 180) {
+                    const relY = ((car.y - playerTruck.y) / 180) * h;
+                    const laneX = (car.laneIndex === 0) ? w * 0.3 : (car.laneIndex === 1 ? w * 0.5 : w * 0.7);
+
+                    c2.fillStyle = car.color;
+                    c2.fillRect(laneX - 8, relY - 6, 16, 12);
+                }
+            });
+        }
+
+        function renderCam3Left(c3) {
+            const w = cam3Canvas.width, h = cam3Canvas.height;
+            c3.fillStyle = '#030712'; c3.fillRect(0, 0, w, h);
+
+            c3.fillStyle = '#0284c7';
+            c3.fillRect(w * 0.75, 0, w * 0.25, h);
+
+            c3.fillStyle = '#1e293b';
+            c3.fillRect(0, 0, w * 0.75, h);
+
+            traffic.forEach(car => {
+                if (car.laneIndex < currentLaneIndex && Math.abs(car.y - playerTruck.y) < 120) {
+                    const relY = (((car.y - playerTruck.y) + 120) / 240) * h;
+                    c3.fillStyle = car.color;
+                    c3.fillRect(w * 0.25, relY - 6, 18, 12);
+                }
+            });
+        }
+
+        function renderCam4Right(c4) {
+            const w = cam4Canvas.width, h = cam4Canvas.height;
+            c4.fillStyle = '#030712'; c4.fillRect(0, 0, w, h);
+
+            c4.fillStyle = '#0284c7';
+            c4.fillRect(0, 0, w * 0.25, h);
+
+            c4.fillStyle = '#1e293b';
+            c4.fillRect(w * 0.25, 0, w * 0.75, h);
+
+            traffic.forEach(car => {
+                if (car.laneIndex > currentLaneIndex && Math.abs(car.y - playerTruck.y) < 120) {
+                    const relY = (((car.y - playerTruck.y) + 120) / 240) * h;
+                    c4.fillStyle = car.color;
+                    c4.fillRect(w * 0.5, relY - 6, 18, 12);
+                }
+            });
+        }
+
+        function updateSimulation() {
+            if (!isSimRunning) return;
+
+            laneOffset = (laneOffset + 2) % 24;
+            
+            ctx.fillStyle = '#060e17';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const lanes = getLaneCenters();
+            const roadWidth = Math.min(canvas.width * 0.8, 180);
+            const roadX = (canvas.width - roadWidth) / 2;
+
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(roadX, 0, roadWidth, canvas.height);
+
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([12, 12]);
+            ctx.lineDashOffset = -laneOffset;
+
+            ctx.beginPath();
+            ctx.moveTo(roadX + roadWidth/3, 0); ctx.lineTo(roadX + roadWidth/3, canvas.height);
+            ctx.moveTo(roadX + (roadWidth/3)*2, 0); ctx.lineTo(roadX + (roadWidth/3)*2, canvas.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            playerTruck.x += (playerTruck.targetX - playerTruck.x) * 0.2;
+
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.08)';
+            ctx.beginPath();
+            ctx.arc(playerTruck.x + playerTruck.w/2, playerTruck.y + playerTruck.h/2, 60, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#0284c7';
+            ctx.fillRect(playerTruck.x, playerTruck.y, playerTruck.w, playerTruck.h);
+
+            let minFront = 999, minRear = 999, minLeft = 999, minRight = 999;
+            const tCX = playerTruck.x + playerTruck.w / 2;
+            const tCY = playerTruck.y + playerTruck.h / 2;
+
+            traffic.forEach((car) => {
+                car.y += car.speed;
+                car.x = lanes[car.laneIndex] - 10;
+
+                if (car.y > canvas.height + 100) {
+                    car.y = -100;
+                    car.laneIndex = Math.floor(Math.random() * 3);
+                } else if (car.y < -100) {
+                    car.y = canvas.height + 100;
+                    car.laneIndex = Math.floor(Math.random() * 3);
+                }
+
+                ctx.fillStyle = car.color;
+                ctx.fillRect(car.x, car.y, 20, 32);
+
+                const cCX = car.x + 10;
+                const cCY = car.y + 16;
+                const dx = cCX - tCX;
+                const dy = cCY - tCY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dy < -10 && Math.abs(dx) < 30) { if (dist < minFront) minFront = dist; }
+                else if (dy > 10 && Math.abs(dx) < 30) { if (dist < minRear) minRear = dist; }
+                else if (dx < 0 && Math.abs(dy) <= 40) { if (dist < minLeft) minLeft = dist; }
+                else if (dx > 0 && Math.abs(dy) <= 40) { if (dist < minRight) minRight = dist; }
+            });
+
+            const minimumOverallDistance = Math.min(minFront, minRear, minLeft, minRight);
+
+            renderCam1Front(cam1Canvas.getContext('2d'));
+            renderCam2Rear(cam2Canvas.getContext('2d'));
+            renderCam3Left(cam3Canvas.getContext('2d'));
+            renderCam4Right(cam4Canvas.getContext('2d'));
+
+            telemetryBuffer.push({
+                truck: { x: playerTruck.x, y: playerTruck.y },
+                traffic: traffic.map(t => ({ x: t.x, y: t.y, color: t.color })),
+                dist: minimumOverallDistance
+            });
+            if (telemetryBuffer.length > 150) telemetryBuffer.shift();
+
+            updateZoneCard('front', minFront);
+            updateZoneCard('rear', minRear);
+            updateZoneCard('left', minLeft);
+            updateZoneCard('right', minRight);
+
+            const distanceMeters = (minimumOverallDistance / 10).toFixed(1);
+            const now = Date.now();
+
+            if (minimumOverallDistance < 40) {
+                mainStatus.className = 'status-pill status-danger';
+                mainStatus.innerText = 'DANGER';
+                if (now - lastBeep > 200) { playBeep(880, 0.1); lastBeep = now; }
+                logIncident(distanceMeters);
+            } else if (minimumOverallDistance <= 70) {
+                mainStatus.className = 'status-pill status-caution';
+                mainStatus.innerText = 'CAUTION';
+                if (now - lastBeep > 600) { playBeep(440, 0.15); lastBeep = now; }
+            } else {
+                mainStatus.className = 'status-pill status-safe';
+                const currentDriver = allProfiles.find(p => p.empId === activeDriverId);
+                mainStatus.innerText = activeDriverId ? ('ACTIVE: ' + (currentDriver ? currentDriver.name : activeDriverId)) : 'STANDBY';
+            }
+
+            simAnimationId = requestAnimationFrame(updateSimulation);
+        }
     </script>
 </body>
 </html>
