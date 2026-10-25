@@ -72,7 +72,6 @@
         #scanner-container { display: none; margin-bottom: 14px; border: 2px dashed var(--secondary); border-radius: 8px; padding: 10px; background: #000; text-align: center; }
         #reader { width: 100%; max-height: 300px; border-radius: 6px; overflow: hidden; }
 
-        /* Searchable Audit Styles */
         .search-box { position: relative; margin-bottom: 15px; }
         .suggestions { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-top: none; max-height: 180px; overflow-y: auto; z-index: 10; border-radius: 0 0 8px 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .suggestion-item { padding: 10px 12px; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid #f1f5f9; }
@@ -139,6 +138,7 @@
         <button data-tab="dashboard">4. Dashboard</button>
         <button data-tab="history">5. History</button>
         <button data-tab="chat">6. Chat Log</button>
+        <button data-tab="billing" style="color: var(--accent); font-weight: bold;">7. Billing</button>
     </nav>
 
     <div id="public-view" class="tab-content">
@@ -189,7 +189,6 @@
             </div>
             <div class="form-group" id="audit-vin-display" style="font-size: 0.85rem; color: #64748b; background: #f1f5f9; padding: 8px; border-radius: 6px; margin-bottom: 12px;">VIN: Not selected</div>
             
-            <!-- Comprehensive Roadworthy Search Bar -->
             <div class="form-group">
                 <label>Search Roadworthy Parts & Defects Catalog</label>
                 <div class="search-box">
@@ -198,9 +197,7 @@
                 </div>
             </div>
 
-            <div id="dynamic-audit-list" class="form-group">
-                <!-- Dynamic inspection items render here -->
-            </div>
+            <div id="dynamic-audit-list" class="form-group"></div>
 
             <button type="button" class="btn btn-success" id="btn-inspect-pass">Pass & Certify Vehicle</button>
             <button type="button" class="btn btn-danger" id="btn-inspect-fail">Fail & Log Defects</button>
@@ -281,9 +278,25 @@
         </div>
     </div>
 
+    <!-- 7. BILLING TAB -->
+    <div id="tab-billing" class="tab-content">
+        <h2>Station Subscription & Billing</h2>
+        <div class="card">
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 14px;">Manage your station license and keep your VeloVault system unlocked.</p>
+            <div class="summary-box" style="margin-top: 0; margin-bottom: 14px;">
+                <div class="summary-row"><span>Station Code:</span><strong id="billing-station-lbl">-</strong></div>
+                <div class="summary-row"><span>Subscription Status:</span><strong id="billing-status-lbl" style="color: var(--accent);">Checking Trial...</strong></div>
+                <div class="summary-row"><span>Trial / Plan:</span><strong id="billing-days-lbl">-</strong></div>
+                <div class="summary-row"><span>Monthly Fee:</span><strong>R500.00 / month</strong></div>
+            </div>
+            <button type="button" class="btn btn-success" id="btn-pay-gateway" style="background: #28a745;">Pay R500.00 Now via Gateway</button>
+            <small style="color: #64748b; font-size: 0.75rem; display: block; margin-top: 8px;">Payments are processed securely via Payfast / Yoco. Account unlocks automatically upon verification.</small>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBfY4P-Gr7wXIzPg8mNq5EX_vEl0YTViQ8",
@@ -307,44 +320,32 @@
         let activeUnsubscribeHistory = null;
         let activeUnsubscribeChats = null;
 
-        // Comprehensive Master Catalog of Roadworthiness Parts & Defect Checks
         const masterVehicleParts = [
-            // Braking & Wheels
             "Heavy Roller Brake Tester Efficiency",
             "Parking / Handbrake Mechanism & Cables",
             "Brake Lines, Hoses & Master Cylinder Leaks",
             "Tyre Tread Depth & Sidewall Damage",
             "Wheel Nuts, Studs, Rims & Hubs",
-            
-            // Steering & Suspension
             "Steering Linkage, Joints & Play",
             "Shock Absorbers, Struts & Mounts",
             "Suspension Bushings, Control Arms & Ball Joints",
-            "Wheel Alignment & Steering Wheel Centering",
-
-            // Structural & Safety Fittings
             "Seat Bar / Seatbelt Safety & Retractor Operation",
             "Missing Bolts, Fasteners & Chassis Structural Integrity",
             "Windscreen Cracks, Chips & Vision Obstructing Damage",
             "Windscreen Wipers & Washers Operation",
             "Rear-View & Side Mirrors Security & Cracks",
             "Doors, Latches, Hinges & Cabin Security Locks",
-
-            // Electrical & Lighting System
             "Headlamp Alignment, Dipped & Main Beams",
             "Indicator, Hazard & Direction Lights",
             "Brake, Reverse & Rear Tail Lights",
             "Number Plate Illumination & Horn Function",
             "Battery Mount, Terminals & Wiring Security",
-
-            // Engine, Exhaust & Undercarriage
             "Exhaust Emissions, Silencer Box & Leaks",
             "Excessive Fluid Leaks (Oil, Coolant, Gearbox, Power Steering)",
             "Engine Mountings, Gearbox Mounts & Drivetrain",
             "Fuel Tank Caps, Filler Neck & Fuel Lines Security"
         ];
 
-        // Active audit inspection items list state
         let currentAuditItems = [
             { name: "Heavy Roller Brake Tester Efficiency", status: "PASS" },
             { name: "Steering Linkage & Joint Play", status: "PASS" },
@@ -354,10 +355,53 @@
             { name: "Seat Bar / Seatbelt Safety & Retractor Operation", status: "PASS" }
         ];
 
+        async function checkSubscriptionAndLock(stationId) {
+            const subRef = doc(db, "subscriptions", stationId);
+            const subSnap = await getDoc(subRef);
+            
+            const now = new Date().getTime();
+            let isExpired = false;
+            let statusText = "Active (5-Day Trial)";
+            let daysLeftStr = "Trial Active";
+
+            if (!subSnap.exists()) {
+                const trialExpiry = now + (5 * 24 * 60 * 60 * 1000);
+                await setDoc(subRef, {
+                    createdAt: now,
+                    expiresAt: trialExpiry,
+                    isPaid: false
+                });
+            } else {
+                const data = subSnap.data();
+                if (!data.isPaid && now > data.expiresAt) {
+                    isExpired = true;
+                } else if (data.isPaid) {
+                    statusText = "Active (Paid Subscription)";
+                    daysLeftStr = "Paid & Unlocked";
+                } else {
+                    const diffDays = Math.ceil((data.expiresAt - now) / (1000 * 60 * 60 * 24));
+                    daysLeftStr = `${diffDays} Days Left in Trial`;
+                }
+            }
+
+            document.getElementById('billing-station-lbl').innerText = stationId;
+            document.getElementById('billing-status-lbl').innerText = statusText;
+            document.getElementById('billing-days-lbl').innerText = daysLeftStr;
+
+            if (isExpired) {
+                document.getElementById('billing-status-lbl').innerText = "Trial Expired - Action Required";
+                document.getElementById('billing-status-lbl').style.color = "var(--danger)";
+                alert("Your 5-day free trial has expired! Please complete your subscription payment on the 7. Billing tab to unlock your system.");
+                switchTab('billing', document.querySelector('nav button[data-tab="billing"]'));
+            }
+        }
+
         function setupRealtimeListeners(stationId) {
             if(activeUnsubscribeRegistrations) activeUnsubscribeRegistrations();
             if(activeUnsubscribeHistory) activeUnsubscribeHistory();
             if(activeUnsubscribeChats) activeUnsubscribeChats();
+
+            checkSubscriptionAndLock(stationId);
 
             const regQuery = query(collection(db, "registrations"), where("stationId", "==", stationId));
             activeUnsubscribeRegistrations = onSnapshot(regQuery, (snapshot) => {
@@ -458,7 +502,6 @@
             window.scrollTo(0, 0);
         }
 
-        // Password Show/Hide Toggle Event Listener
         document.getElementById('btn-toggle-pass').addEventListener('click', function() {
             const passInput = document.getElementById('admin-pass');
             if (passInput.type === 'password') {
@@ -467,6 +510,25 @@
             } else {
                 passInput.type = 'password';
                 this.innerText = '👁️';
+            }
+        });
+
+        // Billing Gateway Button Mock Simulation (R500.00)
+        document.getElementById('btn-pay-gateway').addEventListener('click', async function() {
+            const currentStation = localStorage.getItem("activeStationId");
+            if(!currentStation) return;
+            
+            if(confirm("Proceed to secure payment gateway (Payfast / Yoco) to pay R500.00 for VeloVault subscription?")) {
+                const subRef = doc(db, "subscriptions", currentStation);
+                const newExpiry = new Date().getTime() + (30 * 24 * 60 * 60 * 1000);
+                await updateDoc(subRef, {
+                    isPaid: true,
+                    expiresAt: newExpiry,
+                    lastPaidAt: serverTimestamp()
+                });
+                alert("Payment verified! Your VeloVault subscription has been extended for 30 days.");
+                checkSubscriptionAndLock(currentStation);
+                switchTab('audit', document.querySelector('nav button[data-tab="audit"]'));
             }
         });
 
@@ -995,7 +1057,6 @@
             } catch(e) { alert("Error completing checkout."); }
         });
 
-        // Initial render trigger when script loads
         renderAuditList();
     </script>
 </body>
