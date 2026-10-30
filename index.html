@@ -278,19 +278,27 @@
         </div>
     </div>
 
-    <!-- 7. BILLING TAB -->
+    <!-- 7. BILLING TAB (Manual POP & Cash Send Workflow) -->
     <div id="tab-billing" class="tab-content">
-        <h2>Station Subscription & Billing</h2>
+        <h2>Station Subscription & Manual Verification</h2>
         <div class="card">
-            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 14px;">Manage your station license and keep your VeloVault system unlocked.</p>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 14px;">Keep your VeloVault system active by making your monthly subscription payment.</p>
             <div class="summary-box" style="margin-top: 0; margin-bottom: 14px;">
                 <div class="summary-row"><span>Station Code:</span><strong id="billing-station-lbl">-</strong></div>
-                <div class="summary-row"><span>Subscription Status:</span><strong id="billing-status-lbl" style="color: var(--accent);">Checking Trial...</strong></div>
-                <div class="summary-row"><span>Trial / Plan:</span><strong id="billing-days-lbl">-</strong></div>
-                <div class="summary-row"><span>Monthly Fee:</span><strong>R500.00 / month</strong></div>
+                <div class="summary-row"><span>Subscription Status:</span><strong id="billing-status-lbl" style="color: var(--accent);">Checking Status...</strong></div>
+                <div class="summary-row"><span>Trial / Plan Status:</span><strong id="billing-days-lbl">-</strong></div>
+                <div class="summary-row"><span>Monthly Fee Due:</span><strong style="color: var(--primary);">R500.00 / month</strong></div>
             </div>
-            <button type="button" class="btn btn-success" id="btn-pay-gateway" style="background: #28a745;">Pay R500.00 Now via Gateway</button>
-            <small style="color: #64748b; font-size: 0.75rem; display: block; margin-top: 8px;">Payments are processed securely via Payfast / Yoco. Account unlocks automatically upon verification.</small>
+
+            <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+                <h3 style="font-size: 0.95rem; color: var(--primary); margin-bottom: 6px;">Cash Send Instructions</h3>
+                <p style="font-size: 0.85rem; color: #475569; line-height: 1.4;">
+                    Please transfer <strong>R500.00</strong> via Cash Send using mobile number <strong>0661231371</strong> and share the withdrawal PIN with support.<br><br>
+                    Once paid, send your Cash Send confirmation or Proof of Payment (POP) via WhatsApp to get your station instantly unlocked for 30 days.
+                </p>
+            </div>
+
+            <small style="color: #64748b; font-size: 0.75rem; display: block;">System access is updated manually by platform administration as soon as your payment is verified.</small>
         </div>
     </div>
 
@@ -362,7 +370,7 @@
             const now = new Date().getTime();
             let isExpired = false;
             let statusText = "Active (5-Day Trial)";
-            let daysLeftStr = "Trial Active";
+            let daysLeftStr = "5 Days Left in Trial";
 
             if (!subSnap.exists()) {
                 const trialExpiry = now + (5 * 24 * 60 * 60 * 1000);
@@ -388,11 +396,26 @@
             document.getElementById('billing-status-lbl').innerText = statusText;
             document.getElementById('billing-days-lbl').innerText = daysLeftStr;
 
+            const navButtons = document.querySelectorAll('#admin-nav button');
+
             if (isExpired) {
                 document.getElementById('billing-status-lbl').innerText = "Trial Expired - Action Required";
                 document.getElementById('billing-status-lbl').style.color = "var(--danger)";
-                alert("Your 5-day free trial has expired! Please complete your subscription payment on the 7. Billing tab to unlock your system.");
+                
+                navButtons.forEach(btn => {
+                    if(btn.getAttribute('data-tab') !== 'billing') {
+                        btn.style.opacity = '0.3';
+                        btn.style.pointerEvents = 'none';
+                    }
+                });
+
+                alert("Your free trial or station license has expired! Please settle your R500.00 payment to unlock full system access.");
                 switchTab('billing', document.querySelector('nav button[data-tab="billing"]'));
+            } else {
+                navButtons.forEach(btn => {
+                    btn.style.opacity = '1';
+                    btn.style.pointerEvents = 'auto';
+                });
             }
         }
 
@@ -510,25 +533,6 @@
             } else {
                 passInput.type = 'password';
                 this.innerText = '👁️';
-            }
-        });
-
-        // Billing Gateway Button Mock Simulation (R500.00)
-        document.getElementById('btn-pay-gateway').addEventListener('click', async function() {
-            const currentStation = localStorage.getItem("activeStationId");
-            if(!currentStation) return;
-            
-            if(confirm("Proceed to secure payment gateway (Payfast / Yoco) to pay R500.00 for VeloVault subscription?")) {
-                const subRef = doc(db, "subscriptions", currentStation);
-                const newExpiry = new Date().getTime() + (30 * 24 * 60 * 60 * 1000);
-                await updateDoc(subRef, {
-                    isPaid: true,
-                    expiresAt: newExpiry,
-                    lastPaidAt: serverTimestamp()
-                });
-                alert("Payment verified! Your VeloVault subscription has been extended for 30 days.");
-                checkSubscriptionAndLock(currentStation);
-                switchTab('audit', document.querySelector('nav button[data-tab="audit"]'));
             }
         });
 
